@@ -1,8 +1,6 @@
 ---
-import Button from 'ui/src/components/Button.astro';
 import { addEntity } from '../../../src/entities.ts';
 import { sentence } from '../../../src/text.ts';
-import ActionPanel from '../../components/ActionPanel.astro';
 import EntityForm from '../../components/EntityForm.astro';
 import PageHeader from '../../components/PageHeader.astro';
 import { setOutcome } from '../../lib/connect.ts';
@@ -27,13 +25,8 @@ if (Astro.request.method === 'POST') {
 <Shell title="Add entity">
   <div class="flex max-w-wide flex-col gap-8">
     <PageHeader title="Add entity" />
-    <div class="grid gap-8 lg:grid-cols-3">
-      <div class="lg:col-span-2">
-        <EntityForm {...values} error={error} />
-      </div>
-      <ActionPanel title="Save">
-        <Button slot="actions" type="submit" form="entity-form">Save</Button>
-      </ActionPanel>
+    <div class="lg:w-2/3">
+      <EntityForm {...values} error={error} />
     </div>
   </div>
 </Shell>

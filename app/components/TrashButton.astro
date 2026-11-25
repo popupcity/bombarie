@@ -1,0 +1,15 @@
+---
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
+
+interface Props {
+  label: string;
+  title?: string;
+  [key: string]: unknown;
+}
+const { label, title, ...rest } = Astro.props;
+---
+
+<Button type="button" variant="outline" tone="bad" icon aria-label={label} title={title ?? label} {...rest}>
+  <Icon name="trash" />
+</Button>

@@ -37,7 +37,7 @@ curl -O https://raw.githubusercontent.com/popupcity/bombarie/main/docker-compose
 docker compose up -d
 ```
 
-Open the address within 15 minutes. Bombarie asks for one thing: an OAuth app at GitHub (the page tells you where to register it and which callback address to give). Then sign in with GitHub: the first account becomes the owner, and the owner adds everyone else on the Users page. If nobody has set it up after 15 minutes, setup closes; restart the container to open it again.
+Open the address within 15 minutes. Bombarie asks for one thing: an OAuth app at GitHub (the page tells you where to register it and which callback address to give). Then sign in with GitHub: the first account becomes an admin, and admins add everyone else on the Users page. If nobody has set it up after 15 minutes, setup closes; restart the container to open it again.
 
 Then use Add channel. The first channel creates `channels.yml`. There is no `.env` to write; Telegram (reminders and ideas by message) is set on the Settings page.
 
@@ -107,7 +107,7 @@ pnpm build
 ## Limits
 
 - One process: the scheduler runs inside the app and checks every minute. If the container is down at the planned time, the post is skipped after an hour.
-- Members, admins and owners differ only in who manages the Users page: everyone who can sign in can plan and post on every channel.
+- Admins and members differ only in who manages the Users page: everyone who can sign in can plan and post on every channel.
 - Whoever has both `config/` and `BOMBARIE_SECRET` has your tokens, and Meta and LinkedIn change their APIs. Expect to reconnect a channel now and then.
 
 ## Licence

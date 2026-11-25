@@ -1,6 +1,7 @@
 ---
 import Alert from 'ui/src/components/Alert.astro';
 import Button from 'ui/src/components/Button.astro';
+import TrashButton from '../components/TrashButton.astro';
 import Card from 'ui/src/components/Card.astro';
 import Input from 'ui/src/components/Input.astro';
 import Text from 'ui/src/components/Text.astro';
@@ -10,7 +11,7 @@ import { registerWebhook } from '../../src/telegram-intake.ts';
 import { sentence } from '../../src/text.ts';
 import { change } from '../../src/users.ts';
 import type { Role } from '../../src/users.ts';
-import ActionPanel from '../components/ActionPanel.astro';
+import Form from '../components/Form.astro';
 import ChoiceMenu from '../components/ChoiceMenu.astro';
 import Field from '../components/Field.astro';
 import PageHeader from '../components/PageHeader.astro';
@@ -20,7 +21,7 @@ import { users } from '../lib/auth.ts';
 import { setOutcome, takeOutcome } from '../lib/connect.ts';
 
 const actor = Astro.locals.user ?? '';
-if (Astro.locals.role !== 'owner' && Astro.locals.role !== 'admin') return Astro.redirect('/');
+if (Astro.locals.role !== 'admin') return Astro.redirect('/');
 
 let error = '';
 if (Astro.request.method === 'POST') {
@@ -50,8 +51,8 @@ const list = Object.entries(await users()).sort(([a], [b]) => a.localeCompare(b)
 const token = (await readSetting(appsPath(), 'telegramToken')) ?? '';
 const chat = (await readSetting(appsPath(), 'telegramChat')) ?? '';
 const cap = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
-const tone: Record<string, string> = { owner: 'ok', admin: 'info', member: 'ink' };
-const roles: [Role, string][] = [['owner', 'Can change everything, including owners.'], ['admin', 'Can add and remove users.'], ['member', 'Can sign in and work.']];
+const tone: Record<string, string> = { admin: 'ok', member: 'ink' };
+const roles: [Role, string][] = [['admin', 'Can add and remove users.'], ['member', 'Can sign in and work.']];
 ---
 
 <Shell title="Settings">
@@ -61,7 +62,8 @@ const roles: [Role, string][] = [['owner', 'Can change everything, including own
     {error && <Alert>{error}</Alert>}
     <Section title="Users">
       <div class="grid gap-8 lg:grid-cols-3">
-        <ul class="flex flex-col gap-4 lg:col-span-2">
+        <div class="flex flex-col gap-4 lg:col-span-2">
+        <ul class="flex flex-col gap-4">
           {
             list.map(([name, role]) => (
               <Card as="li" class="flex items-center gap-4">
@@ -69,24 +71,26 @@ const roles: [Role, string][] = [['owner', 'Can change everything, including own
                 <Text class="min-w-0 flex-1 truncate">{name}</Text>
                 <form method="post" class="flex items-center gap-2">
                   <input type="hidden" name="name" value={name} />
-                  <ChoiceMenu id={`role-${name}`} submit disableActive label={cap(role)} tone={tone[role] ?? 'ink'} options={[...roles.map(([value, text]) => ({ label: cap(value), text, active: role === value, attrs: { name: 'role', value } })), { label: 'Remove', text: 'Cannot sign in any more.', active: false, attrs: { name: 'remove', value: '1' } }]} />
+                  <ChoiceMenu id={`role-${name}`} submit disableActive label={cap(role)} tone={tone[role] ?? 'ink'} options={[...roles.map(([value, text]) => ({ label: cap(value), text, active: role === value, attrs: { name: 'role', value } }))]} />
+                  <TrashButton type="submit" name="remove" value="1" label={`Remove ${name}`} title="Remove" />
                 </form>
               </Card>
             ))
           }
         </ul>
-        <ActionPanel title="Add a user">
-          <form id="add-user" method="post" class="flex flex-col gap-2">
-            <input type="hidden" name="add" value="1" />
-            <Input id="name" name="name" label="GitHub name" placeholder="GitHub name" required autocomplete="off" />
-          </form>
-          <Button slot="actions" type="submit" form="add-user">Add</Button>
-        </ActionPanel>
+        <Card as="form" id="add-user" method="post" hidden class="flex items-center gap-4 data-[open]:flex">
+          <input type="hidden" name="add" value="1" />
+          <Input id="name" name="name" label="GitHub username" placeholder="GitHub username" required autocomplete="off" />
+          <Button type="submit">Add</Button>
+        </Card>
+        <div class="flex justify-end"><Button id="add-user-open" type="button" variant="outline">Add user</Button></div>
+        </div>
       </div>
     </Section>
     <Section title="Notifications">
       <div class="grid gap-8 lg:grid-cols-3">
-        <form id="telegram-form" method="post" class="flex flex-col gap-4 lg:col-span-2">
+        <div class="lg:col-span-2">
+        <Form id="telegram-form">
           <input type="hidden" name="part" value="telegram" />
           <Field label="Telegram bot token" for="token" hint="Reminders and ideas by message. Make a bot with @BotFather and paste its token. Leave both fields empty to turn Telegram off.">
             <Input id="token" name="token" type="password" label="Telegram bot token" value={token} autocomplete="off" />
@@ -94,11 +98,22 @@ const roles: [Role, string][] = [['owner', 'Can change everything, including own
           <Field label="Telegram chat ID" for="chat" hint="Only this chat is answered. Send a message to @userinfobot to see your ID.">
             <Input id="chat" name="chat" label="Telegram chat ID" value={chat} autocomplete="off" />
           </Field>
-        </form>
-        <ActionPanel title="Save">
-          <Button slot="actions" type="submit" form="telegram-form">Save</Button>
-        </ActionPanel>
+          <Button slot="actions" type="submit">Save</Button>
+        </Form>
+        </div>
       </div>
     </Section>
   </div>
+  <Fragment slot="after">
+    <script>
+      const open = document.getElementById('add-user-open');
+      const form = document.getElementById('add-user');
+      open?.addEventListener('click', () => {
+        if (!form) return;
+        form.hidden = false;
+        open.hidden = true;
+        form.querySelector('input')?.focus();
+      });
+    </script>
+  </Fragment>
 </Shell>

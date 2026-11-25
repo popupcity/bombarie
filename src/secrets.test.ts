@@ -113,7 +113,7 @@ test('users are kept in the encrypted app file next to the apps', async () => {
   const file = appFile();
   await writeApp(file, 'github', { clientId: 'a', clientSecret: 'b' });
   assert.deepEqual(await readUsers(file), {});
-  await writeUsers(file, { jeroen: 'owner', joop: 'member' });
-  assert.deepEqual(await readUsers(file), { jeroen: 'owner', joop: 'member' });
+  await writeUsers(file, { jeroen: 'admin', joop: 'member' });
+  assert.deepEqual(await readUsers(file), { jeroen: 'admin', joop: 'member' });
   assert.deepEqual(await readApp(file, 'github'), { clientId: 'a', clientSecret: 'b' });
 });

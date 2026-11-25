@@ -1,0 +1,11 @@
+---
+interface Props {
+  id: string;
+}
+const { id } = Astro.props;
+---
+
+<form id={id} method="post" class="flex flex-col gap-4">
+  <slot />
+  <div class="flex flex-wrap items-center gap-2"><slot name="actions" /></div>
+</form>

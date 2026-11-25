@@ -42,10 +42,10 @@ const callback = `${Astro.url.origin}/login/github/callback`;
       <Heading variant="page" as="h1" aria-label={brandName}><Wordmark /></Heading>
       {
         !open ? (
-          <Alert variant="plain">Setup is closed. Restart the container to open it for 15 minutes.</Alert>
+          <Alert>Setup is closed. Restart the container to open it for 15 minutes.</Alert>
         ) : app ? (
           <>
-            <Text>The first GitHub account that signs in becomes the owner. Add the others on the Users page afterwards.</Text>
+            <Text>The first GitHub account that signs in becomes an admin. Add the others on the Users page afterwards.</Text>
             <div>
               <Button href="/login/github">Sign in with GitHub</Button>
             </div>
@@ -58,7 +58,7 @@ const callback = `${Astro.url.origin}/login/github/callback`;
               <Field label="Client ID" for="clientId"><Input id="clientId" name="clientId" label="Client ID" required autocomplete="off" /></Field>
               <Field label="Client secret" for="clientSecret"><Input id="clientSecret" name="clientSecret" type="password" label="Client secret" required autocomplete="off" /></Field>
             </div>
-            {failure && <Alert variant="plain">{failure}</Alert>}
+            {failure && <Alert>{failure}</Alert>}
             <div>
               <Button type="submit" data-pending="Saving…">Save</Button>
             </div>

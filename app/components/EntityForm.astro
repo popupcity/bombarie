@@ -4,6 +4,7 @@ import Button from 'ui/src/components/Button.astro';
 import Input from 'ui/src/components/Input.astro';
 import { bookmarklet } from '../../src/linkedin-lookup.ts';
 import Field from './Field.astro';
+import Form from './Form.astro';
 import Hint from './Hint.astro';
 import ValueButton from './ValueButton.astro';
 
@@ -18,7 +19,7 @@ const SPELLING = 'Type @ in a post to mention it. On LinkedIn the name must be s
 const { name, linkedin, instagram, titled = false, error = '' } = Astro.props;
 ---
 
-<form id="entity-form" method="post" class="flex flex-col gap-4">
+<Form id="entity-form">
   <input type="hidden" name="intent" value="save" />
   {error && <Alert>{error}</Alert>}
   <div class="flex flex-col gap-4">
@@ -45,7 +46,8 @@ const { name, linkedin, instagram, titled = false, error = '' } = Astro.props;
       <Input id="instagram" name="instagram" label="Instagram" value={instagram} placeholder="@username" autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />
     </Field>
   </div>
-</form>
+  <Button slot="actions" type="submit">Save</Button>
+</Form>
 
 <script>
   import '../scripts/entity-lookup.ts';

@@ -384,7 +384,9 @@ function init(root: HTMLElement) {
     const hand = isManual && reached && open;
     const due = !hand && fields.ok && open && postsNow({ manual: fields.manual || manualOnly, connected: !connection, date: fields.date, now: new Date() });
     const immediate = due && fields.ok && fields.status !== 'planned';
-    const reason = fields.ok
+    const reason = !open
+      ? null
+      : fields.ok
       ? readiness({ manual: fields.manual || manualOnly, date: fields.date, images: fields.images.length, needsImage: platform === 'instagram', immediate, preview: result, connection: manualOnly ? null : connection || null, now: new Date() })
       : 'Fix the properties first.';
     const blocked = fields.ok && fields.status === 'planned' && reason !== null;

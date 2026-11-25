@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { githubLogin } from '../../../../src/github-login.ts';
 import { writeUsers, appsPath } from '../../../../src/secrets.ts';
-import { hasOwner, roleOf } from '../../../../src/users.ts';
+import { hasAdmin, roleOf } from '../../../../src/users.ts';
 import { COOKIE, githubApp, sessionToken, setupOpen, STATE_COOKIE, users } from '../../../lib/auth.ts';
 
 const back = (message: string) => `/login?error=${encodeURIComponent(message)}`;
@@ -22,8 +22,8 @@ export const GET: APIRoute = async ({ url, cookies, redirect, request }) => {
   }
   const known = await users();
   if (!roleOf(known, login)) {
-    if (hasOwner(known) || !setupOpen()) return redirect(back(`${login} is not allowed to use this app.`), 302);
-    await writeUsers(appsPath(), { [login]: 'owner' });
+    if (hasAdmin(known) || !setupOpen()) return redirect(back(`${login} is not allowed to use this app.`), 302);
+    await writeUsers(appsPath(), { [login]: 'admin' });
   }
   const secure = url.protocol === 'https:' || request.headers.get('x-forwarded-proto') === 'https';
   cookies.set(COOKIE, sessionToken(login), { httpOnly: true, sameSite: 'lax', secure, path: '/', maxAge: 30 * 24 * 60 * 60 });
