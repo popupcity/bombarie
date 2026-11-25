@@ -3,5 +3,6 @@
 declare namespace App {
   interface Locals {
     user?: string;
+    role?: 'owner' | 'admin' | 'member';
   }
 }

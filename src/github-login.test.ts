@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { adminsOf, githubAuthorizeUrl, githubLogin } from './github-login.ts';
+import { githubAuthorizeUrl, githubLogin, githubName } from './github-login.ts';
 
 const args = { clientId: 'id', clientSecret: 'sec', code: 'abc', redirectUri: 'https://x.test/login/github/callback' };
 
@@ -31,7 +31,7 @@ test('a refused code and an unknown user are errors', async () => {
   await assert.rejects(githubLogin(args, github({ access_token: 't' }, { ok: false, body: { message: 'Bad credentials' } }).fetchImpl), /did not say who you are/);
 });
 
-test('the list of admins ignores case, spaces and empty entries', () => {
-  assert.deepEqual(adminsOf(' Jeroen, anna ,,'), ['jeroen', 'anna']);
-  assert.deepEqual(adminsOf(undefined), []);
+test('a typed name is checked at GitHub and kept as GitHub writes it', async () => {
+  assert.equal(await githubName('JoopDeBoer', github({}, { body: { login: 'joopdeboer' } }).fetchImpl), 'joopdeboer');
+  await assert.rejects(githubName('nobody-here', (async () => new Response('{}', { status: 404 })) as unknown as typeof fetch), /not a GitHub user/);
 });

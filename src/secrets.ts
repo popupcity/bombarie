@@ -1,14 +1,29 @@
-import { statSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { Credentials } from './types.ts';
-import { isSealed, open, seal, vaultSecret } from './vault.ts';
+import { isSealed, open, seal } from './vault.ts';
 
 const location = (file: string, name: string, env: NodeJS.ProcessEnv): string => env[name] ?? join(homedir(), '.config', 'social', file);
 
 export const tokensPath = (env: NodeJS.ProcessEnv = process.env): string => location('tokens.json', 'BOMBARIE_TOKENS', env);
 export const appsPath = (env: NodeJS.ProcessEnv = process.env): string => location('apps.json', 'BOMBARIE_APPS', env);
+
+export function secretOf(path: string): string {
+  if (process.env.BOMBARIE_SECRET) return process.env.BOMBARIE_SECRET;
+  const file = join(dirname(path), 'secret.key');
+  if (!existsSync(file)) {
+    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+    try {
+      writeFileSync(file, `${randomBytes(32).toString('base64')}\n`, { mode: 0o600, flag: 'wx' });
+    } catch (err) {
+      if ((err as { code?: unknown }).code !== 'EEXIST') throw err;
+    }
+  }
+  return readFileSync(file, 'utf8').trim();
+}
 
 async function readPrivate(path: string): Promise<Record<string, Record<string, unknown>>> {
   let mode: number;
@@ -21,7 +36,7 @@ async function readPrivate(path: string): Promise<Record<string, Record<string, 
   if ((mode & 0o077) !== 0) throw new Error(`${path} is readable by others; make it private (mode 600)`);
   const file: unknown = JSON.parse(await readFile(path, 'utf8'));
   if (!isSealed(file)) throw new Error(`${path} is not encrypted; encrypt it once with the BOMBARIE_SECRET (see docs/decisions.md)`);
-  const raw = open(file, vaultSecret());
+  const raw = open(file, secretOf(path));
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error(`${path}: expected a map`);
   for (const [name, entry] of Object.entries(raw)) {
     if (typeof entry !== 'object' || entry === null) throw new Error(`${path}: ${name} must be a map`);
@@ -32,7 +47,7 @@ async function readPrivate(path: string): Promise<Record<string, Record<string, 
 async function writePrivate(path: string, data: unknown): Promise<void> {
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   const temp = `${path}.tmp`;
-  await writeFile(temp, seal(data, vaultSecret()), { mode: 0o600 });
+  await writeFile(temp, seal(data, secretOf(path)), { mode: 0o600 });
   await rename(temp, path);
 }
 
@@ -127,4 +142,12 @@ export async function writeApp(path: string, name: string, credentials: AppCrede
     throw new Error('the client ID and secret are plain text without spaces; copy them again from LinkedIn');
   }
   await writePrivate(path, { ...(await readPrivate(path)), [name]: { clientId, clientSecret, ...(configId !== '' && { configId }) } });
+}
+
+export async function readUsers(path: string): Promise<Record<string, string>> {
+  return Object.fromEntries(Object.entries((await readPrivate(path)).users ?? {}).filter(([, role]) => typeof role === 'string')) as Record<string, string>;
+}
+
+export async function writeUsers(path: string, users: Record<string, string>): Promise<void> {
+  await writePrivate(path, { ...(await readPrivate(path)), users });
 }

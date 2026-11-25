@@ -1,11 +1,13 @@
 export const githubAuthorizeUrl = (clientId: string, redirectUri: string, state: string): string =>
   `https://github.com/login/oauth/authorize?${new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, state })}`;
 
-export const adminsOf = (text: string | undefined): string[] =>
-  (text ?? '')
-    .split(',')
-    .map((name) => name.trim().toLowerCase())
-    .filter((name) => name !== '');
+export async function githubName(name: string, fetchImpl: typeof fetch = fetch): Promise<string> {
+  const response = await fetchImpl(`https://api.github.com/users/${encodeURIComponent(name)}`, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'bombarie' } });
+  if (response.status === 404) throw new Error(`${name} is not a GitHub user`);
+  const user = (await response.json().catch(() => ({}))) as { login?: unknown };
+  if (!response.ok || typeof user.login !== 'string') throw new Error('GitHub did not answer; try again');
+  return user.login;
+}
 
 export async function githubLogin(args: { clientId: string; clientSecret: string; code: string; redirectUri: string }, fetchImpl: typeof fetch = fetch): Promise<string> {
   const exchanged = await fetchImpl('https://github.com/login/oauth/access_token', {

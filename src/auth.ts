@@ -1,11 +1,8 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { vaultSecret } from './vault.ts';
 
 export const SESSION_DAYS = 30;
 
 const mac = (secret: string, text: string): string => createHmac('sha256', secret).update(text).digest('hex');
-
-export const signingSecret = (): string => vaultSecret();
 
 export function issue(secret: string, name: string, now: Date): string {
   const expires = now.getTime() + SESSION_DAYS * 24 * 60 * 60_000;

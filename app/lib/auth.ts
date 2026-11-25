@@ -1,15 +1,18 @@
-import { issue, signingSecret, who } from '../../src/auth.ts';
-import { adminsOf } from '../../src/github-login.ts';
+import { issue, who } from '../../src/auth.ts';
+import { appsPath, readApp, readUsers, secretOf } from '../../src/secrets.ts';
+import { hasOwner } from '../../src/users.ts';
 
 export const COOKIE = 'bombarie_session';
 export const STATE_COOKIE = 'bombarie_oauth';
-export const OPEN = ['/login', '/login/', '/public/', '/healthz', '/api/telegram'];
+export const OPEN = ['/login', '/login/', '/setup', '/public/', '/healthz', '/api/telegram'];
 
-export const github = () => ({ clientId: process.env.GITHUB_CLIENT_ID ?? '', clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '', admins: adminsOf(process.env.BOMBARIE_ADMINS) });
-export const configured = (): boolean => {
-  const { clientId, clientSecret, admins } = github();
-  return clientId !== '' && clientSecret !== '' && admins.length > 0;
-};
-export const required = (): boolean => import.meta.env.PROD || configured();
-export const sessionToken = (name: string, now = new Date()): string => issue(signingSecret(), name, now);
-export const signedInAs = (cookie: string | undefined, now = new Date()): string | null => who(signingSecret(), cookie, now);
+const STARTED = Date.now();
+export const setupOpen = (): boolean => Date.now() - STARTED < 15 * 60_000;
+
+export const githubApp = () => readApp(appsPath(), 'github');
+export const users = () => readUsers(appsPath());
+export const installed = async (): Promise<boolean> => (await githubApp()) !== null && hasOwner(await users());
+export const required = async (): Promise<boolean> => import.meta.env.PROD || (await installed());
+
+export const sessionToken = (name: string, now = new Date()): string => issue(secretOf(appsPath()), name, now);
+export const signedInAs = (cookie: string | undefined, now = new Date()): string | null => who(secretOf(appsPath()), cookie, now);

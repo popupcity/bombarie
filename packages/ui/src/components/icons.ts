@@ -21,6 +21,7 @@ import eyeSlash from '@phosphor-icons/core/assets/regular/eye-slash.svg?raw';
 import warning from '@phosphor-icons/core/assets/regular/warning.svg?raw';
 import x from '@phosphor-icons/core/assets/regular/x.svg?raw';
 import at from '@phosphor-icons/core/assets/regular/at.svg?raw';
+import usersIcon from '@phosphor-icons/core/assets/regular/users.svg?raw';
 import broadcast from '@phosphor-icons/core/assets/regular/broadcast.svg?raw';
 import arrowSquareOut from '@phosphor-icons/core/assets/regular/arrow-square-out.svg?raw';
 import calendarBlank from '@phosphor-icons/core/assets/regular/calendar-blank.svg?raw';
@@ -71,6 +72,7 @@ export const icons = {
     'link-simple': linkSimple,
     'image': image,
     at,
+    users: usersIcon,
     broadcast,
     'calendar-blank': calendarBlank,
     'calendar-check': calendarCheck,

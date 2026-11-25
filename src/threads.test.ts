@@ -7,7 +7,8 @@ import { loadChannels } from './channels.ts';
 import { readTokens } from './secrets.ts';
 import { finishThreads, refreshThreadsTokens, threads, threadsAuthorizeUrl } from './threads.ts';
 import type { Channel, Post, SendContext } from './types.ts';
-import { seal, vaultSecret } from './vault.ts';
+import { secretOf } from './secrets.ts';
+import { seal } from './vault.ts';
 
 const channel: Channel = { platform: 'threads', handle: 'pop' };
 const post = (extra: Partial<Post> = {}): Post => ({ id: 'a/b.md', channel: 'pop', type: null, status: 'planned', manual: false, date: new Date(), images: [], mentions: {}, text: 'Hello', ...extra });
@@ -123,7 +124,7 @@ test('a token is renewed only in its last two weeks', async () => {
   const root = mkdtempSync(join(tmpdir(), 'threads-'));
   const tokens = join(root, 'tokens.json');
   const now = new Date('2026-11-23T10:00:00Z');
-  writeFileSync(tokens, seal({ soon: { accessToken: 'a', expiresAt: '2026-12-01T00:00:00Z' }, later: { accessToken: 'b', expiresAt: '2027-01-20T00:00:00Z' }, gone: { accessToken: 'c', expiresAt: '2026-11-01T00:00:00Z' } }, vaultSecret()), { mode: 0o600 });
+  writeFileSync(tokens, seal({ soon: { accessToken: 'a', expiresAt: '2026-12-01T00:00:00Z' }, later: { accessToken: 'b', expiresAt: '2027-01-20T00:00:00Z' }, gone: { accessToken: 'c', expiresAt: '2026-11-01T00:00:00Z' } }, secretOf(tokens)), { mode: 0o600 });
   const asked: string[] = [];
   const fetchImpl = (async (url: string) => {
     asked.push(String(url));

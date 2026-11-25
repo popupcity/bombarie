@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { chmodSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { seal, vaultSecret } from './vault.ts';
-import { credentialsFrom, readApp, readTokens, removeToken, tokensPath, writeApp, writeToken } from './secrets.ts';
+import { credentialsFrom, readApp, readTokens, readUsers, removeToken, secretOf, tokensPath, writeApp, writeToken, writeUsers } from './secrets.ts';
+import { seal } from './vault.ts';
 
 const now = new Date('2026-11-20T09:00:00Z');
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'social-tokens-')), 'nested', 'tokens.json');
@@ -43,9 +43,9 @@ test('a file readable by others is refused', async () => {
 test('malformed files are refused', async () => {
   const path = fresh();
   await writeToken(path, 'a', { accessToken: 'tok' });
-  writeFileSync(path, seal({ a: { accessToken: '' } }, vaultSecret()), { mode: 0o600 });
+  writeFileSync(path, seal({ a: { accessToken: '' } }, secretOf(path)), { mode: 0o600 });
   await assert.rejects(readTokens(path), /is missing accessToken/);
-  writeFileSync(path, seal({ a: { accessToken: 'x', expiresAt: 'soon' } }, vaultSecret()), { mode: 0o600 });
+  writeFileSync(path, seal({ a: { accessToken: 'x', expiresAt: 'soon' } }, secretOf(path)), { mode: 0o600 });
   await assert.rejects(readTokens(path), /not a date/);
 });
 
@@ -95,8 +95,25 @@ test('the file holds no readable token, and a plain or wrongly keyed file is ref
   await assert.rejects(readTokens(path), /cannot decrypt/);
 });
 
-test('the secret is required in production and has a development value elsewhere', () => {
-  assert.equal(vaultSecret({ BOMBARIE_SECRET: 'abc' }), 'abc');
-  assert.equal(vaultSecret({}), 'development-only');
-  assert.throws(() => vaultSecret({ NODE_ENV: 'production' }), /BOMBARIE_SECRET/);
+test('without BOMBARIE_SECRET the app makes a key file once, private, and keeps using it', () => {
+  const path = fresh();
+  const key = secretOf(path);
+  assert.equal(secretOf(path), key);
+  assert.equal(statSync(join(dirname(path), 'secret.key')).mode & 0o777, 0o600);
+  assert.notEqual(secretOf(fresh()), key);
+  process.env.BOMBARIE_SECRET = 'from-env';
+  try {
+    assert.equal(secretOf(path), 'from-env');
+  } finally {
+    delete process.env.BOMBARIE_SECRET;
+  }
+});
+
+test('users are kept in the encrypted app file next to the apps', async () => {
+  const file = appFile();
+  await writeApp(file, 'github', { clientId: 'a', clientSecret: 'b' });
+  assert.deepEqual(await readUsers(file), {});
+  await writeUsers(file, { jeroen: 'owner', joop: 'member' });
+  assert.deepEqual(await readUsers(file), { jeroen: 'owner', joop: 'member' });
+  assert.deepEqual(await readApp(file, 'github'), { clientId: 'a', clientSecret: 'b' });
 });

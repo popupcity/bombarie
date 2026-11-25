@@ -1,12 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
 
-export const vaultSecret = (env: NodeJS.ProcessEnv = process.env): string => {
-  const secret = env.BOMBARIE_SECRET;
-  if (secret) return secret;
-  if (env.NODE_ENV === 'production') throw new Error('set BOMBARIE_SECRET: it encrypts the platform tokens and app keys');
-  return 'development-only';
-};
-
 const keys = new Map<string, Buffer>();
 const keyFor = (secret: string, salt: Buffer): Buffer => {
   const id = `${secret}:${salt.toString('base64')}`;

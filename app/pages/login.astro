@@ -4,10 +4,11 @@ import Button from 'ui/src/components/Button.astro';
 import Heading from 'ui/src/components/Heading.astro';
 import { brandName } from '../lib/ui.ts';
 import Wordmark from '../components/Wordmark.astro';
-import { configured } from '../lib/auth.ts';
+import { installed } from '../lib/auth.ts';
 import '../styles/global.css';
 
-const failure = configured() ? Astro.url.searchParams.get('error') : 'Set GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET and BOMBARIE_ADMINS on the server first.';
+if (!(await installed())) return Astro.redirect('/setup');
+const failure = Astro.url.searchParams.get('error');
 ---
 
 <!doctype html>

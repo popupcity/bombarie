@@ -34,33 +34,28 @@ You need Docker and an https address in front of it (Meta and LinkedIn only redi
 
 ```
 curl -O https://raw.githubusercontent.com/popupcity/bombarie/main/docker-compose.yml
-curl -O https://raw.githubusercontent.com/popupcity/bombarie/main/.env.example
-cp .env.example .env
+docker compose up -d
 ```
 
-Sign-in is with GitHub. Register an OAuth app at github.com/settings/developers (homepage: your address, callback: `https://<your address>/login/github/callback`, no scopes are needed) and put its client ID and secret in `.env`, with the GitHub names that may sign in in `BOMBARIE_ADMINS`. Then:
+Open the address within 15 minutes. Bombarie asks for one thing: an OAuth app at GitHub (the page tells you where to register it and which callback address to give). Then sign in with GitHub: the first account becomes the owner, and the owner adds everyone else on the Users page. If nobody has set it up after 15 minutes, setup closes; restart the container to open it again.
 
-```
-docker compose --env-file .env up -d
-```
+Then use Add channel. The first channel creates `channels.yml`. There is no `.env` to write.
 
-Open `http://localhost:4321`, sign in, and use Add channel. The first channel creates `channels.yml`.
+Optional settings (environment variables in `docker-compose.yml`):
 
-| Variable | Needed | What it is |
-|---|---|---|
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | yes | The OAuth app that signs people in. Only the GitHub user name is read; the GitHub token is not kept. |
-| `BOMBARIE_ADMINS` | yes | GitHub names that may sign in, separated by commas, for example `jeroen,anna`. |
-| `BOMBARIE_SECRET` | yes | A long random string (`openssl rand -base64 32`). It encrypts the platform tokens and app keys in `config/` and signs the session cookies. Keep a copy: without it the tokens cannot be read and you connect your channels again. |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | no | Reminders and ideas by Telegram, for your chat only. |
-| `BOMBARIE_ROOT` | no | Content folder. `/data` in Docker, `./data` when you develop. |
-| `BOMBARIE_TOKENS`, `BOMBARIE_APPS` | no | Where the platform tokens and app keys live. `/config/...` in Docker. |
+| Variable | What it is |
+|---|---|
+| `BOMBARIE_SECRET` | Your own key for encrypting the platform tokens and app keys. Without it Bombarie makes `config/secret.key` the first time. Set it if you want a copy of `config/` to be useless without it. Keep a copy: without the key the tokens cannot be read and you connect your channels again. |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Reminders and ideas by Telegram, for your chat only. |
+| `BOMBARIE_ROOT` | Content folder. `/data` in Docker, `./data` when you develop. |
+| `BOMBARIE_TOKENS`, `BOMBARIE_APPS` | Where the platform tokens and app keys live. `/config/...` in Docker. |
 
 ## Your content
 
 Two folders hold everything, and both are mounted by `docker-compose.yml`:
 
 - `data/`: your content. Back this up, or make it a git repository.
-- `config/`: platform tokens and app keys (`tokens.json`, `apps.json`). Secrets: never put these in git. Both files are encrypted (AES-256-GCM) with `BOMBARIE_SECRET`, so a backup of `config/` alone reveals nothing.
+- `config/`: platform tokens and app keys (`tokens.json`, `apps.json`). Secrets: never put these in git. The files are encrypted (AES-256-GCM). The key is in `config/secret.key`, so a copy of the whole folder can be read; set `BOMBARIE_SECRET` to keep the key elsewhere.
 
 ```
 data/
@@ -113,7 +108,7 @@ pnpm build
 ## Limits
 
 - One process: the scheduler runs inside the app and checks every minute. If the container is down at the planned time, the post is skipped after an hour.
-- Users are all equal: anyone who can sign in can plan and post on every channel.
+- Members, admins and owners differ only in who manages the Users page: everyone who can sign in can plan and post on every channel.
 - Whoever has both `config/` and `BOMBARIE_SECRET` has your tokens, and Meta and LinkedIn change their APIs. Expect to reconnect a channel now and then.
 
 ## Licence

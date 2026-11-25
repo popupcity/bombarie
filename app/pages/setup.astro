@@ -1,0 +1,73 @@
+---
+import Alert from 'ui/src/components/Alert.astro';
+import Button from 'ui/src/components/Button.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import Input from 'ui/src/components/Input.astro';
+import Text from 'ui/src/components/Text.astro';
+import { appsPath, writeApp } from '../../src/secrets.ts';
+import { sentence } from '../../src/text.ts';
+import Field from '../components/Field.astro';
+import Wordmark from '../components/Wordmark.astro';
+import { githubApp, installed, setupOpen } from '../lib/auth.ts';
+import { brandName } from '../lib/ui.ts';
+import '../styles/global.css';
+
+if (await installed()) return Astro.redirect('/login');
+const open = setupOpen();
+let failure = '';
+if (open && Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  try {
+    await writeApp(appsPath(), 'github', { clientId: String(form.get('clientId') ?? ''), clientSecret: String(form.get('clientSecret') ?? '') });
+    return Astro.redirect('/setup', 303);
+  } catch (err) {
+    failure = sentence(err instanceof Error ? err.message : String(err));
+  }
+}
+const app = open ? await githubApp() : null;
+const callback = `${Astro.url.origin}/login/github/callback`;
+---
+
+<!doctype html>
+<html lang="en" data-theme="social" class="scheme-light scroll-smooth bg-page text-[106.25%]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Set up — {brandName}</title>
+  </head>
+  <body>
+    <main class="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-8 px-6 py-12">
+      <Heading variant="page" as="h1" aria-label={brandName}><Wordmark /></Heading>
+      {
+        !open ? (
+          <Alert variant="plain">Setup is closed. Restart the container to open it for 15 minutes.</Alert>
+        ) : app ? (
+          <>
+            <Text>The first GitHub account that signs in becomes the owner. Add the others on the Users page afterwards.</Text>
+            <div>
+              <Button href="/login/github">Sign in with GitHub</Button>
+            </div>
+          </>
+        ) : (
+          <form method="post" class="flex flex-col gap-8">
+            <div class="flex flex-col gap-4">
+              <Text>Bombarie signs people in with GitHub. Register an OAuth app at github.com/settings/applications/new with this callback address, then fill in what GitHub gives you. No scopes are needed.</Text>
+              <Field label="Callback address"><Input id="callback" value={callback} label="Callback address" readonly /></Field>
+              <Field label="Client ID" for="clientId"><Input id="clientId" name="clientId" label="Client ID" required autocomplete="off" /></Field>
+              <Field label="Client secret" for="clientSecret"><Input id="clientSecret" name="clientSecret" type="password" label="Client secret" required autocomplete="off" /></Field>
+            </div>
+            {failure && <Alert variant="plain">{failure}</Alert>}
+            <div>
+              <Button type="submit" data-pending="Saving…">Save</Button>
+            </div>
+          </form>
+        )
+      }
+    </main>
+  </body>
+  <script>
+    import '../scripts/pending.ts';
+  </script>
+</html>
