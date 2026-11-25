@@ -32,8 +32,7 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
       <NavItem href="/calendar" icon="calendar-blank" current={on('/calendar')}>Calendar</NavItem>
       <NavItem href="/ideas" icon="lightbulb" current={on('/ideas')}>Ideas</NavItem>
       <NavItem href="/entities" icon="at" current={on('/entities')}>Entities</NavItem>
-      {Astro.locals.role && Astro.locals.role !== 'member' && <NavItem href="/users" icon="users" current={on('/users')}>Users</NavItem>}
-      {Astro.locals.role && Astro.locals.role !== 'member' && <NavItem href="/settings" icon="gear" current={on('/settings')}>Settings</NavItem>}
+      {Astro.locals.role && Astro.locals.role !== 'member' && <NavItem href="/settings" icon="sliders-horizontal" current={on('/settings')}>Settings</NavItem>}
     </nav>
     <section aria-label="Channels" class="flex flex-col gap-4">
       <div class="flex flex-col gap-2">

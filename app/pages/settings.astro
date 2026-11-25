@@ -1,29 +1,44 @@
 ---
 import Alert from 'ui/src/components/Alert.astro';
 import Button from 'ui/src/components/Button.astro';
+import Card from 'ui/src/components/Card.astro';
 import Input from 'ui/src/components/Input.astro';
-import { appsPath, readSetting, writeSetting } from '../../src/secrets.ts';
-import { sentence } from '../../src/text.ts';
+import Text from 'ui/src/components/Text.astro';
+import { githubName } from '../../src/github-login.ts';
+import { appsPath, readSetting, writeSetting, writeUsers } from '../../src/secrets.ts';
 import { registerWebhook } from '../../src/telegram-intake.ts';
+import { sentence } from '../../src/text.ts';
+import { change } from '../../src/users.ts';
+import type { Role } from '../../src/users.ts';
 import ActionPanel from '../components/ActionPanel.astro';
+import ChoiceMenu from '../components/ChoiceMenu.astro';
 import Field from '../components/Field.astro';
 import PageHeader from '../components/PageHeader.astro';
+import Section from '../components/Section.astro';
 import Shell from '../layouts/Shell.astro';
+import { users } from '../lib/auth.ts';
 import { setOutcome, takeOutcome } from '../lib/connect.ts';
 
+const actor = Astro.locals.user ?? '';
 if (Astro.locals.role !== 'owner' && Astro.locals.role !== 'admin') return Astro.redirect('/');
 
 let error = '';
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
-  const token = String(form.get('token') ?? '').trim();
-  const chat = String(form.get('chat') ?? '').trim();
   try {
-    if ((token === '') !== (chat === '')) throw new Error('fill in both the bot token and your chat id, or leave both empty');
-    await writeSetting(appsPath(), 'telegramToken', token || null);
-    await writeSetting(appsPath(), 'telegramChat', chat || null);
-    const hooked = token !== '' && Astro.url.protocol === 'https:' ? await registerWebhook(token, Astro.url.origin) : true;
-    setOutcome({ name: 'settings', ok: hooked, message: hooked ? 'Saved.' : 'Saved, but Telegram did not accept the address for ideas by message. Check the bot token.' });
+    if (form.get('part') === 'telegram') {
+      const token = String(form.get('token') ?? '').trim();
+      const chat = String(form.get('chat') ?? '').trim();
+      if ((token === '') !== (chat === '')) throw new Error('fill in both the bot token and the chat ID, or leave both empty');
+      await writeSetting(appsPath(), 'telegramToken', token || null);
+      await writeSetting(appsPath(), 'telegramChat', chat || null);
+      const hooked = token !== '' && Astro.url.protocol === 'https:' ? await registerWebhook(token, Astro.url.origin) : true;
+      setOutcome({ name: 'settings', ok: hooked, message: hooked ? 'Saved.' : 'Saved, but Telegram did not accept the address for ideas by message. Check the bot token.' });
+    } else {
+      const typed = String(form.get('name') ?? '').trim();
+      const role = form.get('remove') !== null ? null : (String(form.get('role') ?? 'member') as Role);
+      await writeUsers(appsPath(), change(await users(), actor, form.has('add') ? await githubName(typed) : typed, role));
+    }
     return Astro.redirect('/settings', 303);
   } catch (err) {
     error = sentence(err instanceof Error ? err.message : String(err));
@@ -31,8 +46,12 @@ if (Astro.request.method === 'POST') {
 }
 const outcome = takeOutcome();
 const toast = outcome?.name === 'settings' ? { tone: outcome.ok ? 'ok' : 'bad', text: sentence(outcome.message) } : null;
+const list = Object.entries(await users()).sort(([a], [b]) => a.localeCompare(b));
 const token = (await readSetting(appsPath(), 'telegramToken')) ?? '';
 const chat = (await readSetting(appsPath(), 'telegramChat')) ?? '';
+const cap = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
+const tone: Record<string, string> = { owner: 'ok', admin: 'info', member: 'ink' };
+const roles: [Role, string][] = [['owner', 'Can change everything, including owners.'], ['admin', 'Can add and remove users.'], ['member', 'Can sign in and work.']];
 ---
 
 <Shell title="Settings">
@@ -40,18 +59,46 @@ const chat = (await readSetting(appsPath(), 'telegramChat')) ?? '';
     <PageHeader title="Settings" />
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
     {error && <Alert>{error}</Alert>}
-    <div class="grid gap-8 lg:grid-cols-3">
-      <form id="settings-form" method="post" class="flex flex-col gap-4 lg:col-span-2">
-        <Field label="Telegram bot token" for="token" hint="Reminders and ideas by message. Make a bot with @BotFather and paste its token. Leave both fields empty to turn Telegram off.">
-          <Input id="token" name="token" type="password" label="Telegram bot token" value={token} autocomplete="off" />
-        </Field>
-        <Field label="Your Telegram chat id" for="chat" hint="Only this chat is answered. Send a message to @userinfobot to see your id.">
-          <Input id="chat" name="chat" label="Your Telegram chat id" value={chat} autocomplete="off" />
-        </Field>
-      </form>
-      <ActionPanel title="Save">
-        <Button slot="actions" type="submit" form="settings-form">Save</Button>
-      </ActionPanel>
-    </div>
+    <Section title="Users">
+      <div class="grid gap-8 lg:grid-cols-3">
+        <ul class="flex flex-col gap-4 lg:col-span-2">
+          {
+            list.map(([name, role]) => (
+              <Card as="li" class="flex items-center gap-4">
+                <img src={`https://github.com/${name}.png?size=64`} alt="" class="size-8 rounded-lg" />
+                <Text class="min-w-0 flex-1 truncate">{name}</Text>
+                <form method="post" class="flex items-center gap-2">
+                  <input type="hidden" name="name" value={name} />
+                  <ChoiceMenu id={`role-${name}`} submit disableActive label={cap(role)} tone={tone[role] ?? 'ink'} options={[...roles.map(([value, text]) => ({ label: cap(value), text, active: role === value, attrs: { name: 'role', value } })), { label: 'Remove', text: 'Cannot sign in any more.', active: false, attrs: { name: 'remove', value: '1' } }]} />
+                </form>
+              </Card>
+            ))
+          }
+        </ul>
+        <ActionPanel title="Add a user">
+          <form id="add-user" method="post" class="flex flex-col gap-2">
+            <input type="hidden" name="add" value="1" />
+            <Input id="name" name="name" label="GitHub name" placeholder="GitHub name" required autocomplete="off" />
+          </form>
+          <Button slot="actions" type="submit" form="add-user">Add</Button>
+        </ActionPanel>
+      </div>
+    </Section>
+    <Section title="Notifications">
+      <div class="grid gap-8 lg:grid-cols-3">
+        <form id="telegram-form" method="post" class="flex flex-col gap-4 lg:col-span-2">
+          <input type="hidden" name="part" value="telegram" />
+          <Field label="Telegram bot token" for="token" hint="Reminders and ideas by message. Make a bot with @BotFather and paste its token. Leave both fields empty to turn Telegram off.">
+            <Input id="token" name="token" type="password" label="Telegram bot token" value={token} autocomplete="off" />
+          </Field>
+          <Field label="Telegram chat ID" for="chat" hint="Only this chat is answered. Send a message to @userinfobot to see your ID.">
+            <Input id="chat" name="chat" label="Telegram chat ID" value={chat} autocomplete="off" />
+          </Field>
+        </form>
+        <ActionPanel title="Save">
+          <Button slot="actions" type="submit" form="telegram-form">Save</Button>
+        </ActionPanel>
+      </div>
+    </Section>
   </div>
 </Shell>
