@@ -1,11 +1,10 @@
 ---
 import Card from 'ui/src/components/Card.astro';
-import Button from 'ui/src/components/Button.astro';
 import TrashButton from './TrashButton.astro';
 import Section from './Section.astro';
 
 interface Props {
-  title: string;
+  title?: string;
   id?: string;
   remove?: string;
   removeLabel?: string;

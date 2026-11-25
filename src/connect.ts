@@ -72,7 +72,6 @@ export function connectProblem(channel: Channel | undefined): string | null {
 export interface Connected {
   profileName?: string;
   urn: string;
-  urnWritten: boolean;
   expiresAt?: Date;
   avatar: string;
 }
@@ -95,11 +94,8 @@ export async function finishLinkedin(args: {
   );
   const profile = await fetchProfile(credentials.accessToken, args.fetchImpl);
   const urn = `urn:li:person:${profile.sub}`;
-  if (args.channel.urn && args.channel.urn !== urn) {
-    throw new Error(`this LinkedIn login is ${urn}, but ${args.name} in channels.yml is ${args.channel.urn}; nothing was saved`);
-  }
   await writeToken(args.tokens, args.name, credentials);
-  if (!args.channel.urn) await setChannelField(args.root, args.name, 'urn', urn);
+  if (args.channel.urn !== urn) await setChannelField(args.root, args.name, 'urn', urn);
   let avatar = 'LinkedIn returned no profile picture';
   if (profile.picture) {
     try {
@@ -111,7 +107,6 @@ export async function finishLinkedin(args: {
   return {
     ...(profile.name && { profileName: profile.name }),
     urn,
-    urnWritten: !args.channel.urn,
     ...(credentials.expiresAt && { expiresAt: credentials.expiresAt }),
     avatar
   };

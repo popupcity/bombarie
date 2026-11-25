@@ -48,12 +48,12 @@ document.addEventListener('dragstart', (event) => {
   const visual = card.querySelector<HTMLElement>('[data-drag-card]') ?? card;
   const box = visual.getBoundingClientRect();
   event.dataTransfer.setDragImage(visual, event.clientX - box.left, event.clientY - box.top);
-  visual.classList.add('opacity-50');
+  visual.classList.add('opacity-(--dim)');
   document.documentElement.toggleAttribute('data-dragging', true);
 });
 
 document.addEventListener('dragend', () => {
-  for (const dragged of document.querySelectorAll('[data-drag-id] .opacity-50, [data-drag-id].opacity-50')) dragged.classList.remove('opacity-50');
+  for (const dragged of document.querySelectorAll('[data-drag-id] .opacity-(--dim), [data-drag-id].opacity-(--dim)')) dragged.classList.remove('opacity-(--dim)');
   clear();
   document.documentElement.removeAttribute('data-dragging');
 });

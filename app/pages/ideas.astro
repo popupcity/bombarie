@@ -14,6 +14,7 @@ import { ideaBookmarklet } from '../../src/idea-bookmarklet.ts';
 import PageHeader from '../components/PageHeader.astro';
 import Section from '../components/Section.astro';
 import { content, root } from '../lib/data.ts';
+import { CHIP } from '../lib/ui.ts';
 import Shell from '../layouts/Shell.astro';
 
 let error = '';
@@ -42,7 +43,6 @@ if (Astro.request.method === 'POST') {
 const ideas = listIdeas(root);
 const grid = 'columns-1 gap-x-8 sm:columns-2 lg:columns-3 [&>*]:mb-8 [&>*]:break-inside-avoid';
 const count = (statuses: string[]) => ideas.filter((idea) => statuses.includes(idea.status)).length;
-const chip = 'inline-flex h-10 cursor-pointer items-center gap-3 rounded-lg px-4 text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-pressed:bg-surface aria-pressed:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const filters = [
   { value: 'open', name: 'Open', tone: 'ink', dim: false, total: count(['new', 'approved']) },
   { value: 'approved', name: 'Approved', tone: 'info', dim: false, total: count(['approved']) },
@@ -53,7 +53,7 @@ const filters = [
 <Shell title="Ideas">
   <div class="flex max-w-wide flex-col gap-8">
     <PageHeader title="Ideas" />
-    <Section>
+    <Section hidden>
       <div class="grid gap-8 lg:grid-cols-3">
         <Card as="form" method="post" class="flex flex-col gap-4 lg:col-span-2">
           <input type="hidden" name="intent" value="add" />
@@ -75,8 +75,8 @@ const filters = [
     <div id="idea-filter" role="group" aria-label="Show" class="flex flex-wrap gap-2">
       {
         filters.map((filter) => (
-          <button type="button" data-show={filter.value} aria-pressed={filter.value === 'open' ? 'true' : 'false'} data-tone={filter.tone} class={chip}>
-            <span aria-hidden="true" class:list={['size-2 rounded-full bg-(--tone)', filter.dim && 'opacity-30']}></span>
+          <button type="button" data-show={filter.value} aria-pressed={filter.value === 'open' ? 'true' : 'false'} data-tone={filter.tone} class={`${CHIP} cursor-pointer px-4`}>
+            <span aria-hidden="true" class:list={['size-2 rounded-full bg-(--tone)', filter.dim && 'opacity-(--dim)']}></span>
             {filter.name}
             <span class="tabular-nums">{filter.total}</span>
           </button>

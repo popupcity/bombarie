@@ -9,7 +9,6 @@ import { sentence } from '../../../../src/text.ts';
 import { callbackUrl } from '../../../lib/connect.ts';
 import ChannelForm from '../../../components/ChannelForm.astro';
 import PageHeader from '../../../components/PageHeader.astro';
-import PlatformMark from '../../../components/PlatformMark.astro';
 import { appSaved, saveApp, setOutcome, startConnect } from '../../../lib/connect.ts';
 import { root } from '../../../lib/data.ts';
 import Shell from '../../../layouts/Shell.astro';
@@ -54,9 +53,8 @@ const redirectUri = callbackUrl(Astro.url.origin);
 <Shell title="Add channel">
   <div class="flex max-w-wide flex-col gap-8">
     <PageHeader title={`Add ${PLATFORM_LABEL[platform]} channel`} />
-    <ChannelForm formId="add-form" platform={platform} name={values.name} handle={values.handle} feed={values.feed} setup={connectable && !savedApp ? { clientId: values.clientId, secretSaved: false, configId: values.configId, redirectUri } : undefined} actionTitle="Save">
+    <ChannelForm formId="add-form" platform={platform} name={values.name} handle={values.handle} feed={values.feed} setup={connectable && !savedApp ? { clientId: values.clientId, secretSaved: false, configId: values.configId, redirectUri } : undefined}>
       {error && <Alert slot="top">{error}</Alert>}
-      <PlatformMark slot="mark" platform={platform} class="size-14" />
       <Text slot="rows" variant="small" class="text-ink-soft">{connectable ? `Saves the channel and opens ${PLATFORM_LABEL[platform]} so you can give access.` : 'Saves the channel.'}</Text>
       <Button slot="actions" type="submit" form="add-form" name="intent" value={connectable ? 'connect' : 'add'} >{connectable ? 'Connect channel' : 'Add channel'}</Button>
     </ChannelForm>

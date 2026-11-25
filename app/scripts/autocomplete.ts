@@ -47,7 +47,7 @@ function caretAt(area: HTMLTextAreaElement, position: number): { x: number; y: n
 
 function mark(platform: keyof typeof MARKS, present: boolean): HTMLElement {
   const glyph = h('span', {
-    class: `inline-flex size-4 items-center justify-center rounded-sm text-white ${MARKS[platform]}${present ? '' : ' opacity-30'}`,
+    class: `inline-flex size-4 items-center justify-center rounded-sm text-white ${MARKS[platform]}${present ? '' : ' opacity-(--dim)'}`,
     title: present ? `has a ${platform} id` : `no ${platform} id`
   });
   glyph.innerHTML = icons.fill[`${platform}-logo`];

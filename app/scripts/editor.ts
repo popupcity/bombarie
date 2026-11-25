@@ -254,10 +254,10 @@ function init(root: HTMLElement) {
           event.dataTransfer?.setData(IMAGE_MIME, String(index));
           if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
           dragFrom = index;
-          tile.classList.add('opacity-50');
+          tile.classList.add('opacity-(--dim)');
         });
         handle.addEventListener('dragend', () => {
-          tile.classList.remove('opacity-50');
+          tile.classList.remove('opacity-(--dim)');
           dropBar.hidden = true;
         });
         return tile;

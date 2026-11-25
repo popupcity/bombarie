@@ -35,10 +35,10 @@ const toast = outcome && outcome.name === 'entity' ? { tone: outcome.ok ? 'ok' :
             <Card href={`/entities/${entity.slug}`} class="flex h-full flex-col gap-4">
               <Heading variant="card" as="p">{entity.name}</Heading>
               <Text variant="body" class="flex gap-2">
-                <span title={entity.linkedin ?? 'No LinkedIn id: shown as plain text'} class:list={[!entity.linkedin && 'opacity-30']}>
+                <span title={entity.linkedin ?? 'No LinkedIn id: shown as plain text'} class:list={[!entity.linkedin && 'opacity-(--dim)']}>
                   <PlatformMark platform="linkedin" class="size-6" />
                 </span>
-                <span title={entity.instagram ? `@${entity.instagram}` : 'No Instagram handle: shown as plain text'} class:list={[!entity.instagram && 'opacity-30']}>
+                <span title={entity.instagram ? `@${entity.instagram}` : 'No Instagram handle: shown as plain text'} class:list={[!entity.instagram && 'opacity-(--dim)']}>
                   <PlatformMark platform="instagram" class="size-6" />
                 </span>
               </Text>

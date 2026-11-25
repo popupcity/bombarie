@@ -114,7 +114,7 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
           </div>
         </Section>
       </div>
-      <ActionPanel title="Status" remove="delete-idea">
+      <ActionPanel remove="delete-idea">
           <ActionRow label="Status">
             {
               idea.status === 'made' ? (
@@ -144,13 +144,11 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
               </ActionRow>
             )
           }
-          <Fragment slot="actions">
-            <Button type="submit" name="intent" value="save" variant="outline">Save</Button>
-            {idea.status === 'made' && idea.post && <Button href={`/posts/${encodeURIComponent(idea.post)}`}>Open post</Button>}
-            {idea.status !== 'made' && <Button type="button" popovertarget="make-menu" style="anchor-name:--make-menu">Make post<Icon name="caret-down" /></Button>}
-          </Fragment>
+          <Button slot="actions" type="submit" name="intent" value="save" variant="outline">Save</Button>
           <Fragment slot="after">
-            {idea.status !== 'made' && <NewPostMenu id="make-menu" pick align="right" />}
+            {idea.status === 'made' && idea.post && <Button href={`/posts/${encodeURIComponent(idea.post)}`} class="w-full">Open post</Button>}
+            {idea.status !== 'made' && <Button type="button" popovertarget="make-menu" style="anchor-name:--make-menu" class="w-full">Make post<Icon name="caret-down" /></Button>}
+            {idea.status !== 'made' && <NewPostMenu id="make-menu" pick />}
           </Fragment>
         </ActionPanel>
     </form>

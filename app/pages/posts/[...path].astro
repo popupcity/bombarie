@@ -34,7 +34,7 @@ import { telegramOf } from '../../lib/telegram.ts';
 import { content, deleteFromPlatform, loadConnections, markPosted, outcomeWording, postRepliesNow, root, setFlash, startPostNow, states, takeFlash, unmarkPosted } from '../../lib/data.ts';
 import { forgetOutcome, lastOutcome } from '../../../src/progress.ts';
 import { isAutomatic } from '../../../src/connect.ts';
-import { jsonForScript, MENU, MENU_ITEM } from '../../lib/ui.ts';
+import { jsonForScript, CHIP, MENU, MENU_ITEM } from '../../lib/ui.ts';
 import { variantOptions } from '../../lib/variants.ts';
 import ActionPanel from '../../components/ActionPanel.astro';
 import ActionRow from '../../components/ActionRow.astro';
@@ -184,7 +184,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
                 aria-label={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}${candidate.type ? `, ${candidate.type}` : ''}`}
                 title={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}`}
                 data-control
-                class="inline-flex h-10 items-center gap-3 rounded-lg pr-4 pl-1 text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-ink"
+                class={`${CHIP} pr-4 pl-1`}
               >
                 <ChannelMark channel={candidate} size="lg" />
                 <span aria-hidden="true">{candidate.label}</span>
@@ -273,7 +273,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
       </section>
 
       <div class="flex flex-col gap-12">
-          <ActionPanel id="fields" title={`Post ${variant.type === 'story' ? 'story ' : ''}on ${PLATFORM_LABEL[variant.platform]}`} remove={recorded?.status === 'posted' ? 'delete-posted' : campaign.variants.length > 1 ? 'delete-variant' : 'delete-post'} actions={{ id: 'actions', 'data-planned': planned ? '' : undefined }}>
+          <ActionPanel id="fields" remove={recorded?.status === 'posted' ? 'delete-posted' : campaign.variants.length > 1 ? 'delete-variant' : 'delete-post'} actions={{ id: 'actions', 'data-planned': planned ? '' : undefined }}>
               <Alert tone="warn" role="note" id="hint" hidden></Alert>
               <ActionRow label="Status">
                 <div class="flex items-center gap-2">

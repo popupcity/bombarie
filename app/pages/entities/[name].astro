@@ -3,9 +3,9 @@ import Button from 'ui/src/components/Button.astro';
 import { entityMentions, findEntity, removeEntity, updateEntity } from '../../../src/entities.ts';
 import { sentence } from '../../../src/text.ts';
 import ConfirmDialog from '../../components/ConfirmDialog.astro';
-import Card from 'ui/src/components/Card.astro';
+import ActionPanel from '../../components/ActionPanel.astro';
+import ActionRow from '../../components/ActionRow.astro';
 import Text from 'ui/src/components/Text.astro';
-import Section from '../../components/Section.astro';
 import EntityForm from '../../components/EntityForm.astro';
 import TitleField from '../../components/TitleField.astro';
 import Heading from 'ui/src/components/Heading.astro';
@@ -47,14 +47,16 @@ const toast = failure ? { tone: 'bad', text: failure } : outcome && outcome.name
       </div>
     </header>
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
-    <div class="flex flex-col gap-8 lg:w-2/3">
-      <EntityForm name={entity.name} linkedin={entity.linkedin ?? ''} instagram={entity.instagram ?? ''} titled />
-      <Section title="Delete">
-        <Card class="flex flex-wrap items-center gap-4">
-          <Text class="min-w-0 flex-1 text-ink-soft">{mentions > 0 ? `${mentions} ${mentions === 1 ? 'post mentions' : 'posts mention'} it, so it cannot be deleted.` : 'Removes the note from the entities folder.'}</Text>
-          <Button type="button" variant="outline" tone="bad" data-open="delete-entity" disabled={mentions > 0}>Delete entity</Button>
-        </Card>
-      </Section>
+    <div class="grid gap-8 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+        <EntityForm name={entity.name} linkedin={entity.linkedin ?? ''} instagram={entity.instagram ?? ''} titled />
+      </div>
+      <ActionPanel remove="delete-entity" removeLabel="Delete entity" blocked={mentions > 0 ? `${mentions} ${mentions === 1 ? 'post mentions' : 'posts mention'} it, so it cannot be deleted.` : undefined}>
+        <ActionRow label="Mentioned in">
+          <Text>{`${mentions} ${mentions === 1 ? 'post' : 'posts'}`}</Text>
+        </ActionRow>
+        <Button slot="actions" type="submit" form="entity-form">Save</Button>
+      </ActionPanel>
     </div>
     <ConfirmDialog id="delete-entity" title={`Delete ${entity.name}?`} intent="delete" variant={entity.name} confirm="Delete">
       This removes the note from the entities folder.

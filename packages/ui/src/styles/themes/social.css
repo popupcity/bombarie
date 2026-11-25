@@ -20,6 +20,7 @@
   --radius-field: 8px;
   --control-ring: 1px;
   --hover-opacity: 0.85;
+  --dim: 0.4;
   --arrow-chevron: none;
   --arrow-plain: inline-block;
   --font-body: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;

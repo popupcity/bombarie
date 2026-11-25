@@ -181,7 +181,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
           'button',
           {
             type: 'button',
-            class: 'h-10 cursor-pointer rounded-lg px-6 text-ink ring-1 ring-ink ring-inset hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink', 'data-tone': 'ink',
+            class: 'h-10 cursor-pointer rounded-lg px-6 text-ink ring-1 ring-ink ring-inset hover:opacity-(--hover-opacity) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink', 'data-tone': 'ink',
             onclick: () => {
               const now = new Date();
               date = ymd(now);

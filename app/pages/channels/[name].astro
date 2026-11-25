@@ -8,12 +8,12 @@ import { appsPath, readApp, readTokens, tokensPath } from '../../../src/secrets.
 import { readFeed, refreshFeed } from '../../../src/feed.ts';
 import { PLATFORM_LABEL } from '../../../src/types.ts';
 import { sentence } from '../../../src/text.ts';
-import ChannelMark from '../../components/ChannelMark.astro';
 import ConfirmDialog from '../../components/ConfirmDialog.astro';
 import ActionRow from '../../components/ActionRow.astro';
 import ValueButton from '../../components/ValueButton.astro';
 import ChannelForm from '../../components/ChannelForm.astro';
-import PageHeader from '../../components/PageHeader.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import TitleField from '../../components/TitleField.astro';
 import { appKey, appSaved, channelState, disconnect, callbackUrl, refreshPhoto, saveApp, setOutcome, startConnect, takeOutcome } from '../../lib/connect.ts';
 import { loadConnections, root } from '../../lib/data.ts';
 import Shell from '../../layouts/Shell.astro';
@@ -91,7 +91,6 @@ const threads = channel.platform === 'threads';
 const meta = instagram || facebook;
 const savedConfig = meta ? ((await readApp(appsPath(), appKey(channel.platform)).catch(() => null))?.configId ?? '') : '';
 const redirectUri = callbackUrl(Astro.url.origin);
-const action = fit ? 'Connection' : 'Save';
 const hasFeed = channel.platform === 'substack' || channel.platform === 'website';
 const connected = Boolean(tokens[key]) && !state.broken;
 const note = connected
@@ -114,11 +113,15 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
 
 <Shell title={info.label}>
   <div class="flex max-w-wide flex-col gap-8">
-    <PageHeader title={info.label} />
+    <header class="flex h-20 items-center">
+      <Heading variant="page" as="h1" class="sr-only">{info.label}</Heading>
+      <div class="min-w-0 flex-1">
+        <TitleField form="channel-form" name="name" value={info.label} required pattern=".*[A-Za-z0-9À-ÿ].*" />
+      </div>
+    </header>
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
-    <ChannelForm formId="channel-form" platform={channel.platform} name={info.label} handle={channel.handle ?? ''} feed={channel.feed ?? ''} setup={fit ? { clientId: savedId ?? '', secretSaved: savedId !== null, configId: savedConfig, redirectUri } : undefined} actionTitle={action} remove={{ id: 'delete-channel', label: 'Delete channel', blocked: inUse > 0 ? `${inUse} ${inUse === 1 ? 'post uses' : 'posts use'} this channel, so it cannot be deleted.` : undefined }}>
+    <ChannelForm formId="channel-form" titled platform={channel.platform} name={info.label} handle={channel.handle ?? ''} feed={channel.feed ?? ''} setup={fit ? { clientId: savedId ?? '', secretSaved: savedId !== null, configId: savedConfig, redirectUri } : undefined} remove={{ id: 'delete-channel', label: 'Delete channel', blocked: inUse > 0 ? `${inUse} ${inUse === 1 ? 'post uses' : 'posts use'} this channel, so it cannot be deleted.` : undefined }}>
       <input slot="top" type="hidden" name="intent" value="save" />
-      <ChannelMark slot="mark" channel={info} size="lg" on="surface" />
       {
         channel.feed && (
           <Text slot="feed-note" variant="small" class="text-ink-soft">

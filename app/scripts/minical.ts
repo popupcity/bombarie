@@ -102,7 +102,7 @@ if (root && grid && panel) {
     panel!.replaceChildren(
       h('h3', { class: 'text-base' }, day === today ? `Today, ${when}` : when),
       h('p', { class: 'text-sm text-ink-soft' }, 'Nothing planned.'),
-      h('button', { type: 'button', popovertarget: 'new-menu', 'data-day': day, class: 'inline-flex h-10 w-fit cursor-pointer items-center gap-2 rounded-lg px-6 text-sm text-ink ring-1 ring-ink ring-inset hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink' }, 'Plan a post', down())
+      h('button', { type: 'button', popovertarget: 'new-menu', 'data-day': day, class: 'inline-flex h-10 w-fit cursor-pointer items-center gap-2 rounded-lg px-6 text-sm text-ink ring-1 ring-ink ring-inset hover:opacity-(--hover-opacity) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink' }, 'Plan a post', down())
     );
   }
 

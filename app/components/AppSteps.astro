@@ -2,6 +2,7 @@
 import Button from 'ui/src/components/Button.astro';
 import Icon from 'ui/src/components/Icon.astro';
 import Input from 'ui/src/components/Input.astro';
+import Heading from 'ui/src/components/Heading.astro';
 import Text from 'ui/src/components/Text.astro';
 import type { Platform } from '../../src/types.ts';
 
@@ -11,7 +12,7 @@ interface Props {
 }
 interface Step {
   title: string;
-  text: string;
+  text?: string;
   permissions?: string[];
   link?: { href: string; label: string };
   redirect?: boolean;
@@ -32,19 +33,19 @@ const steps: Record<string, Step[]> = {
     { title: 'Create the app', text: 'One Meta app serves every Instagram channel. In your Meta app open the Instagram API use case, API setup with Unified login.', link: metaLink },
     { title: 'Add the permissions', text: 'Create a configuration with a system-user access token and your Instagram account as asset, with these permissions:', permissions: ['instagram_basic', 'instagram_content_publish'] },
     { title: 'Save the redirect URL', text: 'Add this URL in that configuration and under Facebook Login for Business, Valid OAuth Redirect URIs.', redirect: true },
-    { title: 'Paste the app details', text: 'Paste the app ID, the app secret and the configuration ID.', fields: true }
+    { title: 'Paste the app details', fields: true }
   ],
   facebook: [
     { title: 'Create the app', text: 'In your Meta app open the Page use case, Customize. The app ID and secret are the same as for Instagram, but they are saved per platform.', link: metaLink },
     { title: 'Add the permissions', text: 'Create a configuration with a system-user access token and your Page as asset, with these permissions:', permissions: ['pages_show_list', 'pages_manage_posts'] },
     { title: 'Save the redirect URL', text: 'Add this URL in that configuration and under Facebook Login for Business, Valid OAuth Redirect URIs.', redirect: true },
-    { title: 'Paste the app details', text: 'Paste the Meta app ID, the app secret and the configuration ID.', fields: true }
+    { title: 'Paste the app details', fields: true }
   ],
   linkedin: [
     { title: 'Create the app', text: 'One app serves every LinkedIn channel. Create an app in LinkedIn for developers.', link: { href: 'https://www.linkedin.com/developers/apps', label: 'Open LinkedIn for developers' } },
     { title: 'Add the permissions', text: 'Under Products request "Share on LinkedIn" and "Sign In with LinkedIn using OpenID Connect". Together they give these scopes:', permissions: ['openid', 'profile', 'w_member_social'] },
     { title: 'Save the redirect URL', text: 'Add this URL under Auth in your LinkedIn app.', redirect: true },
-    { title: 'Paste the app details', text: 'Paste the client ID and the client secret.', fields: true }
+    { title: 'Paste the app details', fields: true }
   ]
 };
 const list = steps[platform] ?? [];
@@ -54,12 +55,12 @@ const list = steps[platform] ?? [];
   {
     list.map((step, index) => (
       <li class="flex gap-4">
-        <span class="flex size-6 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-soft">
+        <span class="flex size-6 shrink-0 items-center justify-center rounded-full border border-line text-ink">
           <Text as="span" variant="fine">{index + 1}</Text>
         </span>
         <div class="flex min-w-0 flex-1 flex-col gap-2">
-          <Text variant="small" class="text-ink">{step.title}</Text>
-          <Text variant="small" class="text-ink-soft">{step.text}</Text>
+          <Heading variant="label" as="h3" class="text-ink!">{step.title}</Heading>
+          {step.text && <Text variant="small" class="text-ink-soft">{step.text}</Text>}
           {step.permissions && (
             <div class="flex flex-wrap gap-2">
               {step.permissions.map((name) => (

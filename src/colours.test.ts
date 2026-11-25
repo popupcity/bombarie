@@ -30,3 +30,13 @@ test('no colour literal in a component or a script', () => {
 test('the retired grey names are gone', () => {
   assert.deepEqual(hits(REMOVED), []);
 });
+
+test('element opacity is 0, 100 or one of the two named values, never a loose grey', () => {
+  const all = [...files('app'), ...files('packages/ui/src')];
+  const found = all.flatMap((file) =>
+    readFileSync(file, 'utf8')
+      .split('\n')
+      .flatMap((line, index) => [...line.matchAll(/(?<![\w-])(?:[a-z@][a-z0-9/-]*:)*opacity-(?!0\b|100\b|\(--dim\)|\(--hover-opacity\))[^\s"'`]+/g)].map((match) => `${file}:${index + 1} ${match[0]}`))
+  );
+  assert.deepEqual(found, []);
+});

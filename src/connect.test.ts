@@ -94,20 +94,18 @@ test('finishing a connection saves the token and writes the urn when the channel
   const { root, tokens, channel } = flowRepo();
   const done = await finishLinkedin({ root, name: 'me-linkedin', channel, clientId: 'c', clientSecret: 's', code: 'x', redirectUri: 'r', tokens, now, fetchImpl: linkedinFetch });
   assert.equal(done.urn, 'urn:li:person:abc');
-  assert.equal(done.urnWritten, true);
   assert.equal(done.avatar, 'LinkedIn returned no profile picture');
   assert.equal((await readTokens(tokens))['me-linkedin']?.accessToken, 'tok');
   assert.match(readFileSync(join(root, 'channels.yml'), 'utf8'), /urn: urn:li:person:abc/);
 });
 
-test('a login that is not the channel in channels.yml saves nothing', async () => {
+test('a login with another id than channels.yml replaces the urn, because the id differs per LinkedIn app', async () => {
   const { root, tokens } = flowRepo();
   const channel = { platform: 'linkedin', kind: 'person', urn: 'urn:li:person:other' } as const;
-  await assert.rejects(
-    finishLinkedin({ root, name: 'me-linkedin', channel, clientId: 'c', clientSecret: 's', code: 'x', redirectUri: 'r', tokens, now, fetchImpl: linkedinFetch }),
-    /nothing was saved/
-  );
-  assert.deepEqual(await readTokens(tokens), {});
+  const done = await finishLinkedin({ root, name: 'me-linkedin', channel, clientId: 'c', clientSecret: 's', code: 'x', redirectUri: 'r', tokens, now, fetchImpl: linkedinFetch });
+  assert.equal(done.urn, 'urn:li:person:abc');
+  assert.match(readFileSync(join(root, 'channels.yml'), 'utf8'), /urn: urn:li:person:abc/);
+  assert.equal((await readTokens(tokens))['me-linkedin']?.accessToken, 'tok');
 });
 
 const connectNow = new Date('2026-11-18T10:00:00Z');
