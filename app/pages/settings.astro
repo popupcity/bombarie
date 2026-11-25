@@ -1,0 +1,57 @@
+---
+import Alert from 'ui/src/components/Alert.astro';
+import Button from 'ui/src/components/Button.astro';
+import Input from 'ui/src/components/Input.astro';
+import { appsPath, readSetting, writeSetting } from '../../src/secrets.ts';
+import { sentence } from '../../src/text.ts';
+import { registerWebhook } from '../../src/telegram-intake.ts';
+import ActionPanel from '../components/ActionPanel.astro';
+import Field from '../components/Field.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Shell from '../layouts/Shell.astro';
+import { setOutcome, takeOutcome } from '../lib/connect.ts';
+
+if (Astro.locals.role !== 'owner' && Astro.locals.role !== 'admin') return Astro.redirect('/');
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const token = String(form.get('token') ?? '').trim();
+  const chat = String(form.get('chat') ?? '').trim();
+  try {
+    if ((token === '') !== (chat === '')) throw new Error('fill in both the bot token and your chat id, or leave both empty');
+    await writeSetting(appsPath(), 'telegramToken', token || null);
+    await writeSetting(appsPath(), 'telegramChat', chat || null);
+    const hooked = token !== '' && Astro.url.protocol === 'https:' ? await registerWebhook(token, Astro.url.origin) : true;
+    setOutcome({ name: 'settings', ok: hooked, message: hooked ? 'Saved.' : 'Saved, but Telegram did not accept the address for ideas by message. Check the bot token.' });
+    return Astro.redirect('/settings', 303);
+  } catch (err) {
+    error = sentence(err instanceof Error ? err.message : String(err));
+  }
+}
+const outcome = takeOutcome();
+const toast = outcome?.name === 'settings' ? { tone: outcome.ok ? 'ok' : 'bad', text: sentence(outcome.message) } : null;
+const token = (await readSetting(appsPath(), 'telegramToken')) ?? '';
+const chat = (await readSetting(appsPath(), 'telegramChat')) ?? '';
+---
+
+<Shell title="Settings">
+  <div class="flex max-w-wide flex-col gap-8">
+    <PageHeader title="Settings" />
+    {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
+    {error && <Alert>{error}</Alert>}
+    <div class="grid gap-8 lg:grid-cols-3">
+      <form id="settings-form" method="post" class="flex flex-col gap-4 lg:col-span-2">
+        <Field label="Telegram bot token" for="token" hint="Reminders and ideas by message. Make a bot with @BotFather and paste its token. Leave both fields empty to turn Telegram off.">
+          <Input id="token" name="token" type="password" label="Telegram bot token" value={token} autocomplete="off" />
+        </Field>
+        <Field label="Your Telegram chat id" for="chat" hint="Only this chat is answered. Send a message to @userinfobot to see your id.">
+          <Input id="chat" name="chat" label="Your Telegram chat id" value={chat} autocomplete="off" />
+        </Field>
+      </form>
+      <ActionPanel title="Save">
+        <Button slot="actions" type="submit" form="settings-form">Save</Button>
+      </ActionPanel>
+    </div>
+  </div>
+</Shell>

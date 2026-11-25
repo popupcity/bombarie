@@ -31,6 +31,7 @@ if (Astro.request.method === 'POST') {
   }
 }
 const list = Object.entries(await users()).sort(([a], [b]) => a.localeCompare(b));
+const cap = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 const tone: Record<string, string> = { owner: 'ok', admin: 'info', member: 'ink' };
 const roles: [Role, string][] = [['owner', 'Can change everything, including owners.'], ['admin', 'Can add and remove users.'], ['member', 'Can sign in and work.']];
 ---
@@ -48,7 +49,7 @@ const roles: [Role, string][] = [['owner', 'Can change everything, including own
               <Text class="min-w-0 flex-1 truncate">{name}</Text>
               <form method="post" class="flex items-center gap-2">
                 <input type="hidden" name="name" value={name} />
-                <ChoiceMenu id={`role-${name}`} submit disableActive label={role} tone={tone[role] ?? 'ink'} options={[...roles.map(([value, text]) => ({ label: value, text, active: role === value, attrs: { name: 'role', value } })), { label: 'remove', text: 'Cannot sign in any more.', active: false, attrs: { name: 'remove', value: '1' } }]} />
+                <ChoiceMenu id={`role-${name}`} submit disableActive label={cap(role)} tone={tone[role] ?? 'ink'} options={[...roles.map(([value, text]) => ({ label: cap(value), text, active: role === value, attrs: { name: 'role', value } })), { label: 'Remove', text: 'Cannot sign in any more.', active: false, attrs: { name: 'remove', value: '1' } }]} />
               </form>
             </Card>
           ))

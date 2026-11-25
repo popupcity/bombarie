@@ -39,14 +39,13 @@ docker compose up -d
 
 Open the address within 15 minutes. Bombarie asks for one thing: an OAuth app at GitHub (the page tells you where to register it and which callback address to give). Then sign in with GitHub: the first account becomes the owner, and the owner adds everyone else on the Users page. If nobody has set it up after 15 minutes, setup closes; restart the container to open it again.
 
-Then use Add channel. The first channel creates `channels.yml`. There is no `.env` to write.
+Then use Add channel. The first channel creates `channels.yml`. There is no `.env` to write; Telegram (reminders and ideas by message) is set on the Settings page.
 
-Optional settings (environment variables in `docker-compose.yml`):
+Optional environment variables in `docker-compose.yml`:
 
 | Variable | What it is |
 |---|---|
 | `BOMBARIE_SECRET` | Your own key for encrypting the platform tokens and app keys. Without it Bombarie makes `config/secret.key` the first time. Set it if you want a copy of `config/` to be useless without it. Keep a copy: without the key the tokens cannot be read and you connect your channels again. |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Reminders and ideas by Telegram, for your chat only. |
 | `BOMBARIE_ROOT` | Content folder. `/data` in Docker, `./data` when you develop. |
 | `BOMBARIE_TOKENS`, `BOMBARIE_APPS` | Where the platform tokens and app keys live. `/config/...` in Docker. |
 
