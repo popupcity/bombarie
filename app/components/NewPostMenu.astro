@@ -1,0 +1,29 @@
+---
+import { channelInfos, loadChannels } from '../../src/channels.ts';
+import { loadConnections, root } from '../lib/data.ts';
+import { MENU, MENU_ITEM } from '../lib/ui.ts';
+import { variantOptions } from '../lib/variants.ts';
+import VariantRow from './VariantRow.astro';
+
+interface Props {
+  id?: string;
+  pick?: boolean;
+  align?: 'left' | 'right';
+}
+const { id = 'new-menu', pick = false, align = 'left' } = Astro.props;
+const Item = pick ? 'button' : 'a';
+const connections = await loadConnections();
+const options = variantOptions(channelInfos(loadChannels(root)));
+---
+
+<div id={id} popover style={`position-anchor:--${id}`} class:list={[MENU, 'w-72 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]', align === 'right' ? '[right:anchor(right)]' : '[left:anchor(left)]']}>
+  <div class="scroll-fade">
+    {
+      options.map((option) => (
+        <Item href={pick ? undefined : `/new/${encodeURIComponent(option.base)}`} data-base={pick ? undefined : option.base} name={pick ? 'make' : undefined} value={pick ? option.base : undefined} class={MENU_ITEM}>
+          <VariantRow option={option} problem={connections[option.name]} />
+        </Item>
+      ))
+    }
+  </div>
+</div>

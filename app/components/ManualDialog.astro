@@ -1,0 +1,36 @@
+---
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+import Button from 'ui/src/components/Button.astro';
+import DialogShell from './DialogShell.astro';
+
+interface Props {
+  variant: string;
+  platform: string;
+  story: boolean;
+  images: boolean;
+}
+const { variant, platform, story, images } = Astro.props;
+---
+
+<DialogShell id="manual-dialog">
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4">
+      <Heading variant="card" as="h2" id="manual-dialog-title">Did you post it on {platform}?</Heading>
+      <Text variant="small" class="text-ink-soft">
+        {story ? 'The image is on your clipboard, or in the share menu on a phone.' : 'The text is on your clipboard.'} Mark it as posted when it is up.
+      </Text>
+    </div>
+    <div class="flex items-center justify-end gap-2">
+      <Button id="manual-copy-image" type="button" variant="outline" hidden={!images} class="mr-auto">Copy image</Button>
+      <form method="dialog">
+        <Button type="submit" variant="outline" autofocus>Not yet</Button>
+      </form>
+      <form method="post" data-leave>
+        <input type="hidden" name="intent" value="mark-posted" />
+        <input type="hidden" name="variant" value={variant} />
+        <Button type="submit">Mark as posted</Button>
+      </form>
+    </div>
+  </div>
+</DialogShell>

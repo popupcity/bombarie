@@ -1,0 +1,23 @@
+---
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+interface Props {
+  title?: string;
+  intro?: string;
+  id?: string;
+  hidden?: boolean;
+}
+const { title, intro, id, hidden = false } = Astro.props;
+---
+
+<section id={id} hidden={hidden} class="flex flex-col gap-4">
+  {
+    title && (
+      <header class="flex flex-col gap-4">
+        <Heading variant="block" as="h2">{title}</Heading>
+        {intro && <Text variant="body" class="text-ink-soft">{intro}</Text>}
+      </header>
+    )
+  }
+  <slot />
+</section>

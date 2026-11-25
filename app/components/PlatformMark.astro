@@ -1,0 +1,16 @@
+---
+import Icon from 'ui/src/components/Icon.astro';
+import { PLATFORM_LABEL } from '../../src/types.ts';
+import type { Platform } from '../../src/types.ts';
+
+interface Props {
+  platform: Platform;
+  class?: string;
+}
+const { platform, class: className } = Astro.props;
+const brand = { linkedin: 'bg-linkedin', instagram: 'bg-instagram', facebook: 'bg-facebook', threads: 'bg-threads', substack: 'bg-substack', website: 'bg-ink' }[platform];
+---
+
+<span role="img" aria-label={PLATFORM_LABEL[platform]} class:list={['grid place-items-center rounded-sm text-white', brand, className]}>
+  {platform === 'website' ? <Icon name="rss" weight="bold" class="size-[84%]" /> : <Icon name={`${platform}-logo`} weight="fill" class="size-[84%]" />}
+</span>

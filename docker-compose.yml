@@ -1,0 +1,17 @@
+services:
+  bombarie:
+    image: ghcr.io/popupcity/bombarie:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - '4321:4321'
+    environment:
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:?set GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:?set GITHUB_CLIENT_SECRET}
+      BOMBARIE_ADMINS: ${BOMBARIE_ADMINS:?set BOMBARIE_ADMINS}
+      BOMBARIE_SECRET: ${BOMBARIE_SECRET:?set BOMBARIE_SECRET}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - ./data:/data
+      - ./config:/config

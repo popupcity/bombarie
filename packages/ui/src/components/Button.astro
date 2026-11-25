@@ -1,0 +1,45 @@
+---
+import type { Size, Tone, Variant } from '../theme/types.ts';
+import Arrow from './Arrow.astro';
+import { focus, looks } from './looks.ts';
+
+interface Props {
+  variant?: Variant;
+  tone?: Tone;
+  size?: Size;
+  icon?: boolean;
+  arrow?: 'left' | 'right';
+  href?: string;
+  active?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { variant = 'solid', tone = 'ink', size = 'md', icon = false, arrow, href, active, class: className, ...rest } = Astro.props;
+const Tag = href ? 'a' : 'button';
+const look = active === false ? 'outline' : variant;
+
+const heights = { sm: 'h-(--control-sm) text-sm', md: 'h-(--control-md) text-sm', lg: 'h-(--control-lg)' };
+const squares = { sm: 'w-(--control-sm)', md: 'w-(--control-md)', lg: 'w-(--control-lg)' };
+---
+
+<Tag
+  href={href}
+  data-tone={tone}
+  data-ui="button"
+  aria-pressed={active}
+  class:list={[
+    'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition cursor-pointer hover:opacity-(--hover-opacity) active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35',
+    'rounded-(--radius-control) [font-family:var(--font-control)] [font-weight:var(--weight-control)]',
+    looks[look],
+    focus,
+    heights[size],
+    icon ? squares[size] : size === 'sm' ? 'px-4' : 'px-6',
+    className
+  ]}
+  {...rest}
+>
+  {arrow === 'left' && <Arrow direction="left" size={size === 'sm' ? 'sm' : 'md'} />}
+  <slot />
+  {arrow === 'right' && <Arrow direction="right" size={size === 'sm' ? 'sm' : 'md'} />}
+</Tag>

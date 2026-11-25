@@ -1,0 +1,37 @@
+---
+import type { Size } from '../theme/types.ts';
+import { focus } from './looks.ts';
+
+interface Props {
+  id: string;
+  label: string;
+  as?: 'input' | 'textarea';
+  size?: Size;
+  bare?: boolean;
+  invalid?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { id, label, as: Tag = 'input', size = 'md', bare = false, invalid = false, class: className, value, ...rest } = Astro.props;
+const heights = { sm: 'min-h-(--control-sm)', md: 'min-h-(--control-md)', lg: 'min-h-(--control-lg)' };
+---
+
+<Tag
+  id={id}
+  aria-label={label}
+  aria-invalid={invalid ? 'true' : undefined}
+  class:list={[
+    'w-full rounded-(--radius-field) px-4 text-base text-ink placeholder:text-ink-soft',
+    focus,
+    Tag === 'textarea' ? 'py-3 leading-7' : heights[size],
+    bare ? 'bg-transparent' : 'bg-surface',
+    invalid
+      ? 'ring-[length:calc(var(--control-ring)*2)] ring-inset ring-(--tone-text)'
+      : !bare && 'ring-(length:--control-ring) ring-inset ring-(--line)',
+    className
+  ]}
+  data-tone={invalid ? 'bad' : undefined}
+  value={Tag === 'textarea' ? undefined : (value as string | undefined)}
+  {...rest}
+>{Tag === 'textarea' ? (value as string | undefined) : undefined}</Tag>

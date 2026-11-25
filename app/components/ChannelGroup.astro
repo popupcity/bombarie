@@ -1,0 +1,39 @@
+---
+import { PLATFORM_LABEL } from '../../src/types.ts';
+import type { Platform } from '../../src/types.ts';
+import ChannelAvatar from './ChannelAvatar.astro';
+import PlatformMark from './PlatformMark.astro';
+
+interface Props {
+  label: string;
+  avatar?: string | undefined;
+  channels: { name: string; platform: Platform; problem?: string | undefined }[];
+}
+const { label, avatar, channels } = Astro.props;
+---
+
+<div class="flex flex-col gap-2">
+  <button type="button" data-plain data-filter-group={channels.map((channel) => channel.name).join(',')} data-label={label} aria-pressed="true" class="flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-surface aria-[pressed=false]:opacity-40">
+    <ChannelAvatar channel={{ label, avatar }} class="size-8" />
+    <span class="min-w-0 flex-1 truncate text-sm">{label}</span>
+  </button>
+  <ul class="flex flex-wrap gap-2 pl-14">
+    {
+      channels.map((channel) => (
+        <li>
+          <button
+            type="button"
+            data-plain
+            data-filter={channel.name}
+            data-label={PLATFORM_LABEL[channel.platform]}
+            title={`Hide ${PLATFORM_LABEL[channel.platform]}`}
+            aria-pressed="true"
+            class:list={['grid size-8 cursor-pointer place-items-center rounded-lg border hover:bg-surface aria-[pressed=false]:opacity-40', channel.problem ? 'border-dashed border-line-strong' : 'border-line']}
+          >
+            <PlatformMark platform={channel.platform} class="size-5" />
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+</div>

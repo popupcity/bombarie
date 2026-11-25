@@ -1,0 +1,78 @@
+---
+import Icon from 'ui/src/components/Icon.astro';
+import type { CardModel } from '../../src/calendar.ts';
+import { PLATFORM_LABEL } from '../../src/types.ts';
+import { whenLabel } from '../../src/time.ts';
+import Button from 'ui/src/components/Button.astro';
+import { cardActions, MENU_ITEM } from '../lib/ui.ts';
+
+interface Props {
+  card: CardModel;
+  siblings?: number;
+  part?: 'all' | 'toggle';
+}
+const { card, siblings = 1, part = 'all' } = Astro.props;
+const { toggles, movable, removable } = cardActions(card);
+const row = MENU_ITEM;
+const showToggle = toggles !== null;
+const showMore = part === 'all';
+const planHere = part === 'all' && toggles?.action === 'plan';
+const when = `${card.day}T${card.time}`;
+---
+
+<form method="post" action={Astro.url.pathname} class:list={[part === 'toggle' && 'contents']}>
+  <input type="hidden" name="id" value={card.id} />
+  <input type="hidden" name="day" value={card.day} />
+  {planHere && (
+    <div class="relative">
+      <input type="hidden" name="action" value="plan" />
+      <button type="button" data-date-open class={row}>
+        <Icon name="calendar-check" class="text-ink-soft" />
+        <span class="flex-1 text-left">Plan</span>
+        <span data-date-label hidden></span>
+      </button>
+      <input type="datetime-local" name="date" step="60" value={when} data-date-input data-submit="always" tabindex="-1" aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-0" />
+    </div>
+  )}
+  {showToggle && !planHere && toggles && (
+    part === 'toggle' ? (
+      <Button type="submit" name="action" value={toggles.action} variant="outline">{toggles.label}</Button>
+    ) : (
+      <button type="submit" name="action" value={toggles.action} class={row}>
+        <Icon name={toggles.action === 'plan' ? 'calendar-check' : 'pencil-simple'} class="text-ink-soft" />
+        {toggles.label}
+      </button>
+    )
+  )}
+  {showMore && card.live && (
+    <a href={card.live} target="_blank" rel="noopener" class={row}>
+      <Icon name="arrow-square-out" class="text-ink-soft" />
+      Open on {PLATFORM_LABEL[card.platform]}
+    </a>
+  )}
+  {showMore && movable && !planHere && (
+    <details class="group [&::details-content]:-translate-y-1 [&::details-content]:opacity-0 [&::details-content]:transition-[opacity,translate,content-visibility] [&::details-content]:duration-(--duration-pop) [&::details-content]:ease-pop [&::details-content]:transition-discrete open:[&::details-content]:translate-y-0 open:[&::details-content]:opacity-100">
+      <summary class:list={[row, 'list-none [&::-webkit-details-marker]:hidden']}>
+        <Icon name="clock" class="text-ink-soft" />
+        <span class="flex-1">Change date</span>
+        <Icon name="caret-right" class="text-ink-soft transition group-open:rotate-90" />
+      </summary>
+      <div class="flex flex-col gap-2 px-1 pt-1 pb-2">
+        <div class="relative">
+          <button type="button" data-date-open class="flex h-10 w-full cursor-pointer items-center justify-between rounded-lg bg-page px-3 text-sm ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">{whenLabel(`${card.day}T${card.time}`)}</button>
+          <input type="datetime-local" name="date" step="60" value={`${card.day}T${card.time}`} data-date-input tabindex="-1" aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-0" />
+        </div>
+        <Button type="submit" name="action" value="replan" class="w-full">Move</Button>
+      </div>
+    </details>
+  )}
+  {showMore && removable && (
+    <>
+      {(toggles || movable || card.live) && <hr class="-mx-2 my-2 border-line" />}
+      <button type="button" data-delete={card.id} data-title={card.campaign} data-siblings={siblings} data-posted={card.status === 'posted' ? PLATFORM_LABEL[card.platform] : undefined} data-tone="bad" class:list={[row, 'text-(--tone-text)']}>
+        <Icon name="trash" />
+        Delete
+      </button>
+    </>
+  )}
+</form>

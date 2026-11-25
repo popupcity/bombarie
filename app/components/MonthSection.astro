@@ -1,0 +1,14 @@
+---
+import Heading from 'ui/src/components/Heading.astro';
+import { monthLabel } from '../../src/calendar.ts';
+
+interface Props {
+  month: string;
+}
+const { month } = Astro.props;
+---
+
+<section data-month-section class="flex flex-col gap-8">
+  <Heading variant="page" as="h2" class="pointer-events-none sticky top-0 z-20 flex h-20 items-center">{monthLabel(month)}</Heading>
+  <slot />
+</section>

@@ -1,0 +1,21 @@
+---
+interface Props {
+  variant?: 'lead' | 'body' | 'small' | 'post' | 'fine';
+  as?: 'p' | 'span';
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { variant = 'body', as: Tag = 'p', class: className, ...rest } = Astro.props;
+const sizes = {
+  lead: 'text-xl leading-8',
+  body: 'text-base leading-7',
+  small: 'text-sm',
+  post: 'text-sm leading-6',
+  fine: 'text-xs'
+};
+---
+
+<Tag class:list={[sizes[variant], '[font-weight:var(--weight-body)]', className]} {...rest}>
+  <slot />
+</Tag>

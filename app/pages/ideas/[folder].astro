@@ -1,0 +1,165 @@
+---
+import Alert from 'ui/src/components/Alert.astro';
+import Button from 'ui/src/components/Button.astro';
+import Card from 'ui/src/components/Card.astro';
+import Text from 'ui/src/components/Text.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import Input from 'ui/src/components/Input.astro';
+import { createPost } from '../../../src/campaign.ts';
+import { attachPreview, cleanLink, deleteIdea, domainOf, ideaTitle, readIdea, removeIdeaImage, saveIdea, setIdeaStatus } from '../../../src/ideas.ts';
+import { sentence } from '../../../src/text.ts';
+import Chip from '../../components/Chip.astro';
+import ImageTile from '../../components/ImageTile.astro';
+import Dropzone from '../../components/Dropzone.astro';
+import ChoiceMenu from '../../components/ChoiceMenu.astro';
+import ActionPanel from '../../components/ActionPanel.astro';
+import ActionRow from '../../components/ActionRow.astro';
+import ValueButton from '../../components/ValueButton.astro';
+import NewPostMenu from '../../components/NewPostMenu.astro';
+import ConfirmDialog from '../../components/ConfirmDialog.astro';
+import Field from '../../components/Field.astro';
+import Section from '../../components/Section.astro';
+import { content, root } from '../../lib/data.ts';
+import { postHref } from '../../lib/ui.ts';
+import TitleField from '../../components/TitleField.astro';
+import Shell from '../../layouts/Shell.astro';
+
+let folder = Astro.params.folder ?? '';
+const idea = readIdea(root, folder);
+if (!idea) return Astro.redirect('/ideas', 302);
+let error = '';
+let chosen: string[] = [];
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const intent = form.get('make') !== null ? 'make' : String(form.get('intent') ?? '');
+  const fields = { title: String(form.get('title') ?? idea.title), link: String(form.get('link') ?? idea.link ?? ''), text: String(form.get('text') ?? idea.text) };
+  try {
+    if (intent === 'delete') {
+      await deleteIdea(root, content, folder);
+      return Astro.redirect('/ideas', 303);
+    }
+    const quiet = form.get('quiet') !== null;
+    folder = await saveIdea(root, content, folder, fields, quiet);
+    if (quiet) return new Response(null, { status: 204 });
+    await attachPreview(root, content, folder);
+    if (intent === 'approve' || intent === 'unapprove') await setIdeaStatus(root, content, folder, intent === 'approve' ? 'approved' : 'new');
+    else if (intent.startsWith('remove:')) await removeIdeaImage(root, content, folder, intent.slice('remove:'.length));
+    else if (intent === 'make') {
+      chosen = [String(form.get('make') ?? '')];
+      const images = await Promise.all(idea.images.map(async (name) => ({ name, bytes: (await content.readFile(`ideas/${folder}/${name}`)) ?? new Uint8Array() })));
+      const link = cleanLink(fields.link);
+      const made = await createPost(root, content, { title: fields.title.trim() || ideaTitle(idea) || folder.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/-/g, ' '), channels: chosen, text: fields.text, ...(link && { link }), images: images.filter((image) => image.bytes.length > 0) });
+      await setIdeaStatus(root, content, folder, 'made', made.folder);
+      return Astro.redirect(postHref(`${made.folder}/${made.base}.md`), 303);
+    } else if (intent !== 'save') error = 'Unknown action.';
+    if (!error) return Astro.redirect(`/ideas/${encodeURIComponent(folder)}`, 303);
+  } catch (err) {
+    error = sentence(err instanceof Error ? err.message : String(err));
+  }
+}
+
+const field = 'block w-full rounded-lg bg-surface p-4 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+const tone = { new: 'warn', approved: 'info', made: 'ok' } as const;
+const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
+---
+
+<Shell title={idea.title || 'Untitled idea'}>
+  <div class="flex max-w-wide flex-col gap-8" data-idea={folder}>
+    <header class="flex h-20 items-center">
+      <Heading variant="page" as="h1" class="sr-only">{idea.title || 'Untitled idea'}</Heading>
+      <div class="min-w-0 flex-1">
+        <TitleField form="idea-form" name="title" value={idea.title} />
+      </div>
+    </header>
+    {error && <Alert>{error}</Alert>}
+    <form id="idea-form" method="post" class="grid gap-8 lg:grid-cols-3">
+      <div class="flex flex-col gap-12 lg:col-span-2">
+        <Section>
+          <div class="flex flex-col gap-8">
+            <div class="flex flex-col gap-4">
+            <Field label="Link" for="link">
+              <Input id="link" name="link" label="Link" type="url" placeholder="https://" value={idea.link ?? ''} autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />
+            </Field>
+            {
+              idea.link && (idea.linkTitle || idea.linkImage) && (
+                <Card variant="row" interactive href={idea.link} target="_blank" rel="noopener noreferrer" class="flex items-center gap-4 overflow-hidden">
+                  {idea.linkImage && (
+                    <span class="relative -my-4 -ml-4 w-28 self-stretch">
+                      <img src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(idea.linkImage)}?w=256`} alt="" loading="lazy" class="absolute inset-0 size-full object-cover" />
+                    </span>
+                  )}
+                  <span class="flex min-w-0 flex-1 flex-col gap-1">
+                    {idea.linkTitle && <Text variant="small" class="line-clamp-2 break-words">{idea.linkTitle}</Text>}
+                    <Text variant="fine" class="truncate text-ink-soft">{idea.linkSite ?? domainOf(idea.link)}</Text>
+                  </span>
+                </Card>
+              )
+            }
+            <Field label="Notes" for="text">
+              <textarea id="text" name="text" rows="8" class={field}>{idea.text}</textarea>
+            </Field>
+            </div>
+            <div class="flex flex-col gap-4">
+            <ul id="idea-uploading" class="grid grid-cols-4 items-start gap-4 empty:hidden">
+              {
+                idea.images.map((name) => (
+                  <ImageTile src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}?w=512`} full={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`} name={name} removeName={name} />
+                ))
+              }
+            </ul>
+            <Dropzone inputId="idea-image-input" accept="image/jpeg,image/png,image/gif,image/webp" title="Add images" />
+            </div>
+          </div>
+        </Section>
+      </div>
+      <ActionPanel title="Status" remove="delete-idea">
+          <ActionRow label="Status">
+            {
+              idea.status === 'made' ? (
+                <Chip size="control" tone={tone.made}>{label.made}</Chip>
+              ) : (
+                <ChoiceMenu
+                  id="status-menu"
+                  submit
+                  disableActive
+                  label={label[idea.status]}
+                  tone={tone[idea.status]}
+                  options={[
+                    { label: 'New', text: 'Still open.', active: idea.status === 'new', attrs: { name: 'intent', value: 'unapprove' } },
+                    { label: 'Approved', text: 'Worth making into a post.', active: idea.status === 'approved', attrs: { name: 'intent', value: 'approve' } }
+                  ]}
+                />
+              )
+            }
+          </ActionRow>
+          {
+            idea.link && (
+              <ActionRow label="Link">
+                <ValueButton href={idea.link}>
+                  Open link
+                  <Icon name="arrow-square-out" />
+                </ValueButton>
+              </ActionRow>
+            )
+          }
+          <Fragment slot="actions">
+            <Button type="submit" name="intent" value="save" variant="outline">Save</Button>
+            {idea.status === 'made' && idea.post && <Button href={`/posts/${encodeURIComponent(idea.post)}`}>Open post</Button>}
+            {idea.status !== 'made' && <Button type="button" popovertarget="make-menu" style="anchor-name:--make-menu">Make post<Icon name="caret-down" /></Button>}
+          </Fragment>
+          <Fragment slot="after">
+            {idea.status !== 'made' && <NewPostMenu id="make-menu" pick align="right" />}
+          </Fragment>
+        </ActionPanel>
+    </form>
+    <ConfirmDialog id="delete-idea" title={`Delete ${idea.title ? `“${idea.title}”` : 'this idea'}?`} intent="delete" variant={folder} confirm="Delete">This removes the idea and its images. A post made from it keeps its own copies.</ConfirmDialog>
+  </div>
+  <Fragment slot="after">
+    <script>
+      import '../../scripts/idea-images.ts';
+      import '../../scripts/idea-autosave.ts';
+    </script>
+  </Fragment>
+</Shell>

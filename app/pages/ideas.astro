@@ -1,0 +1,95 @@
+---
+import Dropzone from '../components/Dropzone.astro';
+import Alert from 'ui/src/components/Alert.astro';
+import Card from 'ui/src/components/Card.astro';
+import Text from 'ui/src/components/Text.astro';
+import Button from 'ui/src/components/Button.astro';
+import Input from 'ui/src/components/Input.astro';
+import { attachPreview, createIdea, deleteIdea, listIdeas, setIdeaStatus, titleFrom } from '../../src/ideas.ts';
+import { sentence } from '../../src/text.ts';
+import IdeaCard from '../components/IdeaCard.astro';
+import Hint from '../components/Hint.astro';
+import ValueButton from '../components/ValueButton.astro';
+import { ideaBookmarklet } from '../../src/idea-bookmarklet.ts';
+import PageHeader from '../components/PageHeader.astro';
+import Section from '../components/Section.astro';
+import { content, root } from '../lib/data.ts';
+import Shell from '../layouts/Shell.astro';
+
+let error = '';
+let typed = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const intent = String(form.get('intent') ?? '');
+  const folder = String(form.get('folder') ?? '');
+  try {
+    if (intent === 'add') {
+      typed = String(form.get('idea') ?? '');
+      const created = await createIdea(root, content, titleFrom(typed));
+      await attachPreview(root, content, created);
+      return Astro.redirect('/ideas', 303);
+    }
+    if (intent === 'approve') await setIdeaStatus(root, content, folder, 'approved');
+    else if (intent === 'unapprove') await setIdeaStatus(root, content, folder, 'new');
+    else if (intent === 'delete') await deleteIdea(root, content, String(form.get('variant') ?? ''));
+    else error = 'Unknown action.';
+    if (!error) return Astro.redirect('/ideas', 303);
+  } catch (err) {
+    error = sentence(err instanceof Error ? err.message : String(err));
+  }
+}
+
+const ideas = listIdeas(root);
+const grid = 'columns-1 gap-x-8 sm:columns-2 lg:columns-3 [&>*]:mb-8 [&>*]:break-inside-avoid';
+const count = (statuses: string[]) => ideas.filter((idea) => statuses.includes(idea.status)).length;
+const chip = 'inline-flex h-10 cursor-pointer items-center gap-3 rounded-lg px-4 text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-pressed:bg-surface aria-pressed:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+const filters = [
+  { value: 'open', name: 'Open', tone: 'ink', dim: false, total: count(['new', 'approved']) },
+  { value: 'approved', name: 'Approved', tone: 'info', dim: false, total: count(['approved']) },
+  { value: 'made', name: 'Made', tone: 'ok', dim: false, total: count(['made']) }
+] as const;
+---
+
+<Shell title="Ideas">
+  <div class="flex max-w-wide flex-col gap-8">
+    <PageHeader title="Ideas" />
+    <Section>
+      <div class="grid gap-8 lg:grid-cols-3">
+        <Card as="form" method="post" class="flex flex-col gap-4 lg:col-span-2">
+          <input type="hidden" name="intent" value="add" />
+          <div class="flex flex-1 flex-col gap-4">
+            <Input as="textarea" id="idea" name="idea" label="New idea" rows="3" placeholder="An idea, or paste a link" required invalid={error !== ''} class="flex-1 resize-none" autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" value={typed} />
+            {error && <Alert variant="plain">{error}</Alert>}
+          </div>
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <ValueButton href={ideaBookmarklet(Astro.url.origin)} external={false} draggable="true" onclick="return false">Save to Bombarie</ValueButton>
+              <Hint text="Drag this to your bookmarks bar. On any page, click it to save that page as an idea; select text first to keep it as notes." />
+            </div>
+            <Button type="submit">Add</Button>
+          </div>
+        </Card>
+        <Dropzone id="idea-dropzone" inputId="idea-upload" accept="image/jpeg,image/png,image/gif,image/webp" title="Add images" hint="One idea per image." />
+      </div>
+    </Section>
+    <div id="idea-filter" role="group" aria-label="Show" class="flex flex-wrap gap-2">
+      {
+        filters.map((filter) => (
+          <button type="button" data-show={filter.value} aria-pressed={filter.value === 'open' ? 'true' : 'false'} data-tone={filter.tone} class={chip}>
+            <span aria-hidden="true" class:list={['size-2 rounded-full bg-(--tone)', filter.dim && 'opacity-30']}></span>
+            {filter.name}
+            <span class="tabular-nums">{filter.total}</span>
+          </button>
+        ))
+      }
+    </div>
+    <ul id="idea-grid" class={grid}>{ideas.map((idea) => <IdeaCard idea={idea} />)}</ul>
+    <Text variant="body" class="text-ink-soft" id="idea-empty" hidden>Nothing here.</Text>
+  </div>
+  <Fragment slot="after">
+    <script>
+      import '../scripts/ideas.ts';
+      import '../scripts/ideas-drop.ts';
+    </script>
+  </Fragment>
+</Shell>

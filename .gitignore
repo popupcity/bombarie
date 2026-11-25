@@ -1,0 +1,12 @@
+node_modules
+.dev.vars
+.env
+.obsidian/workspace*
+.wrangler
+tokens.json
+calendar.html
+.astro
+dist
+.DS_Store
+/data
+CLAUDE.local.md

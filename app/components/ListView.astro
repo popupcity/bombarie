@@ -1,0 +1,80 @@
+---
+import Icon from 'ui/src/components/Icon.astro';
+import Card from 'ui/src/components/Card.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+import type { ListGroup } from '../../src/calendar.ts';
+import Button from 'ui/src/components/Button.astro';
+import { STATUS_TONE } from '../lib/ui.ts';
+import AgendaCard from './AgendaCard.astro';
+import MonthSection from './MonthSection.astro';
+
+interface Props {
+  groups: ListGroup[];
+  today: string;
+  folderCounts?: Record<string, number>;
+}
+const { groups, today, folderCounts = {} } = Astro.props;
+const now = groups.find((group) => group.day >= today)?.day;
+const months = [...new Set(groups.map((group) => group.day.slice(0, 7)))];
+const format = (day: string, options: Intl.DateTimeFormatOptions) => new Date(`${day}T00:00:00Z`).toLocaleDateString('en-GB', { ...options, timeZone: 'UTC' });
+---
+
+<div class="grid gap-8 lg:grid-cols-3 max-w-wide">
+<div class="flex min-w-0 flex-col gap-8 lg:col-span-2">
+  {
+    groups.length === 0 && (
+      <div class="flex flex-col items-start gap-4">
+        <Text variant="body" class="text-ink-soft">Nothing is planned yet.</Text>
+        <Button type="button" popovertarget="new-menu">New post<Icon name="caret-down" /></Button>
+      </div>
+    )
+  }
+  {
+    months.map((month) => (
+      <MonthSection month={month}>
+        <div class="relative flex flex-col gap-12">
+          {groups
+            .filter((group) => group.day.startsWith(month))
+            .map((group) => {
+              const weekday = format(group.day, { weekday: 'long' });
+              const date = format(group.day, { day: 'numeric' });
+              const isToday = group.day === today;
+              return (
+                <section id={`d-${group.day}`} data-group data-drop-day={group.day} class="in-[[data-dragging]]:opacity-40 in-[[data-dragging]]:data-drop-active:opacity-100 relative transition-opacity duration-150 flex scroll-mt-28 flex-col gap-4">
+                  {group.day === now && <span id="today" aria-hidden="true" class="absolute inset-x-0 top-0 scroll-mt-28"></span>}
+                  <Heading variant="block" as="h3" class="flex h-8 items-center">
+                    {isToday && <span class="sr-only">Today, </span>}
+                    {`${weekday} ${date}`}
+                  </Heading>
+                  <ul class="flex flex-col gap-4">{group.cards.map((card, index) => <AgendaCard card={card} showTime={card.time !== group.cards[index - 1]?.time} siblings={folderCounts[card.id.split('/')[0] ?? ''] ?? 1} menu={`${group.day}-${index}`} />)}</ul>
+                </section>
+              );
+            })}
+        </div>
+      </MonthSection>
+    ))
+  }
+</div>
+<aside class="hidden lg:block lg:pt-28">
+  <div class="sticky top-28 flex flex-col gap-4">
+  <Heading variant="block" as="h2">Calendar</Heading>
+  <Card variant="row" id="minical" data-today={today} class="flex flex-col gap-4">
+    <div id="minical-grid" class="flex min-h-72 flex-col gap-2"></div>
+    <div id="minical-day" hidden class="-mx-4 flex flex-col gap-4 border-t border-line px-4 pt-4"></div>
+    <div id="minical-panels" hidden>
+      {
+        groups.map((group) => (
+          <div data-panel={group.day}>
+            {group.cards.map((card) => <i data-tone={STATUS_TONE[card.status]} />)}
+          </div>
+        ))
+      }
+    </div>
+  </Card>
+  </div>
+</aside>
+</div>
+<script>
+  import '../scripts/minical.ts';
+</script>

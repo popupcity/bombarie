@@ -1,0 +1,38 @@
+---
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import { MENU, MENU_ITEM } from '../lib/ui.ts';
+
+interface Option {
+  label: string;
+  text?: string;
+  active: boolean;
+  attrs: Record<string, unknown>;
+}
+interface Props {
+  id: string;
+  label: string;
+  tone: string;
+  options: Option[];
+  submit?: boolean;
+  triggerId?: string;
+  labelId?: string;
+  disableActive?: boolean;
+}
+const { id, label, tone, options, submit = false, triggerId, labelId, disableActive = false } = Astro.props;
+---
+
+<Button id={triggerId} type="button" variant="soft" tone={tone} popovertarget={id} style={`anchor-name:--${id}`} class="pr-3 pl-4">
+  <span id={labelId}>{label}</span>
+  <Icon name="caret-down" />
+</Button>
+<div id={id} popover style={`position-anchor:--${id}`} class:list={[MENU, 'w-64 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [right:anchor(right)] [top:anchor(bottom)]']}>
+  {
+    options.map((option) => (
+      <button type={submit ? 'submit' : 'button'} disabled={disableActive && option.active} aria-pressed={option.active} {...option.attrs} class:list={[MENU_ITEM, 'items-start py-2 disabled:cursor-default disabled:hover:bg-transparent']}>
+        <Icon name="check" class:list={['mt-1 shrink-0', !option.active && 'invisible']} />
+        <span><span class="block">{option.label}</span>{option.text && <span class="block text-ink-soft">{option.text}</span>}</span>
+      </button>
+    ))
+  }
+</div>

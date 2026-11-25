@@ -1,0 +1,31 @@
+---
+import { quiet } from '../lib/ui.ts';
+import Input from 'ui/src/components/Input.astro';
+import type { Platform } from '../../src/types.ts';
+import Field from './Field.astro';
+
+interface Props {
+  platform: Platform;
+  clientId?: string;
+  secretSaved?: boolean;
+  configId?: string;
+  required?: boolean;
+}
+const { platform, clientId = '', secretSaved = false, configId = '', required = false } = Astro.props;
+const meta = platform === 'instagram' || platform === 'facebook';
+const threads = platform === 'threads';
+---
+
+<Field label={meta ? 'Meta app ID' : threads ? 'Threads app ID' : 'Client ID'} for="clientId">
+  <Input id="clientId" name="clientId" label={meta ? 'Meta app ID' : threads ? 'Threads app ID' : 'Client ID'} value={clientId} required={required} {...quiet} />
+</Field>
+<Field label={meta ? 'Meta app secret' : threads ? 'Threads app secret' : 'Client secret'} for="clientSecret">
+  <Input id="clientSecret" name="clientSecret" type="password" label={meta ? 'Meta app secret' : threads ? 'Threads app secret' : 'Client secret'} value={secretSaved ? '••••••••••••••••' : ''} required={required} {...quiet} />
+</Field>
+{
+  meta && (
+    <Field label="Configuration ID" for="configId">
+      <Input id="configId" name="configId" label="Configuration ID" value={configId} required={required} {...quiet} />
+    </Field>
+  )
+}

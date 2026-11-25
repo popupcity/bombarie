@@ -1,0 +1,22 @@
+---
+import ListView from '../components/ListView.astro';
+import App from '../layouts/App.astro';
+import { listGroups } from '../../src/calendar.ts';
+import { folderCountsOf, handleCardPost, loadCalendar, takeFlash } from '../lib/data.ts';
+
+let problem = '';
+if (Astro.request.method === 'POST') {
+  const result = await handleCardPost(Astro.request, '/');
+  if (result.redirect) return Astro.redirect(result.redirect, 303);
+  problem = result.problem;
+}
+
+const flash = takeFlash();
+const data = await loadCalendar();
+---
+
+<App data={data} view="list" title="List">
+  {problem && <div hidden data-toast={problem} data-tone="bad" />}
+  {flash && <div hidden data-toast={flash.text} data-tone={flash.tone} />}
+  <ListView groups={listGroups(data.cards, data.today)} today={data.today} folderCounts={folderCountsOf(data.cards)} />
+</App>

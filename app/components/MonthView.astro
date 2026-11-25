@@ -1,0 +1,24 @@
+---
+import type { MonthDay } from '../../src/calendar.ts';
+import DayCell from './DayCell.astro';
+
+interface Props {
+  weeks: MonthDay[][];
+  hrefOf: (day: string) => string;
+  folderCounts?: Record<string, number>;
+}
+const { weeks, hrefOf, folderCounts = {} } = Astro.props;
+const days = weeks.flat();
+const today = days.findIndex((day) => day.today);
+const anchor = today < 0 ? -1 : Math.max(0, today - 7);
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+---
+
+<div>
+  <div class="sticky top-20 z-10 hidden grid-cols-7 gap-1 bg-page h-8 text-xs text-ink-soft md:grid">
+    {WEEKDAYS.map((weekday) => <span class="px-2">{weekday}</span>)}
+  </div>
+  <div class="grid grid-cols-7 gap-1">
+    {days.map((day, index) => <DayCell day={day} href={hrefOf(day.day)} folderCounts={folderCounts} anchor={index === anchor} />)}
+  </div>
+</div>

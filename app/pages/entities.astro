@@ -1,0 +1,57 @@
+---
+import Card from 'ui/src/components/Card.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import { loadEntities } from '../../src/entities.ts';
+import PlatformMark from '../components/PlatformMark.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { takeOutcome } from '../lib/connect.ts';
+import { root } from '../lib/data.ts';
+import { sentence } from '../../src/text.ts';
+import Shell from '../layouts/Shell.astro';
+
+const { entities, errors } = loadEntities(root);
+const list = [...entities.values()].sort((a, b) => a.name.localeCompare(b.name));
+const outcome = takeOutcome();
+const toast = outcome && outcome.name === 'entity' ? { tone: outcome.ok ? 'ok' : 'bad', text: sentence(outcome.message) } : null;
+---
+
+<Shell title="Entities">
+  <div class="flex max-w-wide flex-col gap-8">
+    <PageHeader title="Entities" />
+    {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
+    {
+      errors.length > 0 && (
+        <Card as="ul" variant="row" alert role="alert" class="flex flex-col gap-2 text-sm text-(--tone-text)">
+          {errors.map((error) => <li>{sentence(error)}</li>)}
+        </Card>
+      )
+    }
+    <ul class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        list.map((entity) => (
+          <li>
+            <Card href={`/entities/${entity.slug}`} class="flex h-full flex-col gap-4">
+              <Heading variant="card" as="p">{entity.name}</Heading>
+              <Text variant="body" class="flex gap-2">
+                <span title={entity.linkedin ?? 'No LinkedIn id: shown as plain text'} class:list={[!entity.linkedin && 'opacity-30']}>
+                  <PlatformMark platform="linkedin" class="size-6" />
+                </span>
+                <span title={entity.instagram ? `@${entity.instagram}` : 'No Instagram handle: shown as plain text'} class:list={[!entity.instagram && 'opacity-30']}>
+                  <PlatformMark platform="instagram" class="size-6" />
+                </span>
+              </Text>
+            </Card>
+          </li>
+        ))
+      }
+      <li>
+        <a href="/entities/new" class="flex h-full min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong p-6 text-ink-soft hover:border-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+          <Icon name="plus" weight="bold" class="text-xl" />
+          Add entity
+        </a>
+      </li>
+    </ul>
+  </div>
+</Shell>

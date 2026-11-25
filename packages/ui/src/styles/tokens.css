@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --font-sans: var(--font);
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+}
+
+@theme static {
+  --text-2xs: 10px;
+  --text-2xs--line-height: 12px;
+  --text-title: 2rem;
+  --text-title--line-height: 36px;
+  --text-xs--line-height: 16px;
+  --text-sm--line-height: 20px;
+  --text-base--line-height: 24px;
+  --text-lg--line-height: 24px;
+  --text-xl--line-height: 28px;
+  --text-2xl--line-height: 32px;
+  --text-3xl--line-height: 40px;
+  --text-5xl--line-height: 56px;
+  --text-7xl--line-height: 80px;
+  --spacing-tight: 12px;
+  --spacing-close: 24px;
+  --spacing-related: 48px;
+  --spacing-moment: var(--moment);
+  --spacing-section: var(--section);
+}
+
+:root {
+  --moment: 64px;
+  --section: 96px;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --moment: 96px;
+    --section: 192px;
+  }
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased;
+    font-optical-sizing: auto;
+  }
+  button:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+}

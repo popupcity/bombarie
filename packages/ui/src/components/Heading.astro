@@ -1,0 +1,33 @@
+---
+interface Props {
+  variant?: 'hero' | 'section' | 'sub' | 'label' | 'page' | 'block' | 'card';
+  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'p';
+  quiet?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { variant = 'section', as, quiet = false, class: className, ...rest } = Astro.props;
+const sizes = {
+  hero: 'text-5xl md:text-7xl',
+  section: 'text-3xl md:text-5xl',
+  sub: 'text-xl md:text-2xl',
+  label: 'text-sm text-ink-soft',
+  page: 'text-title',
+  block: 'text-2xl',
+  card: 'text-lg'
+};
+const tags = { hero: 'h1', section: 'h2', sub: 'h3', label: 'h4', page: 'h1', block: 'h2', card: 'h3' } as const;
+const Tag = as ?? tags[variant];
+const face = quiet
+  ? '[font-family:var(--font-heading-quiet)] [font-weight:var(--weight-heading-quiet)]'
+  : variant === 'card'
+    ? '[font-family:var(--font-heading)] [font-weight:var(--weight-heading-card,var(--weight-heading))] [letter-spacing:var(--tracking-heading-card,0)]'
+    : variant === 'label'
+      ? '[font-family:var(--font-heading)] [font-weight:var(--weight-heading-label,var(--weight-heading))] [letter-spacing:var(--tracking-heading-label,0)] [text-transform:var(--transform-heading-label,none)]'
+      : '[font-family:var(--font-heading)] [font-weight:var(--weight-heading)] [letter-spacing:var(--tracking-heading,0)]';
+---
+
+<Tag class:list={[sizes[variant], face, className]} {...rest}>
+  <slot />
+</Tag>

@@ -1,0 +1,16 @@
+---
+interface Props {
+  channel: { label: string; avatar?: string | undefined };
+  class?: string;
+  small?: boolean;
+}
+const { channel, class: className = 'size-7 text-2xs', small = false } = Astro.props;
+const words = channel.label.split(/\s+/).filter(Boolean);
+const initials = `${words[0]?.[0] ?? '?'}${words.length > 1 ? (words[words.length - 1]?.[0] ?? '') : ''}`.toUpperCase();
+---
+
+<span
+  class:list={['inline-flex shrink-0 items-center justify-center overflow-hidden bg-track text-ink-soft', small ? 'rounded-sm' : 'rounded-lg', className]}
+>
+  {channel.avatar ? <img src={`/img/${channel.avatar}?size=96`} alt="" class="size-full object-cover" /> : initials}
+</span>

@@ -1,0 +1,31 @@
+---
+import Card from 'ui/src/components/Card.astro';
+import Text from 'ui/src/components/Text.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { PLATFORMS } from '../../../src/channels.ts';
+import { isAutomatic } from '../../../src/connect.ts';
+import { PLATFORM_LABEL } from '../../../src/types.ts';
+import PlatformMark from '../../components/PlatformMark.astro';
+import Shell from '../../layouts/Shell.astro';
+
+---
+
+<Shell title="Add channel">
+  <div class="flex max-w-wide flex-col gap-8">
+    <PageHeader title="Add channel" />
+    <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          PLATFORMS.map((candidate) => (
+            <Card href={`/channels/new/${candidate}`} class="flex flex-col gap-4">
+              <PlatformMark platform={candidate} class="size-14" />
+              <div class="flex flex-col gap-2">
+                <Heading variant="card" as="p">{PLATFORM_LABEL[candidate]}</Heading>
+                {!isAutomatic(candidate) && <Text variant="small" class="text-ink-soft">{candidate === 'website' ? 'Shows its posts from an RSS feed.' : candidate === 'substack' ? 'You post by hand and get a reminder. Shows its posts from an RSS feed.' : 'You post by hand and get a reminder.'}</Text>}
+              </div>
+            </Card>
+          ))
+        }
+    </div>
+  </div>
+</Shell>

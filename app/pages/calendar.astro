@@ -1,0 +1,34 @@
+---
+import MonthSection from '../components/MonthSection.astro';
+import MonthView from '../components/MonthView.astro';
+import App from '../layouts/App.astro';
+import { monthRange, monthWeeks, nextPostDay } from '../../src/calendar.ts';
+import { folderCountsOf, handleCardPost, loadCalendar, takeFlash } from '../lib/data.ts';
+
+let problem = '';
+if (Astro.request.method === 'POST') {
+  const result = await handleCardPost(Astro.request, '/calendar');
+  if (result.redirect) return Astro.redirect(result.redirect, 303);
+  problem = result.problem;
+}
+
+const flash = takeFlash();
+const data = await loadCalendar();
+const folderCounts = folderCountsOf(data.cards);
+const hrefOf = (day: string) => {
+  const target = nextPostDay(data.cards, day);
+  return target ? `/#d-${target}` : '/';
+};
+---
+
+<App data={data} view="month" title="Calendar">
+  {problem && <div hidden data-toast={problem} data-tone="bad" />}
+  {flash && <div hidden data-toast={flash.text} data-tone={flash.tone} />}
+  {
+    monthRange(data.cards, data.today).map((month) => (
+      <MonthSection month={month}>
+        <MonthView weeks={monthWeeks(data.cards, month, data.today)} hrefOf={hrefOf} folderCounts={folderCounts} />
+      </MonthSection>
+    ))
+  }
+</App>

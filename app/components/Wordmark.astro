@@ -1,0 +1,10 @@
+---
+import { brandName } from '../lib/ui.ts';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<span class={className}>{brandName}</span>

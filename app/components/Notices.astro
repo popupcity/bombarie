@@ -1,0 +1,56 @@
+---
+import Text from 'ui/src/components/Text.astro';
+import type { NoticeModel } from '../../src/calendar.ts';
+import { sentence } from '../../src/text.ts';
+import Icon from 'ui/src/components/Icon.astro';
+import { MENU, MENU_ITEM, postHref } from '../lib/ui.ts';
+
+interface Props {
+  notices: NoticeModel[];
+}
+const { notices } = Astro.props;
+---
+
+{
+  notices.length > 0 && (
+    <>
+      <button type="button" popovertarget="notices" data-tone="bad" style="anchor-name:--notices" class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-(--tone-soft) px-4 text-sm text-(--tone-text) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-(--tone-text)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+        </svg>
+        {notices.length} {notices.length === 1 ? 'needs' : 'need'} attention
+      </button>
+      <div id="notices" popover role="alert" data-tone="bad" style="position-anchor:--notices" class:list={[MENU, 'w-112 max-w-[calc(100vw-32px)] [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [right:anchor(right)] [top:anchor(bottom)]']}>
+        <ul class="flex flex-col gap-1">
+          {notices.map((notice) => {
+            const body = (
+              <span class="flex min-w-0 flex-col gap-1">
+                <span class="flex flex-wrap items-center gap-x-1 gap-y-1">
+                  <span class="text-(--tone-text)">{notice.label}</span>
+                  {notice.where.map((part) => (
+                    <>
+                      <Icon name="dot" weight="fill" class="text-ink-soft" />
+                      <span>{part}</span>
+                    </>
+                  ))}
+                </span>
+                <span class="text-ink-soft">{sentence(notice.text)}</span>
+              </span>
+            );
+            return (
+              <li>
+                {notice.id ? (
+                  <a href={postHref(notice.id)} class:list={[MENU_ITEM, 'items-start py-2']}>{body}</a>
+                ) : (
+                  <Text variant="small" class="px-3 py-2">{body}</Text>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </>
+  )
+}

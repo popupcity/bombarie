@@ -1,0 +1,52 @@
+---
+import Alert from 'ui/src/components/Alert.astro';
+import Button from 'ui/src/components/Button.astro';
+import Input from 'ui/src/components/Input.astro';
+import { bookmarklet } from '../../src/linkedin-lookup.ts';
+import Field from './Field.astro';
+import Hint from './Hint.astro';
+import ValueButton from './ValueButton.astro';
+
+interface Props {
+  name: string;
+  linkedin: string;
+  instagram: string;
+  titled?: boolean;
+  error?: string;
+}
+const SPELLING = 'Type @ in a post to mention it. On LinkedIn the name must be spelled exactly like the page, capitals included.';
+const { name, linkedin, instagram, titled = false, error = '' } = Astro.props;
+---
+
+<form id="entity-form" method="post" class="flex flex-col gap-4">
+  <input type="hidden" name="intent" value="save" />
+  {error && <Alert>{error}</Alert>}
+  <div class="flex flex-col gap-4">
+    {
+      !titled && (
+    <Field label="Name" for="name" hint={SPELLING}>
+        <Input id="name" name="name" label="Name" value={name} required autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />
+    </Field>
+      )
+    }
+    <Field label="LinkedIn" for="linkedin" hint={titled ? SPELLING : undefined}>
+      <div class="flex items-center gap-2">
+        <div class="min-w-0 flex-1">
+          <Input id="linkedin" name="linkedin" label="LinkedIn" value={linkedin} placeholder="Paste a company page address, or a urn:li:organization: urn" autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />
+        </div>
+        <Button id="linkedin-lookup" type="button" variant="outline">Look up</Button>
+      </div>
+      <div id="linkedin-bookmarklet" hidden class="flex items-center gap-2">
+        <ValueButton href={bookmarklet()} external={false} draggable="true" onclick="return false">Copy from LinkedIn</ValueButton>
+        <Hint text="Drag this to your bookmarks bar, click it on the company page, then paste the result in the LinkedIn field. Your own browser can read the page when a server cannot." />
+      </div>
+    </Field>
+    <Field label="Instagram" for="instagram">
+      <Input id="instagram" name="instagram" label="Instagram" value={instagram} placeholder="@username" autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />
+    </Field>
+  </div>
+</form>
+
+<script>
+  import '../scripts/entity-lookup.ts';
+</script>

@@ -1,0 +1,25 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  direction?: 'left' | 'right';
+  size?: 'sm' | 'md';
+  class?: string;
+}
+
+const { direction = 'right', size = 'md', class: className } = Astro.props;
+const chevron = { sm: 'h-4 w-2.5', md: 'h-6 w-3.5' };
+const plain = { sm: 'size-4', md: 'size-5' };
+const mirror = direction === 'left' && '-scale-x-100';
+---
+
+<svg
+  viewBox="0 0 20 35.355"
+  aria-hidden="true"
+  class:list={['shrink-0 fill-none stroke-current [display:var(--arrow-chevron)]', chevron[size], mirror, className]}
+>
+  <path d="M0.678,0 L17.825,17.147 C18.117,17.439 18.117,17.916 17.825,18.208 L0.678,35.355" stroke-width="2" vector-effect="non-scaling-stroke" />
+</svg>
+<span class:list={['shrink-0 [display:var(--arrow-plain)]', plain[size], mirror, className]}>
+  <Icon name="arrow-right" class="size-full" />
+</span>

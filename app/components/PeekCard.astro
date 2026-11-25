@@ -1,0 +1,88 @@
+---
+import Alert from 'ui/src/components/Alert.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import { thumbUrl } from '../../src/calendar.ts';
+import type { CardModel } from '../../src/calendar.ts';
+import { whenLabel } from '../../src/time.ts';
+import { sentence } from '../../src/text.ts';
+import { coverLabel, isCover, mediaKind, PLATFORM_LABEL } from '../../src/types.ts';
+import { cardActions, OVERLAY, postHref } from '../lib/ui.ts';
+import CardActions from './CardActions.astro';
+import ChannelMark from './ChannelMark.astro';
+import StatusBadge from './StatusBadge.astro';
+
+interface Props {
+  id: string;
+  card: CardModel;
+  siblings?: number;
+}
+const { id, card, siblings = 1 } = Astro.props;
+const image = thumbUrl(card, 320);
+const { movable, removable } = cardActions(card);
+const when = `${card.day}T${card.time}`;
+---
+
+<div id={id} popover style={`position-anchor:--${id}`} class:list={[OVERLAY, 'm-0 w-96 max-w-[calc(100vw-32px)] rounded-xl bg-surface p-6 text-sm text-ink shadow-float ring-1 ring-line ring-inset [inset:auto] [left:anchor(left)] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]']}>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-center justify-between gap-3">
+      <Text variant="small" class="flex min-w-0 items-center gap-2 text-ink-soft">
+        <ChannelMark channel={card} size="sm" on="surface" />
+        <span class="truncate">{card.label}</span>
+        {card.type && <span class="rounded-sm bg-track px-2 py-1 text-xs capitalize">{card.type}</span>}
+      </Text>
+      <span class="flex shrink-0 items-center gap-2"><StatusBadge status={card.status} manual={card.manual} /></span>
+    </div>
+    <div class:list={['grid gap-3', image && 'grid-cols-[minmax(0,1fr)_80px]']}>
+      <div class="flex min-w-0 flex-col gap-2">
+        <Heading variant="card" as="p" class="break-words">{card.campaign}</Heading>
+        <Text variant="small" class="line-clamp-3 break-words whitespace-pre-wrap text-ink-soft">{card.text || 'No text.'}</Text>
+      </div>
+      {image && (
+        <div class="relative size-20">
+          <img src={image} alt="" width="80" height="80" loading="lazy" data-full={`/img/${encodeURIComponent(card.id.split('/')[0] ?? '')}/${encodeURIComponent((card.images[0] ?? '').replace(/\.cover\.jpg$/i, ''))}`} data-full-kind={mediaKind(card.images[0] ?? '')} data-full-set={`peek-${card.id}`} class="size-20 cursor-zoom-in rounded-lg object-cover" />
+          {isCover(card.images[0] ?? '') && <span class="absolute bottom-1 left-1 rounded-sm bg-veil px-1 text-xs text-white">{coverLabel(card.images[0] ?? '')}</span>}
+        </div>
+      )}
+    </div>
+    {card.problem && <Alert variant="plain" role="note">{sentence(card.problem)}</Alert>}
+    {
+      movable ? (
+        <form method="post" action={Astro.url.pathname} class="-mx-2">
+          <input type="hidden" name="id" value={card.id} />
+          <input type="hidden" name="day" value={card.day} />
+          <input type="hidden" name="action" value="replan" />
+          <div class="relative w-fit">
+            <button type="button" data-date-open title="Change date" class="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2 text-ink-soft hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+              <Icon name="clock" />
+              <span data-date-label class="tabular-nums">{whenLabel(when)}</span>
+              <Icon name="pencil-simple" />
+            </button>
+            <input type="datetime-local" name="date" step="60" value={when} data-date-input data-submit tabindex="-1" aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-0" />
+          </div>
+        </form>
+      ) : (
+        <Text variant="small" class="flex items-center gap-2 text-ink-soft">
+          <Icon name="clock" />
+          <time class="tabular-nums">{whenLabel(when)}</time>
+        </Text>
+      )
+    }
+    <div class="flex min-w-0 items-center gap-2">
+      <Button href={card.url ?? postHref(card.id)} target={card.url ? '_blank' : undefined} rel={card.url ? 'noopener' : undefined}>Open</Button>
+      <CardActions card={card} siblings={siblings} part="toggle" />
+      {card.live && (
+        <Button href={card.live} target="_blank" rel="noopener" icon variant="outline" class="ml-auto" aria-label={`Open on ${PLATFORM_LABEL[card.platform]}`} title={`Open on ${PLATFORM_LABEL[card.platform]}`}>
+          <Icon name="arrow-square-out" />
+        </Button>
+      )}
+      {removable && (
+        <Button icon variant="outline" tone="bad" class:list={[!card.live && 'ml-auto']} aria-label="Delete" title="Delete" data-delete={card.id} data-title={card.campaign} data-siblings={siblings} data-posted={card.status === 'posted' ? PLATFORM_LABEL[card.platform] : undefined}>
+          <Icon name="trash" />
+        </Button>
+      )}
+    </div>
+  </div>
+</div>

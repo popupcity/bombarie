@@ -1,0 +1,78 @@
+---
+import { quiet } from '../lib/ui.ts';
+import Card from 'ui/src/components/Card.astro';
+import Input from 'ui/src/components/Input.astro';
+import { PLATFORM_LABEL, type Platform } from '../../src/types.ts';
+import ActionPanel from './ActionPanel.astro';
+import AppFields from './AppFields.astro';
+import AppSteps from './AppSteps.astro';
+import Field from './Field.astro';
+import Section from './Section.astro';
+
+interface Props {
+  formId: string;
+  platform: Platform;
+  name?: string;
+  handle?: string;
+  feed?: string;
+  setup?: { clientId: string; secretSaved: boolean; configId: string; redirectUri: string };
+  actionTitle: string;
+  remove?: { id: string; label: string; blocked?: string };
+}
+const { formId, platform, name = '', handle = '', feed = '', setup, actionTitle, remove } = Astro.props;
+const hasFeed = platform === 'substack' || platform === 'website';
+const hint = `The RSS address of this ${platform === 'substack' ? 'publication' : 'website'}. The posts it lists show in the List and the Calendar. Nothing is posted to ${PLATFORM_LABEL[platform]} from here.`;
+---
+
+<div class="grid gap-8 lg:grid-cols-3">
+  <form id={formId} method="post" class="flex flex-col gap-12 lg:col-span-2">
+    <slot name="top" />
+    <Section title="Channel">
+      <Card class="flex flex-col gap-8">
+        <div class="flex items-center gap-4">
+          <slot name="mark" />
+          <span class="text-ink-soft">{PLATFORM_LABEL[platform]}</span>
+        </div>
+        <div class="flex flex-col gap-4">
+          <Field label="Name" for="name">
+            <Input id="name" name="name" label="Name" value={name} required pattern=".*[A-Za-z0-9À-ÿ].*" title="Use at least one letter or number." {...quiet} />
+          </Field>
+          {
+            platform === 'instagram' && (
+              <Field label="Handle" for="handle">
+                <Input id="handle" name="handle" label="Handle" value={handle} placeholder="@username" {...quiet} />
+              </Field>
+            )
+          }
+        </div>
+      </Card>
+    </Section>
+    {
+      hasFeed && (
+        <Section title="Feed">
+          <Card class="flex flex-col gap-4">
+            <Field label="Feed address" for="feed" hint={hint}>
+              <Input id="feed" name="feed" label="Feed address" value={feed} placeholder={platform === 'substack' ? 'https://name.substack.com/feed' : 'https://example.com/feed/'} {...quiet} />
+            </Field>
+            <slot name="feed-note" />
+          </Card>
+        </Section>
+      )
+    }
+    {
+      setup && (
+        <Section title="Setup">
+          <Card>
+            <AppSteps platform={platform} redirectUri={setup.redirectUri}>
+              <AppFields platform={platform} clientId={setup.clientId} secretSaved={setup.secretSaved} configId={setup.configId} />
+            </AppSteps>
+          </Card>
+        </Section>
+      )
+    }
+  </form>
+  <ActionPanel title={actionTitle} remove={remove?.id} removeLabel={remove?.label} blocked={remove?.blocked}>
+    <slot name="rows" />
+    <slot name="actions" slot="actions" />
+  </ActionPanel>
+</div>

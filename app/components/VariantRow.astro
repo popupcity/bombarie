@@ -1,0 +1,15 @@
+---
+import type { VariantOption } from '../lib/variants.ts';
+import ChannelMark from './ChannelMark.astro';
+
+interface Props {
+  option: VariantOption;
+  problem?: string | null | undefined;
+}
+const { option, problem } = Astro.props;
+---
+
+<ChannelMark channel={option} size="sm" on="surface" />
+<span class="truncate">{option.label}</span>
+{option.type && <span class="rounded-sm bg-track px-2 py-1 text-xs text-ink-soft capitalize">{option.type}</span>}
+<span class="ml-auto text-xs text-ink-soft" title={problem ?? undefined}>{problem ? 'Manual' : 'Auto'}</span>

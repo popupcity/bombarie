@@ -1,0 +1,33 @@
+---
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import type { NoticeModel } from '../../src/calendar.ts';
+import Notices from './Notices.astro';
+
+interface Props {
+  view: 'month' | 'list';
+  notices?: NoticeModel[];
+}
+const { view, notices = [] } = Astro.props;
+const tabs = [
+  { id: 'month', label: 'Calendar', href: '/calendar', icon: 'calendar-blank' as const },
+  { id: 'list', label: 'List', href: '/', icon: 'list' as const }
+];
+---
+
+<div class="sticky top-0 z-20 -mx-6 flex h-20 items-center gap-3 bg-page px-6 md:-mx-12 md:px-12">
+  <div class="ml-auto flex items-center gap-3">
+    <Notices notices={notices} />
+  </div>
+  <Button href="#today" variant="outline">Today</Button>
+  <nav data-control class="inline-flex h-10 overflow-hidden rounded-lg border border-ink text-sm">
+    {
+      tabs.map((tab) => (
+        <a href={tab.href} aria-current={tab.id === view ? 'page' : undefined} class="inline-flex h-full items-center gap-2 px-4 text-ink aria-[current=page]:bg-ink aria-[current=page]:text-page">
+          <Icon name={tab.icon} />
+          {tab.label}
+        </a>
+      ))
+    }
+  </nav>
+</div>

@@ -1,0 +1,38 @@
+---
+import Sidebar from '../components/Sidebar.astro';
+import { brandName } from '../lib/ui.ts';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" data-theme="social" class="scheme-light scroll-smooth bg-page text-[106.25%]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{title} — {brandName}</title>
+  </head>
+  <body>
+    <div class="min-h-screen md:grid md:grid-cols-[240px_minmax(0,1fr)]">
+      <Sidebar />
+      <main class="min-w-0 px-6 pb-8 md:px-12">
+        <slot />
+      </main>
+    </div>
+    <slot name="after" />
+    <script>
+      import '../scripts/dialogs.ts';
+      import '../scripts/lightbox.ts';
+      import '../scripts/newpost.ts';
+      import '../scripts/pending.ts';
+      import '../scripts/toast.ts';
+      import '../scripts/tooltip.ts';
+      import '../scripts/sidebar.ts';
+    </script>
+  </body>
+</html>

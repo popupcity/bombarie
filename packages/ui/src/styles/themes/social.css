@@ -1,0 +1,96 @@
+@import '@fontsource-variable/inter/opsz.css';
+
+[data-theme='social'] {
+  font-feature-settings: 'cv11', 'ss01';
+  --font: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --puc-charcoal: #262626;
+  --puc-white: #ffffff;
+  --puc-light-gray: #e6dfdc;
+  --puc-green: #1cd584;
+  --puc-yellow: #ffce5d;
+  --puc-blue: #4f99e3;
+  --puc-red: #ff563b;
+  --puc-purple: #d9afff;
+  --page: color-mix(in srgb, var(--puc-light-gray) 25%, var(--puc-white));
+  --surface: var(--puc-white);
+  --ink: var(--puc-charcoal);
+  --ink-soft: color-mix(in srgb, var(--puc-charcoal) 68%, var(--puc-white));
+  --line: var(--puc-light-gray);
+  --radius-control: 8px;
+  --radius-field: 8px;
+  --control-ring: 1px;
+  --hover-opacity: 0.85;
+  --arrow-chevron: none;
+  --arrow-plain: inline-block;
+  --font-body: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --weight-body: 400;
+  --font-heading: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --weight-heading: 500;
+  --tracking-heading: -0.02em;
+  --weight-heading-card: 500;
+  --tracking-heading-card: -0.01em;
+  --weight-heading-label: 600;
+  --font-heading-quiet: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --weight-heading-quiet: 400;
+  --font-control: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --weight-control: 500;
+  --control-sm: 32px;
+  --control-md: 40px;
+  --control-lg: 48px;
+}
+
+[data-theme='social'] [data-tone='ink'] {
+  --tone: var(--puc-charcoal);
+  --tone-on: var(--puc-white);
+  --tone-text: var(--puc-charcoal);
+  --tone-soft: color-mix(in srgb, var(--puc-charcoal) 12%, transparent);
+}
+
+[data-theme='social'] [data-tone='paper'] {
+  --tone: var(--puc-white);
+  --tone-on: var(--puc-charcoal);
+  --tone-text: var(--puc-white);
+  --tone-soft: color-mix(in srgb, var(--puc-white) 12%, transparent);
+}
+
+[data-theme='social'] [data-tone='accent'] {
+  --tone: var(--puc-charcoal);
+  --tone-on: var(--puc-white);
+  --tone-text: var(--puc-charcoal);
+  --tone-soft: color-mix(in srgb, var(--puc-charcoal) 12%, transparent);
+}
+
+[data-theme='social'] [data-tone='info'] {
+  --tone: var(--puc-blue);
+  --tone-on: var(--puc-charcoal);
+  --tone-text: color-mix(in srgb, var(--puc-blue) 45%, var(--puc-charcoal));
+  --tone-soft: color-mix(in srgb, var(--puc-blue) 22%, transparent);
+}
+
+[data-theme='social'] [data-tone='ok'] {
+  --tone: var(--puc-green);
+  --tone-on: var(--puc-charcoal);
+  --tone-text: color-mix(in srgb, var(--puc-green) 45%, var(--puc-charcoal));
+  --tone-soft: color-mix(in srgb, var(--puc-green) 22%, transparent);
+}
+
+[data-theme='social'] [data-tone='warn'] {
+  --tone: var(--puc-yellow);
+  --tone-on: var(--puc-charcoal);
+  --tone-text: color-mix(in srgb, var(--puc-yellow) 45%, var(--puc-charcoal));
+  --tone-soft: color-mix(in srgb, var(--puc-yellow) 22%, transparent);
+}
+
+[data-theme='social'] [data-tone='bad'] {
+  --tone: var(--puc-red);
+  --tone-on: var(--puc-charcoal);
+  --tone-text: color-mix(in srgb, var(--puc-red) 45%, var(--puc-charcoal));
+  --tone-soft: color-mix(in srgb, var(--puc-red) 22%, transparent);
+}
+
+[data-theme='social'] [data-tone='manual'] {
+  --tone: var(--puc-purple);
+  --tone-on: var(--puc-charcoal);
+  --tone-text: color-mix(in srgb, var(--puc-purple) 45%, var(--puc-charcoal));
+  --tone-soft: color-mix(in srgb, var(--puc-purple) 22%, transparent);
+}

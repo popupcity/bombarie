@@ -1,0 +1,60 @@
+---
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import DialogShell from './DialogShell.astro';
+import { brandName } from '../lib/ui.ts';
+
+interface Props {
+  id: string;
+  title: string;
+  variant: string;
+  platform: string;
+  remote: boolean;
+  url?: string | undefined;
+  last: boolean;
+}
+const { id, title, variant, platform, remote, url, last } = Astro.props;
+const here = last ? `Deletes the post and its images from ${brandName}.` : `Deletes this variant from ${brandName}. The images stay.`;
+const options = remote
+  ? [
+      { value: 'both', label: 'Everywhere', text: `Removes it from ${platform} and deletes it here.` },
+      { value: 'platform', label: `Only from ${platform}`, text: 'It stays here, marked as deleted.' },
+      { value: 'local', label: 'Only here', text: `${here} It stays on ${platform}.` }
+    ]
+  : [{ value: 'local', label: 'Delete here', text: here }];
+const row = 'flex cursor-pointer items-start gap-3 rounded-lg p-3 ring-1 ring-line ring-inset has-checked:ring-2 has-checked:ring-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-0 has-focus-visible:outline-ink';
+---
+
+<DialogShell id={id}>
+  <form method="post" data-leave class="flex flex-col gap-4">
+    <input type="hidden" name="intent" value="delete-posted" />
+    <input type="hidden" name="variant" value={variant} />
+    <div class="flex flex-col gap-4">
+      <Heading variant="card" as="h2" id={`${id}-title`}>{title}</Heading>
+            {
+        options.length > 1 ? (
+          <div role="radiogroup" class="flex flex-col gap-2">
+            {options.map((option, index) => (
+              <label class={row}>
+                <input type="radio" name="scope" value={option.value} checked={index === 0} class="mt-1 accent-ink" />
+                <span class="flex flex-col"><span>{option.label}</span><span class="text-sm text-ink-soft">{option.text}</span></span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <>
+            <input type="hidden" name="scope" value="local" />
+            <Text variant="small" class="text-ink-soft">{options[0]!.text}{!remote && ` ${platform} does not let other apps delete posts. Remove it from ${platform} manually.`}</Text>
+          </>
+        )
+      }
+    </div>
+    <div class="flex items-center justify-end gap-2">
+      {url && <Button href={url} target="_blank" rel="noopener" variant="outline" class="mr-auto gap-2">Open on {platform}<Icon name="arrow-square-out" /></Button>}
+      <Button type="submit" variant="outline" formmethod="dialog" autofocus>Cancel</Button>
+      <Button type="submit" tone="bad">Delete</Button>
+    </div>
+  </form>
+</DialogShell>

@@ -1,0 +1,35 @@
+---
+import { focus } from './looks.ts';
+
+interface Props {
+  variant?: 'block' | 'row' | 'bare';
+  as?: 'div' | 'li' | 'ul' | 'section' | 'article' | 'form' | 'details' | 'a';
+  href?: string;
+  interactive?: boolean;
+  alert?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { variant = 'block', as, href, interactive = false, alert = false, class: className, ...rest } = Astro.props;
+const Tag = as ?? (href ? 'a' : 'div');
+const padding = { block: 'p-6', row: 'p-4', bare: '' };
+const live = interactive || href !== undefined;
+---
+
+<Tag
+  href={href}
+  data-tone={alert ? 'bad' : undefined}
+  class:list={[
+    'rounded-xl bg-surface ring-1 ring-inset',
+    alert ? 'ring-(--tone-text)/40' : 'ring-line',
+    padding[variant],
+    live && 'transition has-focus-visible:ring-2 has-focus-visible:ring-ink',
+    live && (alert ? 'hover:ring-(--tone-text)' : 'hover:ring-ink/20'),
+    href !== undefined && focus,
+    className
+  ]}
+  {...rest}
+>
+  <slot />
+</Tag>

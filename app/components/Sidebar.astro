@@ -1,0 +1,61 @@
+---
+import Heading from 'ui/src/components/Heading.astro';
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import { channelInfos, loadChannels } from '../../src/channels.ts';
+import { loadConnections, root } from '../lib/data.ts';
+import { brandName } from '../lib/ui.ts';
+import NewPostMenu from './NewPostMenu.astro';
+import Wordmark from './Wordmark.astro';
+import ChannelGroup from './ChannelGroup.astro';
+import NavItem from './NavItem.astro';
+
+const path = Astro.url.pathname;
+const connections = await loadConnections();
+const channels = channelInfos(loadChannels(root)).map((channel) => ({ ...channel, ...(connections[channel.name] ? { problem: connections[channel.name]! } : {}) }));
+const groups: { label: string; avatar: string | undefined; channels: typeof channels }[] = [];
+for (const channel of channels) {
+  const found = groups.find((group) => group.label.toLowerCase() === channel.label.toLowerCase());
+  if (found) found.channels.push(channel);
+  else groups.push({ label: channel.label, avatar: channel.avatar, channels: [channel] });
+}
+const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix || path.startsWith(`${prefix}/`));
+---
+
+<aside class="[view-transition-name:sidebar] md:sticky md:top-0 md:h-screen">
+  <div class="flex flex-col gap-8 px-4 pb-4 md:h-full md:overflow-y-auto">
+    <a href="/" aria-label={brandName} class="flex h-20 shrink-0 items-center px-3 text-2xl leading-8 [font-family:var(--font-heading)] [font-weight:var(--weight-heading)] [letter-spacing:var(--tracking-heading,0)]"><Wordmark /></a>
+    <Button type="button" popovertarget="new-menu" class="w-full">New post<Icon name="caret-down" /></Button>
+    <NewPostMenu />
+    <nav aria-label="Main" class="flex flex-col gap-1">
+      <NavItem href="/" icon="list" current={path === '/' || path.startsWith('/posts') || path === '/new'}>List</NavItem>
+      <NavItem href="/calendar" icon="calendar-blank" current={on('/calendar')}>Calendar</NavItem>
+      <NavItem href="/ideas" icon="lightbulb" current={on('/ideas')}>Ideas</NavItem>
+      <NavItem href="/entities" icon="at" current={on('/entities')}>Entities</NavItem>
+    </nav>
+    <section aria-label="Channels" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-2">
+      <div class="flex min-h-10 items-center justify-between pl-3">
+        <Heading variant="label" as="h2">Channels</Heading>
+        <div class="flex items-center gap-1">
+        <a href="/channels/new" title="Add channel" aria-label="Add channel" aria-current={path === '/channels/new' ? 'page' : undefined} class="grid size-8 place-items-center rounded-lg text-base text-ink-soft hover:bg-surface hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+          <Icon name="plus" />
+        </a>
+        <a href="/channels" title="Manage channels" aria-label="Manage channels" aria-current={path === '/channels' ? 'page' : undefined} class="grid size-8 place-items-center rounded-lg text-base text-ink-soft hover:bg-surface hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+          <Icon name="gear" />
+        </a>
+        </div>
+      </div>
+      <ul class="flex flex-col gap-4">
+        {
+          groups.map((group) => (
+            <li>
+              <ChannelGroup label={group.label} avatar={group.avatar} channels={group.channels} />
+            </li>
+          ))
+        }
+      </ul>
+      </div>
+    </section>
+  </div>
+</aside>

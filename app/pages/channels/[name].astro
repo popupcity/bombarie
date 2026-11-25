@@ -1,0 +1,178 @@
+---
+import Text from 'ui/src/components/Text.astro';
+import Button from 'ui/src/components/Button.astro';
+import Chip from '../../components/Chip.astro';
+import { connectProblem } from '../../../src/connect.ts';
+import { channelInfos, channelPosts, loadChannels, removeChannel, renameChannel, setFeed, setHandle } from '../../../src/channels.ts';
+import { appsPath, readApp, readTokens, tokensPath } from '../../../src/secrets.ts';
+import { readFeed, refreshFeed } from '../../../src/feed.ts';
+import { PLATFORM_LABEL } from '../../../src/types.ts';
+import { sentence } from '../../../src/text.ts';
+import ChannelMark from '../../components/ChannelMark.astro';
+import ConfirmDialog from '../../components/ConfirmDialog.astro';
+import ActionRow from '../../components/ActionRow.astro';
+import ValueButton from '../../components/ValueButton.astro';
+import ChannelForm from '../../components/ChannelForm.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { appKey, appSaved, channelState, disconnect, callbackUrl, refreshPhoto, saveApp, setOutcome, startConnect, takeOutcome } from '../../lib/connect.ts';
+import { loadConnections, root } from '../../lib/data.ts';
+import Shell from '../../layouts/Shell.astro';
+
+const key = decodeURIComponent(Astro.params.name ?? '');
+const channels = loadChannels(root);
+const channel = channels[key];
+if (!channel) return new Response('Not found', { status: 404 });
+const here = `/channels/${encodeURIComponent(key)}`;
+
+let failure = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const intent = String(form.get('intent') ?? '');
+  try {
+    if (intent === 'save') {
+      const text = (name: string) => String(form.get(name) ?? '');
+      const messages: string[] = ['Saved.'];
+      await renameChannel(root, key, text('name'));
+      if (channel.platform === 'instagram') await setHandle(root, key, text('handle'));
+      if (form.has('feed')) {
+        await setFeed(root, key, text('feed'));
+        const address = loadChannels(root)[key]?.feed;
+        if (address) {
+          const result = await refreshFeed(root, key, address, fetch, new Date());
+          if (result.error) throw new Error(`saved, but the feed could not be read: ${result.error}`);
+          messages[0] = 'Saved and read.';
+        } else if (channel.feed) messages[0] = 'Saved. The feed is removed.';
+      }
+      if (form.has('clientId') && text('clientId') !== '') {
+        await saveApp(channel.platform, { clientId: text('clientId'), clientSecret: text('clientSecret'), configId: text('configId') }, Astro.url.origin);
+      }
+      if (form.has('connect') && connectProblem(channel) === null) return Astro.redirect(await startConnect(root, key, Astro.url.origin), 303);
+      setOutcome({ name: key, ok: true, message: messages[0]! });
+      return Astro.redirect(here, 303);
+    }
+    if (intent === 'delete') {
+      await disconnect(key);
+      await removeChannel(root, key);
+      setOutcome({ name: '', ok: true, message: 'Channel deleted.' });
+      return Astro.redirect('/channels', 303);
+    }
+    if (intent === 'photo' || intent === 'disconnect') {
+      const message = intent === 'photo' ? await refreshPhoto(root, key) : await disconnect(key);
+      setOutcome({ name: key, ok: true, message });
+      return Astro.redirect(here, 303);
+    }
+    if (intent === 'connect') return Astro.redirect(await startConnect(root, key, Astro.url.origin), 303);
+    failure = 'Unknown action.';
+  } catch (err) {
+    failure = sentence(err instanceof Error ? err.message : String(err));
+  }
+}
+
+const outcome = takeOutcome();
+const toast = failure ? { tone: 'bad' as const, text: failure } : outcome && (outcome.name === key || outcome.name === '') ? { tone: outcome.ok ? ('ok' as const) : ('bad' as const), text: sentence(outcome.message) } : null;
+const info = channelInfos(channels).find((candidate) => candidate.name === key)!;
+const problem = (await loadConnections())[key];
+const fit = connectProblem(channel) === null;
+let tokens: Awaited<ReturnType<typeof readTokens>> = {};
+try {
+  tokens = await readTokens(tokensPath());
+} catch {
+  tokens = {};
+}
+const until = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const expires = tokens[key]?.expiresAt;
+const inUse = channelPosts(root, key);
+const validity = expires ? `Token valid until ${until.format(expires)}.` : 'Token has no expiry date.';
+const savedId = await appSaved(channel.platform).catch(() => null);
+const state = channelState(channel, problem, tokens[key]);
+const instagram = channel.platform === 'instagram';
+const facebook = channel.platform === 'facebook';
+const threads = channel.platform === 'threads';
+const meta = instagram || facebook;
+const savedConfig = meta ? ((await readApp(appsPath(), appKey(channel.platform)).catch(() => null))?.configId ?? '') : '';
+const redirectUri = callbackUrl(Astro.url.origin);
+const action = fit ? 'Connection' : 'Save';
+const hasFeed = channel.platform === 'substack' || channel.platform === 'website';
+const connected = Boolean(tokens[key]) && !state.broken;
+const note = connected
+  ? facebook
+    ? ''
+    : validity
+  : state.broken && (instagram || threads)
+    ? 'The connection stopped working. Connect again.'
+    : facebook
+      ? 'Give this channel the exact name of the page if you share more than one.'
+      : instagram || threads
+        ? ''
+        : problem
+          ? sentence(problem)
+          : validity;
+
+const stored = hasFeed ? readFeed(root, key) : null;
+const feedFile = stored && stored.source === channel.feed ? stored : null;
+---
+
+<Shell title={info.label}>
+  <div class="flex max-w-wide flex-col gap-8">
+    <PageHeader title={info.label} />
+    {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
+    <ChannelForm formId="channel-form" platform={channel.platform} name={info.label} handle={channel.handle ?? ''} feed={channel.feed ?? ''} setup={fit ? { clientId: savedId ?? '', secretSaved: savedId !== null, configId: savedConfig, redirectUri } : undefined} actionTitle={action} remove={{ id: 'delete-channel', label: 'Delete channel', blocked: inUse > 0 ? `${inUse} ${inUse === 1 ? 'post uses' : 'posts use'} this channel, so it cannot be deleted.` : undefined }}>
+      <input slot="top" type="hidden" name="intent" value="save" />
+      <ChannelMark slot="mark" channel={info} size="lg" on="surface" />
+      {
+        channel.feed && (
+          <Text slot="feed-note" variant="small" class="text-ink-soft">
+            {feedFile ? `${feedFile.items.length} ${feedFile.items.length === 1 ? 'post' : 'posts'} kept. Last read ${new Date(feedFile.fetchedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Amsterdam' })}.` : 'Not read yet.'}
+            {feedFile?.error ? ` ${sentence(feedFile.error)}` : ''}
+          </Text>
+        )
+      }
+      {
+        !hasFeed && (
+          <Fragment slot="rows">
+            <ActionRow label="Status">
+              <Chip size="control" tone={state.broken ? 'warn' : connected ? 'ok' : 'ink'}>{state.broken ? 'Reconnect' : connected ? 'Connected' : 'Not connected'}</Chip>
+            </ActionRow>
+            {note && <Text variant="small" class="text-ink-soft">{note}</Text>}
+            {fit && !problem && channel.platform === 'linkedin' && (
+              <ActionRow label="Photo">
+                <ValueButton type="submit" form="connection-form" name="intent" value="photo" external={false}>Refresh photo</ValueButton>
+              </ActionRow>
+            )}
+            {fit && tokens[key] && (
+              <ActionRow label="Access">
+                <ValueButton type="submit" form="connection-form" name="intent" value="disconnect" external={false}>Disconnect</ValueButton>
+              </ActionRow>
+            )}
+          </Fragment>
+        )
+      }
+      <Fragment slot="actions">
+        {
+          fit && (!tokens[key] || state.broken) ? (
+            <Button type="submit" form="channel-form" name="connect" value="1">{tokens[key] ? 'Save and reconnect' : 'Save and connect'}</Button>
+          ) : (
+            <Button type="submit" form="channel-form">Save</Button>
+          )
+        }
+        <form id="connection-form" method="post" hidden></form>
+      </Fragment>
+    </ChannelForm>
+    <ConfirmDialog id="delete-channel" title={`Delete ${info.label} on ${PLATFORM_LABEL[info.platform]}?`} intent="delete" variant={key} confirm="Delete">
+      This removes the channel and its connection. Posts are not touched, but a channel with posts cannot be deleted.
+    </ConfirmDialog>
+  </div>
+  <Fragment slot="after">
+    <script>
+      const copy = document.getElementById('copy');
+      const redirect = document.getElementById('redirect') as HTMLInputElement | null;
+      copy?.addEventListener('click', async () => {
+        if (!redirect) return;
+        await navigator.clipboard.writeText(redirect.value);
+        copy.textContent = 'Copied';
+      });
+      redirect?.addEventListener('focus', () => redirect.select());
+      document.getElementById('clientSecret')?.addEventListener('focus', (event) => (event.target as HTMLInputElement).select());
+    </script>
+  </Fragment>
+</Shell>

@@ -1,0 +1,12 @@
+---
+import { TINTED } from '../lib/ui.ts';
+
+interface Props {
+  tone: 'ok' | 'warn' | 'ink' | 'info' | 'bad';
+  size?: 'small' | 'control';
+  [key: string]: unknown;
+}
+const { tone, size = 'small', ...rest } = Astro.props;
+---
+
+<span data-tone={tone} class:list={['inline-flex w-fit items-center gap-1', size === 'control' ? 'h-(--control-md) rounded-(--radius-control) px-4 text-sm' : 'rounded-sm px-2 py-1 text-xs', TINTED]} {...rest}><slot /></span>

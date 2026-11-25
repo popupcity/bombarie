@@ -1,0 +1,402 @@
+---
+import Alert from 'ui/src/components/Alert.astro';
+import Card from 'ui/src/components/Card.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+import { removeUnusedFile } from '../../../src/media.ts';
+import { COMPOSE_URL, PLATFORM_LABEL, coverLabel, isMedia, needsCover, takesMedia } from '../../../src/types.ts';
+import { dateLabel, postsNow } from '../../../src/plan.ts';
+import { whenLabel } from '../../../src/time.ts';
+import Chip from '../../components/Chip.astro';
+import ChannelMark from '../../components/ChannelMark.astro';
+import TitleField from '../../components/TitleField.astro';
+import Shell from '../../layouts/Shell.astro';
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import ManualDialog from '../../components/ManualDialog.astro';
+import DeleteDialog from '../../components/DeleteDialog.astro';
+import ImageTile from '../../components/ImageTile.astro';
+import Dropzone from '../../components/Dropzone.astro';
+import ReplyTemplate from '../../components/ReplyTemplate.astro';
+import VariantRow from '../../components/VariantRow.astro';
+import ChoiceMenu from '../../components/ChoiceMenu.astro';
+import Hint from '../../components/Hint.astro';
+import { toEdit } from '../../../src/mentions.ts';
+import { sentence } from '../../../src/text.ts';
+import { channelInfos, loadChannels } from '../../../src/channels.ts';
+import { addVariant, deletePost, deleteVariant, loadCampaign } from '../../../src/campaign.ts';
+import ConfirmDialog from '../../components/ConfirmDialog.astro';
+import DialogShell from '../../components/DialogShell.astro';
+import { canRemoveReply, canReply } from '../../../src/reply.ts';
+import { canUnpost, MANUAL_ID } from '../../../src/unpost.ts';
+import { providers } from '../../../src/connect.ts';
+import { content, deleteFromPlatform, loadConnections, markPosted, outcomeWording, postRepliesNow, root, setFlash, startPostNow, states, takeFlash, unmarkPosted } from '../../lib/data.ts';
+import { forgetOutcome, lastOutcome } from '../../../src/progress.ts';
+import { isAutomatic } from '../../../src/connect.ts';
+import { jsonForScript, MENU, MENU_ITEM } from '../../lib/ui.ts';
+import { variantOptions } from '../../lib/variants.ts';
+import ActionPanel from '../../components/ActionPanel.astro';
+import ActionRow from '../../components/ActionRow.astro';
+import ValueButton from '../../components/ValueButton.astro';
+import PlatformPreview from '../../components/PlatformPreview.astro';
+import Section from '../../components/Section.astro';
+
+const [folder = '', requested] = (Astro.params.path ?? '').split('/');
+const campaign = loadCampaign(root, decodeURIComponent(folder));
+if (!campaign) return new Response('Not found', { status: 404 });
+
+let formError = '';
+const flash = takeFlash();
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const intent = String(form.get('intent') ?? '');
+  const at = (base: string) => `/posts/${encodeURIComponent(campaign.folder)}/${encodeURIComponent(base)}`;
+  try {
+    if (intent === 'add') return Astro.redirect(at(await addVariant(root, content, campaign.folder, String(form.get('from') ?? ''), String(form.get('channel') ?? ''))), 303);
+    if (intent === 'delete-file') {
+      await removeUnusedFile(content, campaign.folder, String(form.get('file') ?? ''), campaign.variants.flatMap((other) => (other.fields.ok ? other.fields.images : [])));
+      setFlash({ text: 'File deleted.', tone: 'ok' });
+      return Astro.redirect(at(String(form.get('variant') ?? '')), 303);
+    }
+    if (intent === 'delete-variant') return Astro.redirect(at(await deleteVariant(root, content, states, campaign.folder, String(form.get('variant') ?? ''))), 303);
+    else if (intent === 'delete-posted') {
+      const base = String(form.get('variant') ?? '');
+      const scope = String(form.get('scope') ?? 'local');
+      const result = scope === 'local' ? { ok: true, text: '' } : await deleteFromPlatform(campaign.folder, base);
+      if (!result.ok) formError = result.text;
+      else if (scope === 'platform') {
+        setFlash({ text: result.text, tone: 'ok' });
+        return Astro.redirect(at(base), 303);
+      } else if (campaign.variants.length > 1) return Astro.redirect(at(await deleteVariant(root, content, states, campaign.folder, base)), 303);
+      else {
+        await deletePost(root, content, states, campaign.folder);
+        return Astro.redirect('/', 303);
+      }
+    } else if (intent === 'mark-posted' || intent === 'unmark-posted') {
+      const base = String(form.get('variant') ?? '');
+      await (intent === 'mark-posted' ? markPosted(campaign.folder, base, Astro.locals.user) : unmarkPosted(campaign.folder, base));
+      setFlash({ text: intent === 'mark-posted' ? 'Marked as posted.' : 'Back to not posted.', tone: 'ok' });
+      return Astro.redirect(at(base), 303);
+    } else if (intent === 'post-replies') {
+      const base = String(form.get('variant') ?? '');
+      const result = await postRepliesNow(campaign.folder, base);
+      setFlash({ text: result.text, tone: result.ok ? 'ok' : 'bad' });
+      return Astro.redirect(at(base), 303);
+    } else if (intent === 'post-now') {
+      const result = await startPostNow(campaign.folder, String(form.get('variant') ?? ''), Astro.locals.user);
+      if (!result.ok) formError = result.text;
+      else return Astro.redirect(at(String(form.get('variant') ?? '')), 303);
+    } else if (intent === 'delete-post') {
+      await deletePost(root, content, states, campaign.folder);
+      return Astro.redirect('/', 303);
+    } else formError = 'Unknown action.';
+  } catch (err) {
+    formError = err instanceof Error ? err.message : String(err);
+  }
+}
+
+const variant = campaign.variants.find((candidate) => candidate.base === decodeURIComponent(requested ?? '')) ?? campaign.variants[0]!;
+const fields = variant.fields;
+const images = fields.ok ? fields.images : [];
+const fits = (name: string): boolean => takesMedia(variant.platform, name);
+const reusable = (await content.list(`posts/${campaign.folder}`)).filter((name) => isMedia(name) && !images.includes(name) && fits(name));
+const recorded = await states.get(`${campaign.folder}/${variant.base}.md`);
+const settled = lastOutcome(`${campaign.folder}/${variant.base}.md`);
+const settledToast = settled && Date.now() - new Date(settled.at).getTime() < 120_000 ? { text: outcomeWording(settled.status, settled.message), tone: settled.status === 'posted' ? 'ok' : settled.status === 'unconfirmed' ? 'warn' : 'bad' } : null;
+if (settled) forgetOutcome(`${campaign.folder}/${variant.base}.md`);
+const stays = recorded?.status === 'posted' ? ` It stays on ${PLATFORM_LABEL[variant.platform]} until you delete it there.` : '';
+const markedByHand = recorded?.status === 'posted' && recorded.remoteId === MANUAL_ID;
+const repliable = recorded?.status === 'posted' && !markedByHand && canReply(providers, variant.platform);
+const unpostable = recorded?.status === 'posted' && !markedByHand && canUnpost(providers, variant.platform);
+const manualNow = !isAutomatic(variant.platform) || (fields.ok && fields.manual);
+const pdfOk = takesMedia(variant.platform, 'a.pdf');
+const videoOk = takesMedia(variant.platform, 'a.mp4');
+const accept = ['image/jpeg,image/png,image/gif,image/webp', pdfOk && 'application/pdf', videoOk && 'video/mp4'].filter(Boolean).join(',');
+const threaded = (variant.platform === 'threads' || variant.platform === 'linkedin') && variant.type !== 'story';
+const compose = variant.platform === 'substack' && variant.type === 'note' ? 'https://substack.com/notes' : COMPOSE_URL[variant.platform];
+const forcedManual = !isAutomatic(variant.platform);
+const copyText = manualNow && variant.type !== 'story';
+const planned = fields.ok && fields.status === 'planned';
+const shown = toEdit(fields.body, new Map(Object.entries(campaign.entities)));
+const field = 'rounded-lg bg-surface p-6 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+const connections = await loadConnections();
+const instant = fields.ok && !planned && recorded === null && postsNow({ manual: fields.manual || !isAutomatic(variant.platform), connected: !connections[variant.channel], date: fields.date, now: new Date() });
+const addable = variantOptions(channelInfos(loadChannels(root))).filter((option) => !campaign.variants.some((candidate) => candidate.base === option.base));
+const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-pressed:bg-ink aria-pressed:text-page';
+---
+
+<Shell title={campaign.title}>
+  <div class="flex max-w-wide flex-col gap-8">
+    <header class="flex flex-col gap-4">
+      <Heading variant="page" as="h1" id="heading" class="sr-only">{(fields.ok && fields.title) || campaign.title}</Heading>
+      <div class="sticky top-0 z-10 flex h-20 items-center gap-4 bg-page">
+        <div class="min-w-0 flex-1">
+          <TitleField id="title" value={(fields.ok && fields.title) || campaign.title} data-fallback={campaign.title} />
+        </div>
+      </div>
+    </header>
+    {formError && <div hidden data-toast={formError} data-tone="bad" />}
+    {flash && <div hidden data-toast={flash.text} data-tone={flash.tone} />}
+    {settledToast && <div hidden data-toast={settledToast.text} data-tone={settledToast.tone} />}
+
+    <Card variant="row" alert id="problems" role="alert" hidden={!variant.error} class="flex flex-col gap-2 text-sm text-(--tone-text)">
+      {variant.error && <Text variant="body">{sentence(variant.error)}</Text>}
+    </Card>
+
+    <div class="grid gap-8 lg:grid-cols-3">
+      <section
+        class="relative flex flex-col gap-8 lg:col-span-2"
+        data-editor
+        data-folder={campaign.folder}
+        data-variant={variant.base}
+        data-revision={variant.revision}
+        data-platform={variant.platform}
+        data-posting={recorded?.status === 'posting' && Date.now() - new Date(recorded.at).getTime() < 10 * 60_000 ? '' : undefined}
+        data-type={variant.type ?? undefined}
+        data-due={variant.post?.date.toISOString()}
+        data-posted={markedByHand ? '' : undefined}
+        data-replies-sent={recorded?.status === 'posted' ? String(recorded.replies?.count ?? 0) : undefined}
+        data-reply-ids={recorded?.status === 'posted' ? JSON.stringify(recorded.replies?.ids ?? []) : undefined}
+        data-reply-remote={recorded?.status === 'posted' && canRemoveReply(providers, variant.platform) ? '' : undefined}
+        data-compose={compose}
+        data-reminders={process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID ? '' : undefined}
+        data-connection={connections[variant.channel] ?? undefined}
+        data-manual-only={isAutomatic(variant.platform) ? undefined : ''}
+      >
+        <Card variant="row" class="hidden items-center justify-between gap-4 text-sm has-[#restore:not([hidden])]:flex">
+          <span>Unsaved text from your last visit was kept.</span>
+          <Button id="restore" type="button" variant="outline" hidden>Restore</Button>
+        </Card>
+        <div data-tone="warn" class="hidden items-center justify-between gap-4 rounded-lg bg-(--tone-soft) px-4 py-3 text-sm text-(--tone-text) has-[#conflict:not([hidden])]:flex">
+          <span>This file changed elsewhere. Your text is kept here.</span>
+          <span id="conflict" hidden class="flex gap-2">
+            <Button id="reload" type="button" variant="outline">Reload</Button>
+            <Button id="overwrite" type="button" variant="outline" tone="bad">Overwrite</Button>
+          </span>
+        </div>
+        <nav class="flex flex-wrap gap-2" aria-label="Variants">
+          {
+            campaign.variants.map((candidate) => (
+              <a
+                href={`/posts/${encodeURIComponent(campaign.folder)}/${encodeURIComponent(candidate.base)}`}
+                aria-current={candidate === variant ? 'page' : undefined}
+                aria-label={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}${candidate.type ? `, ${candidate.type}` : ''}`}
+                title={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}`}
+                data-control
+                class="inline-flex h-10 items-center gap-3 rounded-lg pr-4 pl-1 text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-ink"
+              >
+                <ChannelMark channel={candidate} size="lg" />
+                <span aria-hidden="true">{candidate.label}</span>
+                {candidate.type && <span aria-hidden="true" class="rounded-sm bg-track px-2 py-1 text-xs text-ink-soft capitalize">{candidate.type}</span>}
+              </a>
+            ))
+          }
+          {
+            addable.length > 0 && (
+              <>
+                <button type="button" popovertarget="add-variant" aria-label="Add variant" title="Add variant" class="inline-flex size-10 cursor-pointer items-center justify-center rounded-lg text-xl text-ink ring-1 ring-line ring-inset [anchor-name:--add-variant] hover:ring-line-strong"><Icon name="plus" weight="bold" /></button>
+                <form id="add-variant" popover method="post" class:list={[MENU, 'w-72 [inset:auto] [left:anchor(left)] [position-anchor:--add-variant] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]']}>
+                  <input type="hidden" name="intent" value="add" />
+                  <input type="hidden" name="from" value={variant.base} />
+                  <div class="scroll-fade">                  {addable.map((option) => (
+                    <button type="submit" name="channel" value={option.base} class={MENU_ITEM}>
+                      <VariantRow option={option} problem={connections[option.name]} />
+                    </button>
+                  ))}
+                  </div>
+                </form>
+              </>
+            )
+          }
+        </nav>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-4">
+            <div role="group" aria-label="Editor view" class="inline-flex h-10 w-fit overflow-hidden rounded-lg border border-ink text-sm">
+              <button type="button" id="mode-edit" aria-pressed="true" class={tab}>Edit</button>
+              <button type="button" id="mode-source" aria-pressed="false" class={tab}>Source</button>
+            </div>
+          </div>
+          <div id="edit-view" class="flex flex-col gap-8">
+            <label for="body" class="sr-only">Text</label>
+            <div class="flex flex-col gap-8">
+              <div class="flex flex-col gap-2">
+                {threaded && <p class="text-sm text-ink-soft">Post</p>}
+              <div class="relative">
+                <textarea id="body" rows="8" hidden={variant.type === 'story' && !(fields.ok && fields.manual)} placeholder="Write your post. Type @ to mention." class:list={['block min-h-56 w-full text-lg', field, copyText && 'pr-14']}>{shown}</textarea>
+                <Button id="copy-text" type="button" variant="quiet" size="sm" icon aria-label="Copy text" title="Copy text" hidden={!copyText} class="absolute top-3 right-3"><Icon name="copy" /></Button>
+              </div>
+              </div>
+              {
+                threaded && (
+                  <div class="flex flex-col gap-4">
+                    <div id="replies" class="flex flex-col gap-8 empty:hidden"></div>
+                    <ReplyTemplate />
+                    <div class="flex justify-end">
+                      <Button id="add-reply" type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a comment under this post'}>{variant.platform === 'threads' ? 'Add reply' : 'Add comment'}</Button>
+                    </div>
+                  </div>
+                )
+              }
+            </div>
+            <div id="images" class="relative flex flex-col gap-4">
+              <ul id="image-list" class="grid grid-cols-4 items-start gap-4"></ul>
+              <template id="image-tile"><ImageTile arrows /></template>
+              <Dropzone inputId="image-input" accept={accept} title={`Add images${pdfOk && videoOk ? ', PDF or video' : videoOk ? ' or video' : ''}`} />
+            </div>
+            {
+              reusable.length > 0 && (
+                <div data-unused class="flex flex-col gap-4">
+                  <Heading variant="label" as="h2">Unused in this post</Heading>
+                  <ul class="grid grid-cols-4 items-start gap-4">
+                    {reusable.map((name) => (
+                      <li class="group/tile relative">
+                        <img src={`/img/${encodeURIComponent(campaign.folder)}/${encodeURIComponent(needsCover(name) ? `${name}.cover.jpg` : name)}?w=512`} alt="" loading="lazy" class="block h-auto w-full rounded-lg object-cover ring-1 ring-line" />
+                        {needsCover(name) && <span class="absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white">{coverLabel(`${name}.cover.jpg`)}</span>}
+                        <Button data-use-image={name} type="button" variant="quiet" size="sm" icon aria-label={`Add ${name}`} title={`Add ${name}`} class="absolute right-2 bottom-2"><Icon name="plus" /></Button>
+                        <Button type="button" data-open="delete-file" data-value={name} variant="quiet" size="sm" icon data-tone="bad" aria-label={`Delete ${name}`} title={`Delete ${name}`} class="absolute top-2 right-2 opacity-0 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 pointer-coarse:opacity-100 hover:text-(--tone-text)"><Icon name="trash" /></Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            }
+          </div>
+          <div id="source-view" hidden class="flex flex-col gap-2">
+            <label for="source" class="sr-only">File source</label>
+            <textarea id="source" rows="18" spellcheck="false" class={`block min-h-72 w-full font-mono text-sm ${field}`}>{variant.raw}</textarea>
+            <Alert variant="plain" id="source-note"></Alert>
+          </div>
+        </div>
+        <script type="application/json" id="entities" set:html={jsonForScript(campaign.entities)} />
+        <script type="application/json" id="raw" set:html={jsonForScript(variant.raw)} />
+      </section>
+
+      <div class="flex flex-col gap-12">
+          <ActionPanel id="fields" title={`Post ${variant.type === 'story' ? 'story ' : ''}on ${PLATFORM_LABEL[variant.platform]}`} remove={recorded?.status === 'posted' ? 'delete-posted' : campaign.variants.length > 1 ? 'delete-variant' : 'delete-post'} actions={{ id: 'actions', 'data-planned': planned ? '' : undefined }}>
+              <Alert tone="warn" role="note" id="hint" hidden></Alert>
+              <ActionRow label="Status">
+                <div class="flex items-center gap-2">
+                {
+                  recorded?.status === 'posted' && !markedByHand ? (
+                    <Chip size="control" id="state" tone="ok">Posted</Chip>
+                  ) : (
+                    <ChoiceMenu
+                      id="status-menu"
+                      triggerId="state"
+                      labelId="state-label"
+                      label={markedByHand ? 'Posted' : planned ? 'Planned' : 'Draft'}
+                      tone={markedByHand ? 'ok' : planned ? 'info' : 'warn'}
+                      options={[
+                        { label: 'Draft', text: 'Not planned yet.', active: !markedByHand && !planned, attrs: { 'data-status': 'draft' } },
+                        { label: 'Planned', text: manualNow ? 'You get a reminder at the date.' : 'Posts by itself at the date.', active: !markedByHand && planned, attrs: { 'data-status': 'planned' } },
+                        { label: 'Posted', text: 'Already posted manually.', active: markedByHand, attrs: { 'data-status': 'posted', hidden: !manualNow } }
+                      ]}
+                    />
+                  )
+                }
+                  <span id="reminder" hidden class="inline-flex cursor-default text-lg text-ink-soft" role="img">
+                    <span data-on hidden><Icon name="bell" /></span>
+                    <span data-off hidden><Icon name="bell-slash" /></span>
+                  </span>
+                  {(recorded?.status === 'posted' || recorded?.status === 'posting') && recorded.by && <Text variant="small" class="text-ink-soft">by {recorded.by}</Text>}
+                </div>
+              </ActionRow>
+              {
+                recorded?.status === 'posted' && recorded.url && (
+                  <ActionRow label="Live">
+                    <ValueButton href={recorded.url}>
+                      Open on {PLATFORM_LABEL[variant.platform]}
+                      <Icon name="arrow-square-out" />
+                    </ValueButton>
+                  </ActionRow>
+                )
+              }
+              <ActionRow label="Date">
+                <div class="relative">
+                  <ValueButton id="date-open" data-date-open>{fields.ok && fields.date ? dateLabel(fields.date, planned || recorded !== null, new Date()) : 'Pick a date'}</ValueButton>
+                  <input id="date" data-date-input type="datetime-local" step="60" value={fields.ok ? fields.date : ''} tabindex="-1" aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-0" />
+                </div>
+              </ActionRow>
+              <input id="manual" type="checkbox" checked={fields.ok && fields.manual} class="sr-only" tabindex="-1" aria-hidden="true" />
+              {!forcedManual && (
+              <ActionRow label="Posting">
+                {
+                  connections[variant.channel] ? (
+                    <Button variant="soft" tone="manual" tabindex="-1" title="This channel has no connection yet, so you post it yourself" class="cursor-default hover:opacity-100">Manual</Button>
+                  ) : (
+                    <ChoiceMenu
+                      id="mode-menu"
+                      triggerId="mode-open"
+                      labelId="mode-label"
+                      label={fields.ok && fields.manual ? 'Manual' : 'Auto'}
+                      tone={fields.ok && fields.manual ? 'manual' : 'ink'}
+                      options={[
+                        { label: 'Auto', active: !(fields.ok && fields.manual), attrs: { 'data-mode': 'auto' } },
+                        { label: 'Manual', text: 'You post it yourself.', active: fields.ok && fields.manual, attrs: { 'data-mode': 'manual' } }
+                      ]}
+                    />
+                  )
+                }
+              </ActionRow>
+              )}
+              <Fragment slot="actions">
+                {repliable && <Button id="post-replies" type="button" hidden>Post comment</Button>}
+                <Button id="save" type="button" variant="outline" aria-describedby="hint" disabled hidden class="group-data-[planned]:bg-(--tone) group-data-[planned]:text-(--tone-on)">Save</Button>
+                <Button id="plan" type="button" aria-describedby="hint" data-recorded={recorded !== null ? '1' : undefined} hidden={planned || recorded !== null}>{instant ? 'Post now' : 'Plan'}</Button>
+              </Fragment>
+            </ActionPanel>
+        <Section id="preview" title="Preview" hidden={variant.preview.length === 0 && images.length === 0}>
+          <div class="flex flex-col gap-4 rounded-xl bg-track p-4">
+            <PlatformPreview platform={variant.platform} type={variant.type} channel={variant.channel} label={variant.label} avatar={variant.avatar} when={fields.ok && fields.date ? whenLabel(fields.date) : 'No date yet'} folder={campaign.folder} images={images} link={variant.post?.link} handle={loadChannels(root)[variant.channel]?.handle} segments={variant.preview.segments} />
+            <Text variant="fine" class="px-2 text-ink-soft tabular-nums" id="preview-count" hidden={variant.type === 'story'}>{variant.preview.length}{variant.preview.limit ? `/${variant.preview.limit}` : ''} characters</Text>
+            {variant.type === 'story' && <Text variant="fine" class="flex items-center gap-1 px-2 text-ink-soft">Story format <Hint text="9:16, 1080 × 1920 px. Keep important things out of the top 14 % and the bottom 18 %, Instagram puts its own buttons there. A story is posted as the image alone: no text and no link." /></Text>}
+          </div>
+          <ul id="preview-notes" class="flex flex-col gap-2 text-sm text-ink-soft">{variant.preview.notes.map((note) => <li>{sentence(note)}</li>)}</ul>
+        </Section>
+
+        {
+          campaign.variants.length > 1 && (
+            <ConfirmDialog id="delete-variant" title={`Delete the ${variant.label} variant?`} intent="delete-variant" variant={variant.base} confirm="Delete">
+              This removes its file. The images stay.{stays}
+            </ConfirmDialog>
+          )
+        }
+        {
+          recorded?.status === 'posted' && (
+            <DeleteDialog id="delete-posted" title={`Delete this ${variant.label} post?`} variant={variant.base} platform={PLATFORM_LABEL[variant.platform]} remote={unpostable} url={recorded.url} last={campaign.variants.length === 1} />
+          )
+        }
+        <ManualDialog variant={variant.base} platform={PLATFORM_LABEL[variant.platform]} story={variant.type === 'story'} images={images.length > 0} />
+        <DialogShell id="reply-delete">
+          <div class="flex flex-col gap-4">
+            <Heading variant="card" as="h2" id="reply-delete-title">Delete this {variant.platform === 'threads' ? 'reply' : 'comment'}?</Heading>
+            <Text variant="small" class="text-ink-soft">It is removed here. {variant.platform === 'threads' ? 'Threads does not let other apps delete replies; remove it there yourself.' : `Choose whether it also goes from ${PLATFORM_LABEL[variant.platform]}.`}</Text>
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <form method="dialog"><Button type="submit" variant="outline" autofocus>Cancel</Button></form>
+              <Button id="reply-delete-local" type="button" variant="outline" tone="bad">Only here</Button>
+              <Button id="reply-delete-both" type="button" tone="bad" hidden>From {PLATFORM_LABEL[variant.platform]} and here</Button>
+            </div>
+          </div>
+        </DialogShell>
+        <ConfirmDialog id="delete-file" title="Delete this file?" intent="delete-file" variant={variant.base} confirm="Delete" field="file">
+          It is in the folder of this post but no variant uses it. Deleting it cannot be undone.
+        </ConfirmDialog>
+        <ConfirmDialog id="post-now" title={`Post to ${variant.label} on ${PLATFORM_LABEL[variant.platform]} now?`} intent="post-now" variant={variant.base} confirm="Post now" tone="ink">
+          You are about to post the saved version on {PLATFORM_LABEL[variant.platform]}. It goes live right away and cannot be undone.
+        </ConfirmDialog>
+        {
+          campaign.variants.length === 1 && (
+            <ConfirmDialog id="delete-post" title={`Delete “${campaign.title}”?`} intent="delete-post" variant={variant.base} confirm="Delete">
+              This removes its file and every image in the folder. It cannot be undone.{stays}
+            </ConfirmDialog>
+          )
+        }
+      </div>
+    </div>
+  </div>
+  <Fragment slot="after">
+    <script>
+      import '../../scripts/editor.ts';
+    </script>
+  </Fragment>
+</Shell>

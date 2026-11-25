@@ -1,0 +1,97 @@
+---
+import Card from 'ui/src/components/Card.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import { domainOf } from '../../src/ideas.ts';
+import type { Idea } from '../../src/ideas.ts';
+import Chip from './Chip.astro';
+import ConfirmDialog from './ConfirmDialog.astro';
+
+interface Props {
+  idea: Idea;
+}
+const { idea } = Astro.props;
+const href = `/ideas/${encodeURIComponent(idea.folder)}`;
+const shown = idea.images.slice(0, 3);
+const more = idea.images.length - shown.length;
+const tone = { new: 'warn', approved: 'info', made: 'ok' } as const;
+const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
+const cover = 'block focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+---
+
+<Card as="li" data-status={idea.status} hidden={idea.status === 'made'} class="flex flex-col gap-4">
+  <Chip tone={tone[idea.status]}>{label[idea.status]}</Chip>
+  {
+    (idea.title || idea.text) && (
+      <a href={href} class="flex flex-col gap-2 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+        {idea.title && <Heading variant="card" as="h3" class="break-words">{idea.title}</Heading>}
+        {idea.text && <Text variant="small" class="line-clamp-3 text-ink-soft break-words whitespace-pre-line">{idea.text}</Text>}
+      </a>
+    )
+  }
+  {
+    idea.link && domainOf(idea.link) !== idea.title && (
+      <a href={idea.link} target="_blank" rel="noreferrer noopener" class="inline-flex w-fit items-center gap-2 text-sm text-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+        <Icon name="link-simple" />
+        {domainOf(idea.link)}
+      </a>
+    )
+  }
+  {
+    idea.images.length === 0 && idea.linkImage && (
+      <a href={href} class={cover}>
+        <img src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(idea.linkImage)}?w=768`} alt="" loading="lazy" class="block h-auto max-h-48 w-full rounded-lg object-cover ring-1 ring-line" />
+      </a>
+    )
+  }
+  {
+    idea.images.length === 1 && (
+      <a href={href} class={cover}>
+        <img src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(idea.images[0] as string)}?w=768`} alt="" loading="lazy" class="block h-auto max-h-96 w-full rounded-lg object-cover ring-1 ring-line" />
+      </a>
+    )
+  }
+  {
+    idea.images.length > 1 && (
+      <a href={href} class={cover}>
+      <ul class="grid grid-cols-3 items-start gap-2">
+        {shown.map((name, index) => (
+          <li class="relative min-w-0">
+            <img src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(name)}?w=384`} alt="" loading="lazy" class="block h-auto w-full rounded-lg object-cover ring-1 ring-line" />
+            {index === shown.length - 1 && more > 0 && <span class="absolute inset-0 grid place-items-center rounded-lg bg-veil text-sm text-white">+{more}</span>}
+          </li>
+        ))}
+      </ul>
+      </a>
+    )
+  }
+  <form method="post" class="flex items-center justify-end gap-2">
+    <input type="hidden" name="folder" value={idea.folder} />
+    {
+      idea.status === 'new' && (
+        <>
+          <Button type="button" variant="outline" tone="bad" icon aria-label="Delete" title="Delete" class="mr-auto" data-open={`delete-${idea.folder}`}><Icon name="trash" /></Button>
+          <Button type="submit" name="intent" value="approve">Approve</Button>
+        </>
+      )
+    }
+    {
+      idea.status === 'approved' && (
+        <>
+          <Button type="submit" name="intent" value="unapprove" variant="outline">Unapprove</Button>
+          <Button href={`${href}#make`}>Make post</Button>
+        </>
+      )
+    }
+    {
+      idea.status === 'made' && (
+        <>
+          {idea.post && <Button href={`/posts/${encodeURIComponent(idea.post)}`} variant="outline">Open post</Button>}
+        </>
+      )
+    }
+  </form>
+  <ConfirmDialog id={`delete-${idea.folder}`} title={`Delete ${idea.title ? `“${idea.title}”` : 'this idea'}?`} intent="delete" variant={idea.folder} confirm="Delete">This removes the idea. It cannot be undone.</ConfirmDialog>
+</Card>

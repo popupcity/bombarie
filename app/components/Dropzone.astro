@@ -1,0 +1,22 @@
+---
+import Heading from 'ui/src/components/Heading.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import Text from 'ui/src/components/Text.astro';
+
+interface Props {
+  id?: string;
+  inputId: string;
+  accept: string;
+  title: string;
+  hint?: string;
+  class?: string;
+}
+const { id = 'image-dropzone', inputId, accept, title, hint, class: className } = Astro.props;
+---
+
+<label id={id} class:list={['flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong p-6 text-center text-ink-soft hover:border-ink-soft hover:text-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-0 has-focus-visible:outline-ink data-active:border-ink data-active:bg-surface data-active:text-ink', className]}>
+  <input id={inputId} type="file" accept={accept} multiple class="sr-only" />
+  <Icon name="image" class="text-xl" />
+  <Heading variant="card" as="p">{title}</Heading>
+  {hint && <Text variant="small">{hint}</Text>}
+</label>

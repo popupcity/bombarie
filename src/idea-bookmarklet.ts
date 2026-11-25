@@ -1,0 +1,2 @@
+export const ideaBookmarklet = (origin: string): string =>
+  `javascript:(()=>{const u=new URL(${JSON.stringify(`${origin}/ideas/add`)});u.searchParams.set('url',location.href);const m=document.querySelector('meta[property="og:title"],meta[name="twitter:title"]');u.searchParams.set('title',(m&&m.content||document.title).trim());const s=String(getSelection()).trim();if(s)u.searchParams.set('text',s.slice(0,2000));window.open(u,'bombarie-idea','width=520,height=680')})()`;

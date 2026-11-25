@@ -1,0 +1,12 @@
+---
+import { DIALOG } from '../lib/ui.ts';
+
+interface Props {
+  id: string;
+}
+const { id } = Astro.props;
+---
+
+<dialog id={id} aria-labelledby={`${id}-title`} class:list={[DIALOG, 'm-auto w-[min(28rem,calc(100%-32px))] rounded-xl bg-surface p-6 text-ink shadow-float ring-1 ring-line ring-inset backdrop:bg-scrim']}>
+  <slot />
+</dialog>

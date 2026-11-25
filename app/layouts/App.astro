@@ -1,0 +1,34 @@
+---
+import ConfirmDialog from '../components/ConfirmDialog.astro';
+import Toolbar from '../components/Toolbar.astro';
+import type { CalendarData } from '../../src/calendar.ts';
+import Shell from './Shell.astro';
+
+interface Props {
+  data: CalendarData;
+  view: 'month' | 'list';
+  title: string;
+}
+const { data, view, title } = Astro.props;
+---
+
+<Shell title={title}>
+  <Toolbar view={view} notices={data.notices} />
+  <div data-view class="-mt-20 flex max-w-wide flex-col gap-8">
+    <slot />
+  </div>
+  <script is:inline>
+    (() => {
+      const today = document.getElementById('today');
+      if (!today || (location.hash && location.hash !== '#today')) return;
+      scrollTo({ top: Math.max(0, today.getBoundingClientRect().top + scrollY - parseFloat(getComputedStyle(today).scrollMarginTop)), behavior: 'instant' });
+    })();
+  </script>
+  <ConfirmDialog id="card-delete" title="Delete this post?" intent="delete" variant="" confirm="Delete">This removes its file.</ConfirmDialog>
+  <Fragment slot="after">
+    <script>
+      import '../scripts/page.ts';
+      import '../scripts/dnd.ts';
+    </script>
+  </Fragment>
+</Shell>

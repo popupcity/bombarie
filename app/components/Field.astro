@@ -1,0 +1,18 @@
+---
+import Hint from './Hint.astro';
+
+interface Props {
+  label: string;
+  for?: string;
+  hint?: string;
+}
+const { label, for: target, hint } = Astro.props;
+---
+
+<div class="flex flex-col gap-2">
+  <div class="flex items-center gap-1">
+    <label for={target} class="text-sm text-ink-soft">{label}</label>
+    {hint && <Hint text={hint} />}
+  </div>
+  <slot />
+</div>

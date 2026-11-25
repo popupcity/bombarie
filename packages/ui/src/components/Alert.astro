@@ -1,0 +1,15 @@
+---
+interface Props {
+  variant?: 'plain' | 'panel';
+  tone?: string;
+  as?: 'p' | 'div';
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { variant = 'panel', tone = 'bad', as: Tag = 'p', class: className, ...rest } = Astro.props;
+---
+
+<Tag role="alert" data-tone={tone} class:list={['text-sm text-(--tone-text)', variant === 'panel' && 'rounded-xl bg-(--tone-soft) p-4', className]} {...rest}>
+  <slot />
+</Tag>

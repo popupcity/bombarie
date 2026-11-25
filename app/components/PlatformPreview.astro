@@ -1,0 +1,132 @@
+---
+import Text from 'ui/src/components/Text.astro';
+import Icon from 'ui/src/components/Icon.astro';
+import type { IconName } from 'ui/src/components/icons.ts';
+import type { Platform } from '../../src/types.ts';
+import { SEGMENT_CLASS, SEGMENT_TONE } from '../lib/ui.ts';
+import ChannelAvatar from './ChannelAvatar.astro';
+
+interface Props {
+  platform: Platform;
+  type: string | null;
+  channel: string;
+  label: string;
+  avatar?: string | undefined;
+  when: string;
+  folder: string;
+  images: string[];
+  link?: string | undefined;
+  handle?: string | undefined;
+  segments: { kind: string; text: string }[];
+}
+const { platform, type, channel, label, avatar, when, folder, images, link, handle: given, segments } = Astro.props;
+const story = platform === 'instagram' && type === 'story';
+const handle = given ?? channel.replace(/-instagram$/, '');
+const who = { label, avatar };
+const domain = link ? link.replace(/^https?:\/\//, '').split('/')[0] : '';
+const picture = (name: string) => `/img/${encodeURIComponent(folder)}/${encodeURIComponent(name)}?w=640`;
+const feedImages = 'flex flex-col gap-1 overflow-hidden rounded-lg [&_li]:max-h-80 [&_li]:overflow-hidden';
+const squareImages = 'absolute inset-0 [&_li]:size-full [&_li:not(:first-child)]:hidden';
+const feedPicture = 'block h-auto max-h-[125cqw] min-h-[52cqw] w-full object-cover';
+const slideButton = 'absolute top-1/2 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-lg bg-white text-ink ring-1 ring-line ring-inset hover:ring-line-strong';
+const action = 'flex items-center gap-2 text-sm text-ink-soft';
+const ACTIONS: Partial<Record<Platform, [IconName, string][]>> = {
+  linkedin: [['thumbs-up', 'Like'], ['chat-circle', 'Comment'], ['repeat', 'Repost'], ['paper-plane-tilt', 'Send']],
+  facebook: [['thumbs-up', 'Like'], ['chat-circle', 'Comment'], ['share-fat', 'Share']],
+  threads: [['heart', 'Like'], ['chat-circle', 'Reply'], ['repeat', 'Repost'], ['paper-plane-tilt', 'Share']],
+  substack: [['heart', 'Like'], ['chat-circle', 'Reply'], ['repeat', 'Restack']]
+};
+const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platform] ?? []);
+---
+
+{
+  story ? (
+    <div class="relative mx-auto aspect-[9/16] w-60 overflow-hidden rounded-xl bg-ink text-white">
+      <ul id="preview-images" class={squareImages} hidden={images.length === 0}>
+        {
+          images.map((name) => (
+            <li class="relative">
+              <img src={picture(name)} alt="" aria-hidden="true" class="absolute inset-0 size-full scale-125 object-cover blur-2xl brightness-75" />
+              <img src={picture(name)} alt="" class="relative block size-full object-contain" />
+            </li>
+          ))
+        }
+      </ul>
+      <div class="absolute inset-x-0 top-0 flex flex-col gap-2 bg-linear-to-b from-ink/60 to-transparent p-3">
+        <div class="h-0.5 rounded-sm bg-white/40"><div class="h-full w-1/3 rounded-sm bg-white"></div></div>
+        <div class="flex items-center gap-2 text-xs">
+          <ChannelAvatar channel={who} class="size-8 text-xs ring-2 ring-white" />
+          <span>{handle}</span>
+          <span class="text-white/70">Now</span>
+        </div>
+      </div>
+      <div class="absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 px-4">
+        {link && (
+          <span class="flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs text-ink">
+            <Icon name="link-simple" />
+            {domain}
+          </span>
+        )}
+      </div>
+      <div class="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-linear-to-t from-ink/60 to-transparent p-3">
+        <span class="flex-1 rounded-lg px-4 py-2 text-xs text-white ring-1 ring-white/60 ring-inset">Send message</span>
+        <Icon name="heart" class="text-xl" />
+        <Icon name="paper-plane-tilt" class="text-xl" />
+      </div>
+    </div>
+  ) : platform === 'instagram' ? (
+    <article class="flex flex-col overflow-hidden rounded-lg bg-surface">
+      <header class="flex items-center gap-3 p-3">
+        <ChannelAvatar channel={who} class="size-8 text-xs" small />
+        <span class="flex-1 text-sm font-semibold">{handle}</span>
+        <Icon name="dots-three" weight="bold" class="text-ink-soft" />
+      </header>
+      <div class="group @container relative flex aspect-square flex-col items-center justify-center gap-2 bg-track text-ink-soft has-[#preview-images:not([hidden])]:block has-[#preview-images:not([hidden])]:aspect-auto">
+        <Icon name="image" class="text-3xl group-has-[#preview-images:not([hidden])]:hidden" />
+        <span class="text-xs group-has-[#preview-images:not([hidden])]:hidden">Instagram needs an image</span>
+        <ul id="preview-images" class="w-full" hidden={images.length === 0}>
+          {images.map((name, index) => <li hidden={index > 0}><img src={picture(name)} alt="" class={feedPicture} /></li>)}
+        </ul>
+        <span id="slide-count" hidden class="absolute top-3 right-3 rounded-sm bg-veil px-2 py-1 text-xs text-white tabular-nums"></span>
+        <button type="button" data-slide="-1" hidden aria-label="Previous image" class={`${slideButton} left-2 rotate-180`}><Icon name="caret-right" /></button>
+        <button type="button" data-slide="1" hidden aria-label="Next image" class={`${slideButton} right-2`}><Icon name="caret-right" /></button>
+      </div>
+      <div id="slide-dots" hidden class="flex justify-center gap-1 pt-3"></div>
+      <div class="flex items-center gap-4 p-3 text-xl">
+        <Icon name="heart" />
+        <Icon name="chat-circle" />
+        <Icon name="paper-plane-tilt" />
+        <Icon name="bookmark-simple" class="ml-auto" />
+      </div>
+      <Text variant="post" class="px-3 pb-3 break-words whitespace-pre-wrap">
+        <span class="font-semibold text-ink">{handle}</span>{' '}
+        <span id="preview-text">
+          {segments.map((segment) => <span data-tone={SEGMENT_TONE[segment.kind]} class={SEGMENT_CLASS[segment.kind]}>{segment.text}</span>)}
+        </span>
+      </Text>
+    </article>
+  ) : (
+    <article class="@container flex flex-col gap-3 rounded-lg bg-surface p-4">
+      <header class="flex items-center gap-3">
+        <ChannelAvatar channel={who} class="size-10 text-xs" />
+        <div class="flex min-w-0 flex-col">
+          <span class="truncate text-sm">{label}</span>
+          <span class="flex items-center gap-1 text-xs text-ink-soft">
+            {platform === 'substack' ? <span>{type === 'note' ? 'Note' : 'Article'}</span> : null}
+            <span id="preview-when">{when}</span>
+            {platform === 'linkedin' || platform === 'facebook' ? <Icon name="globe" /> : null}
+          </span>
+        </div>
+      </header>
+      <Text variant="post" class="break-words whitespace-pre-wrap" id="preview-text">
+        {segments.map((segment) => <span data-tone={SEGMENT_TONE[segment.kind]} class={SEGMENT_CLASS[segment.kind]} title={segment.kind === 'plain' ? 'posted as plain text' : undefined}>{segment.text}</span>)}
+      </Text>
+      <ul id="preview-images" class={feedImages} hidden={images.length === 0}>
+        {images.map((name) => <li><img src={picture(name)} alt="" class="block size-full object-cover" /></li>)}
+      </ul>
+      <footer class="flex items-center justify-between border-t border-line pt-3">
+        {actions.map(([icon, label]) => <span class={action}><Icon name={icon} class="text-lg" /><span class="hidden @xs:inline">{label}</span></span>)}
+      </footer>
+    </article>
+  )
+}

@@ -1,0 +1,19 @@
+---
+import { channelInfos, loadChannels } from '../../../src/channels.ts';
+import { createPost, lastChannel } from '../../../src/campaign.ts';
+import { content, root } from '../../lib/data.ts';
+import { postHref } from '../../lib/ui.ts';
+import { variantOptions } from '../../lib/variants.ts';
+
+const parts = (Astro.params.date ?? '').split('/').filter((part) => part !== '').map(decodeURIComponent);
+const day = parts[0] && /^\d{4}-\d{2}-\d{2}$/.test(parts[0]) ? parts.shift() : undefined;
+const infos = channelInfos(loadChannels(root));
+const names = variantOptions(infos).map((option) => option.base);
+const chosen = parts.length === 1 && names.includes(parts[0]!) ? parts[0] : undefined;
+if (parts.length > (chosen ? 1 : 0)) return Astro.redirect('/new', 302);
+const last = lastChannel(root);
+const channel = chosen ?? (last && names.includes(last) ? last : names[0]);
+if (!channel) return Astro.redirect('/channels/new', 302);
+const made = await createPost(root, content, { title: '', channels: [channel], ...(day && { day }) });
+return Astro.redirect(postHref(`${made.folder}/${made.base}.md`), 303);
+---

@@ -1,0 +1,80 @@
+---
+import Alert from 'ui/src/components/Alert.astro';
+import Button from 'ui/src/components/Button.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import Input from 'ui/src/components/Input.astro';
+import Text from 'ui/src/components/Text.astro';
+import { attachPreview, cleanLink, createIdea, titleFrom } from '../../../src/ideas.ts';
+import { sentence } from '../../../src/text.ts';
+import Field from '../../components/Field.astro';
+import { content, root } from '../../lib/data.ts';
+import { brandName, quiet } from '../../lib/ui.ts';
+import '../../styles/global.css';
+
+let values = { title: '', link: '', text: '' };
+let error = '';
+let saved = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  values = { title: String(form.get('title') ?? '').trim(), link: String(form.get('link') ?? '').trim(), text: String(form.get('text') ?? '').trim() };
+  try {
+    const link = values.link === '' ? undefined : cleanLink(values.link);
+    const parts = values.title === '' && link ? titleFrom(link) : { title: values.title, ...(link && { link }), ...(values.text !== '' && { text: values.text }) };
+    const folder = await createIdea(root, content, { ...parts, ...(values.text !== '' && { text: values.text }), ...(link && { link }) });
+    await attachPreview(root, content, folder);
+    saved = folder;
+  } catch (err) {
+    error = sentence(err instanceof Error ? err.message : String(err));
+  }
+} else {
+  const search = Astro.url.searchParams;
+  values = { title: (search.get('title') ?? '').trim(), link: (search.get('url') ?? '').trim(), text: (search.get('text') ?? '').trim() };
+}
+---
+
+<!doctype html>
+<html lang="en" data-theme="social" class="scheme-light scroll-smooth bg-page text-[106.25%]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>New idea — {brandName}</title>
+  </head>
+  <body>
+    <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-8 px-6 py-8">
+      <Heading variant="page" as="h1">New idea</Heading>
+      {
+        saved ? (
+          <div class="flex flex-col gap-4">
+            <Text variant="small" class="text-ink-soft">Saved. This window closes by itself.</Text>
+            <div>
+              <Button href={`/ideas/${encodeURIComponent(saved)}`} target="_blank" variant="outline">Open the idea</Button>
+            </div>
+          </div>
+        ) : (
+          <form method="post" class="flex flex-col gap-4">
+            {error && <Alert variant="plain">{error}</Alert>}
+            <Field label="Title" for="title">
+              <Input id="title" name="title" label="Title" value={values.title} {...quiet} />
+            </Field>
+            <Field label="Link" for="link">
+              <Input id="link" name="link" label="Link" type="url" value={values.link} {...quiet} />
+            </Field>
+            <Field label="Notes" for="text">
+              <Input as="textarea" id="text" name="text" label="Notes" rows="4" value={values.text} {...quiet} />
+            </Field>
+            <div>
+              <Button type="submit" autofocus data-pending="Saving…">Save idea</Button>
+            </div>
+          </form>
+        )
+      }
+    </main>
+  </body>
+  {saved && <script is:inline>setTimeout(() => window.close(), 1500);</script>}
+  <script>
+    import '../../scripts/pending.ts';
+  </script>
+</html>

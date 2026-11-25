@@ -1,0 +1,13 @@
+---
+interface Props {
+  href?: string;
+  external?: boolean;
+  [key: string]: unknown;
+}
+const { href, external = true, ...rest } = Astro.props;
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag data-control href={href} type={href ? undefined : 'button'} target={href && external ? '_blank' : undefined} rel={href && external ? 'noopener' : undefined} class="inline-flex h-(--control-md) shrink-0 cursor-pointer items-center gap-2 rounded-(--radius-control) bg-page px-4 text-sm ring-1 ring-line ring-inset hover:ring-line-strong focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink" {...rest}>
+  <slot />
+</Tag>

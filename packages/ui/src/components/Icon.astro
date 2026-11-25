@@ -1,0 +1,16 @@
+---
+import { icons } from './icons.ts';
+import type { IconName, IconWeight } from './icons.ts';
+
+interface Props {
+  name: IconName;
+  weight?: IconWeight;
+  class?: string;
+}
+
+const { name, weight = 'regular', class: className } = Astro.props;
+const svg = (icons[weight] as Record<string, string>)[name];
+if (!svg) throw new Error(`icon "${name}" does not exist in the ${weight} weight`);
+---
+
+<span aria-hidden="true" class:list={['inline-block size-[1em] shrink-0 [&>svg]:size-full', className]} set:html={svg} />

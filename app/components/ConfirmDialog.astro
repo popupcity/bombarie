@@ -1,0 +1,37 @@
+---
+import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
+import Button from 'ui/src/components/Button.astro';
+import DialogShell from './DialogShell.astro';
+
+interface Props {
+  id: string;
+  title: string;
+  intent: string;
+  variant: string;
+  confirm: string;
+  tone?: 'bad' | 'ink';
+  field?: string;
+}
+const { id, title, intent, variant, confirm, tone = 'bad', field } = Astro.props;
+---
+
+<DialogShell id={id}>
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4">
+      <Heading variant="card" as="h2" id={`${id}-title`}>{title}</Heading>
+      <Text variant="small" class="text-ink-soft" id={`${id}-text`}><slot /></Text>
+    </div>
+    <div class="flex justify-end gap-2">
+      <form method="dialog">
+        <Button type="submit" variant="outline" autofocus>Cancel</Button>
+      </form>
+      <form method="post" data-leave>
+        <input type="hidden" name="intent" value={intent} />
+        <input type="hidden" name="variant" value={variant} />
+        {field && <input type="hidden" name={field} data-fill />}
+        <Button type="submit" tone={tone}>{confirm}</Button>
+      </form>
+    </div>
+  </div>
+</DialogShell>
