@@ -48,7 +48,7 @@ function parseIdea(folder: string, raw: string): Idea {
     title: typeof fields.title === 'string' ? fields.title.trim() : '',
     text: body.trim(),
     status,
-    images: Array.isArray(fields.images) ? fields.images.filter((item): item is string => typeof item === 'string') : [],
+    images: Array.isArray(fields.media) ? fields.media.filter((item): item is string => typeof item === 'string') : [],
     ...(typeof fields.link === 'string' && fields.link !== '' && { link: fields.link }),
     ...(typeof fields.linkTitle === 'string' && fields.linkTitle !== '' && { linkTitle: fields.linkTitle }),
     ...(typeof fields.linkSite === 'string' && fields.linkSite !== '' && { linkSite: fields.linkSite }),

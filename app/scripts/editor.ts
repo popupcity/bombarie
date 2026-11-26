@@ -217,7 +217,9 @@ function init(root: HTMLElement) {
     const data = (await response.json()) as { name?: string; error?: string };
     if (!response.ok) {
       input.value = stem;
-      toast(sentence(data.error ?? 'The file could not be renamed'), 'bad');
+      const fields = readFields(raw);
+      const taken = fields.ok && unused(fields.images).some((other) => data.error?.startsWith(`${other} `));
+      toast(`${sentence(data.error ?? 'The file could not be renamed')}${taken ? ' See Unused in this post.' : ''}`, 'bad');
       return;
     }
     toastAfterReload(sentence(`Renamed to ${data.name}`), 'ok');
@@ -225,8 +227,38 @@ function init(root: HTMLElement) {
     location.reload();
   }
 
+  const unusedSection = document.querySelector<HTMLElement>('[data-unused]');
+  const library = new Set<string>(JSON.parse(unusedSection?.dataset.files ?? '[]') as string[]);
+  const unused = (names: string[]): string[] => [...library].filter((name) => !names.includes(name));
+
+  function renderUnused(names: string[] | null) {
+    if (!unusedSection) return;
+    const left = names ? unused(names) : [];
+    unusedSection.hidden = left.length === 0;
+    const template = $<HTMLTemplateElement>('unused-tile');
+    $('unused-list').replaceChildren(
+      ...left.map((name) => {
+        const tile = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+        tile.querySelector<HTMLImageElement>('[data-unused-thumb]')!.src = `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(name) ? `${name}.cover.jpg` : name)}?w=512`;
+        const label = tile.querySelector<HTMLElement>('[data-unused-label]')!;
+        label.hidden = !needsCover(name);
+        if (needsCover(name)) label.textContent = coverLabel(`${name}.cover.jpg`);
+        const add = tile.querySelector<HTMLElement>('[data-use-image]')!;
+        const remove = tile.querySelector<HTMLElement>('[data-open]')!;
+        add.dataset.useImage = name;
+        remove.dataset.value = name;
+        for (const [button, verb] of [[add, 'Add'], [remove, 'Delete']] as const) {
+          button.title = `${verb} ${name}`;
+          button.setAttribute('aria-label', `${verb} ${name}`);
+        }
+        return tile;
+      })
+    );
+  }
+
   function renderImages(fields: Fields) {
     const names = fields.ok ? fields.images : [];
+    renderUnused(fields.ok ? names : null);
     const full = (name: string) => `/img/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`;
     const thumb = (name: string) =>
       needsCover(name)
@@ -325,6 +357,7 @@ function init(root: HTMLElement) {
         const data = (await response.json()) as { name?: string; error?: string };
         if (response.ok && data.name) {
           added.push(data.name);
+          library.add(data.name);
           if (needsCover(data.name)) {
             const cover = await (isDocument(data.name) ? pdfCover(file) : videoCover(file));
             if (cover) await fetch(`/img/${encodeURIComponent(folder)}/${encodeURIComponent(`${data.name}.cover.jpg`)}`, { method: 'PUT', body: cover }).catch(() => null);
@@ -349,9 +382,6 @@ function init(root: HTMLElement) {
     const fields = readFields(raw);
     if (!fields.ok) return toast('Fix the properties first, then add the image again.', 'bad');
     if (!fields.images.includes(button.dataset.useImage)) setImages([...fields.images, button.dataset.useImage]);
-    const section = button.closest('[data-unused]');
-    button.closest('li')?.remove();
-    if (section && !section.querySelector('li')) section.remove();
   });
 
   function problems(lines: string[]) {
@@ -717,17 +747,18 @@ function init(root: HTMLElement) {
   root.addEventListener('dragover', (event) => {
     if (mode === 'edit' && carriesFiles(event)) event.preventDefault();
   });
+  const droppable = (file: File): boolean => file.type.startsWith('image/') || $<HTMLInputElement>('image-input').accept.split(',').includes(file.type);
   root.addEventListener('drop', (event) => {
     depth = 0;
     zone?.removeAttribute('data-active');
     if (mode !== 'edit') return;
     event.preventDefault();
-    const files = [...(event.dataTransfer?.files ?? [])].filter((file) => file.type.startsWith('image/') || file.type === 'application/pdf');
+    const files = [...(event.dataTransfer?.files ?? [])].filter(droppable);
     if (files.length > 0) void addImages(files);
   });
   document.addEventListener('paste', (event) => {
     if (mode !== 'edit') return;
-    const pasted = [...(event.clipboardData?.files ?? [])].filter((file) => file.type.startsWith('image/') || file.type === 'application/pdf');
+    const pasted = [...(event.clipboardData?.files ?? [])].filter(droppable);
     if (pasted.length === 0) return;
     event.preventDefault();
     void addImages(pasted);

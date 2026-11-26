@@ -54,7 +54,7 @@ test('a complete post is ready', () => {
 test('the first thing that is missing is named, in plain words', () => {
   assert.equal(readiness({ ...ok, date: '' }), 'Pick a date and time.');
   assert.equal(readiness({ ...ok, date: '2026-11-18T08:00' }), 'Pick a time in the future.');
-  assert.equal(readiness({ ...ok, preview: text(0) }), 'Add text or an image first.');
+  assert.equal(readiness({ ...ok, preview: text(0) }), 'Add text or media first.');
   assert.equal(readiness({ ...ok, preview: text(0), images: 1 }), null);
   assert.equal(readiness({ ...ok, preview: text(3001, 3000) }), 'Shorten the text by 1 character.');
   assert.equal(readiness({ ...ok, preview: text(3005, 3000) }), 'Shorten the text by 5 characters.');

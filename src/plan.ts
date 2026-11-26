@@ -41,8 +41,8 @@ export function readiness({ manual, date, images, needsImage, immediate, preview
   if (date === '') return 'Pick a date and time.';
   if (manual) return null;
   if (!immediate && now.getTime() - parseDate(date).getTime() > LATE_AFTER_MS) return 'Pick a time in the future.';
-  if (needsImage && images === 0) return 'Add an image first.';
-  if (preview.length === 0 && images === 0) return 'Add text or an image first.';
+  if (needsImage && images === 0) return 'Add media first.';
+  if (preview.length === 0 && images === 0) return 'Add text or media first.';
   const over = preview.limit === undefined ? 0 : preview.length - preview.limit;
   if (over > 0) return `Shorten the text by ${over} ${over === 1 ? 'character' : 'characters'}.`;
   if (preview.segments.some((segment) => segment.kind === 'unknown')) return 'A mention has no entity yet. Create it or remove it.';

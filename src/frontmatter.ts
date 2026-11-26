@@ -35,7 +35,7 @@ export function readFields(raw: string): Fields {
       date: typeof data.date === 'string' && LOCAL_DATE.test(data.date) ? data.date : '',
       manual: data.manual === true,
       status: data.status === 'planned' ? 'planned' : 'draft',
-      images: Array.isArray(data.images) ? data.images.filter((item): item is string => typeof item === 'string') : [],
+      images: Array.isArray(data.media) ? data.media.filter((item): item is string => typeof item === 'string') : [],
       title: typeof data.title === 'string' ? data.title : '',
       body
     };
@@ -69,6 +69,6 @@ export function setFrontmatter(raw: string, changes: Record<string, string | boo
 
 export const withDate = (raw: string, date: string): string => (date === '' ? raw : setFrontmatter(raw, { date }));
 export const withManual = (raw: string, manual: boolean): string => setFrontmatter(raw, { manual: manual ? true : undefined });
-export const withImages = (raw: string, images: string[]): string => setFrontmatter(raw, { images });
+export const withImages = (raw: string, images: string[]): string => setFrontmatter(raw, { media: images });
 export const withTitle = (raw: string, title: string): string => setFrontmatter(raw, { title: title.trim() === '' ? undefined : title });
 export const withStatus = (raw: string, status: PostStatus): string => setFrontmatter(raw, { status });

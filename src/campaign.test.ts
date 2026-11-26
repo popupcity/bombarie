@@ -75,7 +75,7 @@ const save = (root: string, base: string, raw: string, now = new Date('2026-11-1
 test('saving writes exactly the text it is given and returns the new revision and the problems', async () => {
   const root = repo();
   const before = variantOf(root, 'jeroen-linkedin');
-  const raw = '---\n# keep\ndate: 2026-11-21T09:15\nimages: [ a.jpg ]\n---\nNieuw met [[Onbekend]]';
+  const raw = '---\n# keep\ndate: 2026-11-21T09:15\nmedia: [ a.jpg ]\n---\nNieuw met [[Onbekend]]';
   const after = await save(root, 'jeroen-linkedin', raw);
   assert.equal(readFileSync(join(root, 'posts', FILE, 'jeroen-linkedin.md'), 'utf8'), raw);
   assert.notEqual(after.revision, before.revision);

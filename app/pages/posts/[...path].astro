@@ -100,7 +100,7 @@ const variant = campaign.variants.find((candidate) => candidate.base === decodeU
 const fields = variant.fields;
 const images = fields.ok ? fields.images : [];
 const fits = (name: string): boolean => takesMedia(variant.platform, name);
-const reusable = (await content.list(`posts/${campaign.folder}`)).filter((name) => isMedia(name) && !images.includes(name) && fits(name));
+const library = (await content.list(`posts/${campaign.folder}`)).filter((name) => isMedia(name) && fits(name));
 const recorded = await states.get(`${campaign.folder}/${variant.base}.md`);
 const settled = lastOutcome(`${campaign.folder}/${variant.base}.md`);
 const settledToast = settled && Date.now() - new Date(settled.at).getTime() < 120_000 ? { text: outcomeWording(settled.status, settled.message), tone: settled.status === 'posted' ? 'ok' : settled.status === 'unconfirmed' ? 'warn' : 'bad' } : null;
@@ -244,25 +244,20 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
             <div id="images" class="relative flex flex-col gap-4">
               <ul id="image-list" class="grid grid-cols-4 items-start gap-4"></ul>
               <template id="image-tile"><ImageTile arrows /></template>
-              <Dropzone inputId="image-input" accept={accept} title={`Add images${pdfOk && videoOk ? ', PDF or video' : videoOk ? ' or video' : ''}`} />
+              <Dropzone inputId="image-input" accept={accept} title={pdfOk || videoOk ? 'Add media' : 'Add images'} />
             </div>
-            {
-              reusable.length > 0 && (
-                <div data-unused class="flex flex-col gap-4">
-                  <Heading variant="label" as="h2">Unused in this post</Heading>
-                  <ul class="grid grid-cols-4 items-start gap-4">
-                    {reusable.map((name) => (
-                      <li class="group/tile relative">
-                        <img src={`/img/${encodeURIComponent(campaign.folder)}/${encodeURIComponent(needsCover(name) ? `${name}.cover.jpg` : name)}?w=512`} alt="" loading="lazy" class="block h-auto w-full rounded-lg object-cover ring-1 ring-line" />
-                        {needsCover(name) && <span class="absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white">{coverLabel(`${name}.cover.jpg`)}</span>}
-                        <Button data-use-image={name} type="button" variant="quiet" size="sm" icon aria-label={`Add ${name}`} title={`Add ${name}`} class="absolute right-2 bottom-2"><Icon name="plus" /></Button>
-                        <Button type="button" data-open="delete-file" data-value={name} variant="quiet" size="sm" icon data-tone="bad" aria-label={`Delete ${name}`} title={`Delete ${name}`} class="absolute top-2 right-2 opacity-0 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 pointer-coarse:opacity-100 hover:text-(--tone-text)"><Icon name="trash" /></Button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )
-            }
+            <div data-unused data-files={JSON.stringify(library)} hidden class="flex flex-col gap-4">
+              <Heading variant="label" as="h2">Unused in this post</Heading>
+              <ul id="unused-list" class="grid grid-cols-4 items-start gap-4"></ul>
+            </div>
+            <template id="unused-tile">
+              <li class="group/tile relative">
+                <img data-unused-thumb alt="" loading="lazy" class="block h-auto w-full rounded-lg object-cover ring-1 ring-line" />
+                <span data-unused-label hidden class="absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white"></span>
+                <Button data-use-image="" type="button" variant="quiet" size="sm" icon aria-label="Add" class="absolute right-2 bottom-2"><Icon name="plus" /></Button>
+                <Button type="button" data-open="delete-file" data-value="" variant="quiet" size="sm" icon data-tone="bad" aria-label="Delete" class="absolute top-2 right-2 opacity-0 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 pointer-coarse:opacity-100 hover:text-(--tone-text)"><Icon name="trash" /></Button>
+              </li>
+            </template>
           </div>
           <div id="source-view" hidden class="flex flex-col gap-2">
             <label for="source" class="sr-only">File source</label>
@@ -390,7 +385,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
         {
           campaign.variants.length === 1 && (
             <ConfirmDialog id="delete-post" title={`Delete “${campaign.title}”?`} intent="delete-post" variant={variant.base} confirm="Delete">
-              This removes its file and every image in the folder. It cannot be undone.{stays}
+              This removes its file and everything else in the folder. It cannot be undone.{stays}
             </ConfirmDialog>
           )
         }

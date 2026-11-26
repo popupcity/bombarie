@@ -83,7 +83,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
       </header>
       <div class="group @container relative flex aspect-square flex-col items-center justify-center gap-2 bg-track text-ink-soft has-[#preview-images:not([hidden])]:block has-[#preview-images:not([hidden])]:aspect-auto">
         <Icon name="image" class="text-3xl group-has-[#preview-images:not([hidden])]:hidden" />
-        <span class="text-xs group-has-[#preview-images:not([hidden])]:hidden">Instagram needs an image</span>
+        <span class="text-xs group-has-[#preview-images:not([hidden])]:hidden">Instagram needs media</span>
         <ul id="preview-images" class="w-full" hidden={images.length === 0}>
           {images.map((name, index) => <li hidden={index > 0}><img src={picture(name)} alt="" class={feedPicture} /></li>)}
         </ul>

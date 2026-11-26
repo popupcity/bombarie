@@ -20,7 +20,7 @@ test('the example posts are read, bad files are reported without hiding the rest
   writeFileSync(join(folder, 'popupcity-instagram-story.md'), '---\nmanual: true\ndate: 2026-11-20T12:00\n---\n');
   writeFileSync(join(folder, 'popupcity-instagram.md'), '---\ndate: 2026-11-20T09:00\n---\nMet **vet**\n');
   writeFileSync(join(folder, 'nobody.md'), '---\ndate: 2026-11-20T09:00\n---\nx\n');
-  writeFileSync(join(folder, 'popupcity-instagram-reel.md'), '---\ndate: 2026-11-20T09:00\nimages: [missing.jpg]\n---\nx\n');
+  writeFileSync(join(folder, 'popupcity-instagram-reel.md'), '---\ndate: 2026-11-20T09:00\nmedia: [missing.jpg]\n---\nx\n');
 
   const { posts, errors } = readPosts(dir, channels);
   assert.deepEqual(

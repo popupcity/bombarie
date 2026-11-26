@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { statusOfRaw, readFields, withBody, withDate, withImages, withManual, withTitle, withStatus } from './frontmatter.ts';
 
-const raw = '---\nstatus: draft\ndate: 2026-11-20T10:30\nimages: [a.jpg]\n---\nOld text\n';
+const raw = '---\nstatus: draft\ndate: 2026-11-20T10:30\nmedia: [a.jpg]\n---\nOld text\n';
 
 test('view reads the fields the editor shows', () => {
   assert.deepEqual(readFields(raw), { ok: true, date: '2026-11-20T10:30', manual: false, status: 'draft', images: ['a.jpg'], title: '', body: 'Old text' });
@@ -28,7 +28,7 @@ test('edits go through the text and keep everything else', () => {
   text = withManual(text, true);
   text = withStatus(text, 'planned');
   text = withBody(text, 'New text');
-  assert.equal(text, '---\nstatus: planned\ndate: 2026-11-21T09:15\nimages: [a.jpg]\nmanual: true\n---\nNew text\n');
+  assert.equal(text, '---\nstatus: planned\ndate: 2026-11-21T09:15\nmedia: [a.jpg]\nmanual: true\n---\nNew text\n');
   assert.equal(withManual(text, false).includes('manual'), false);
   assert.equal(withDate(raw, ''), raw);
 });
@@ -40,11 +40,11 @@ test('statusOfRaw is draft for anything it cannot read', () => {
 });
 
 test('the image list starts as a flow list, keeps a block list and disappears when empty', () => {
-  assert.match(withImages(raw, ['b.jpg', 'a.jpg']), /\nimages: \[b\.jpg, a\.jpg\]\n/);
-  const block = '---\ndate: 2026-11-20T10:30\nimages:\n  - a.jpg\n---\nX\n';
-  assert.match(withImages(block, ['a.jpg', 'c.jpg']), /\nimages:\n {2}- a\.jpg\n {2}- c\.jpg\n/);
-  assert.match(withImages('---\ndate: 2026-11-20T10:30\n---\nX\n', ['a.jpg']), /\nimages: \[a\.jpg\]\n---/);
-  assert.equal(withImages(raw, []).includes('images'), false);
+  assert.match(withImages(raw, ['b.jpg', 'a.jpg']), /\nmedia: \[b\.jpg, a\.jpg\]\n/);
+  const block = '---\ndate: 2026-11-20T10:30\nmedia:\n  - a.jpg\n---\nX\n';
+  assert.match(withImages(block, ['a.jpg', 'c.jpg']), /\nmedia:\n {2}- a\.jpg\n {2}- c\.jpg\n/);
+  assert.match(withImages('---\ndate: 2026-11-20T10:30\n---\nX\n', ['a.jpg']), /\nmedia: \[a\.jpg\]\n---/);
+  assert.equal(withImages(raw, []).includes('media'), false);
 });
 
 test('the title is written in place, trimmed away when empty, and quoted when YAML needs it', () => {
@@ -56,10 +56,10 @@ test('the title is written in place, trimmed away when empty, and quoted when YA
 });
 
 test('withBody keeps the frontmatter byte for byte and only changes the body', () => {
-  const raw = '---\nstatus: draft\ndate: 2026-11-20T10:30\nimages: [a.jpg]\n---\nOld\n';
+  const raw = '---\nstatus: draft\ndate: 2026-11-20T10:30\nmedia: [a.jpg]\n---\nOld\n';
   assert.equal(
     withBody(raw, '  New text\r\nsecond line  '),
-    '---\nstatus: draft\ndate: 2026-11-20T10:30\nimages: [a.jpg]\n---\nNew text\nsecond line\n'
+    '---\nstatus: draft\ndate: 2026-11-20T10:30\nmedia: [a.jpg]\n---\nNew text\nsecond line\n'
   );
   assert.throws(() => withBody('no frontmatter', 'x'), /no properties at the top/);
   assert.throws(() => withBody('---\nopen\n', 'x'), /not closed/);

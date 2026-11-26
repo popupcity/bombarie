@@ -98,7 +98,7 @@ document.addEventListener('click', (event) => {
   const title = button.dataset.title ?? '';
   (dialog.querySelector('input[name=variant]') as HTMLInputElement).value = button.dataset.delete ?? '';
   document.getElementById('card-delete-title')!.textContent = count > 1 ? 'Delete this variant?' : `Delete “${title}”?`;
-  document.getElementById('card-delete-text')!.textContent = (count > 1 ? 'This removes this channel’s file. The images and the other variants stay.' : 'This removes its file and every image in the folder. It cannot be undone.') + (button.dataset.posted ? ` It stays on ${button.dataset.posted} until you delete it there.` : '');
+  document.getElementById('card-delete-text')!.textContent = (count > 1 ? 'This removes this channel’s file. The images and the other variants stay.' : 'This removes its file and every file in the folder. It cannot be undone.') + (button.dataset.posted ? ` It stays on ${button.dataset.posted} until you delete it there.` : '');
   for (const open of document.querySelectorAll<HTMLElement>('[popover]:popover-open')) open.hidePopover();
   dialog.showModal();
 });

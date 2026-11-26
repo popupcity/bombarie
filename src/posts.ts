@@ -42,9 +42,9 @@ export function parsePost({ id, folder, text, channel, type, platform, entities 
   if (typeof data.date !== 'string') throw new Error('date is required');
   const date = parseDate(data.date);
 
-  const images = data.images ?? [];
+  const images = data.media ?? [];
   if (!Array.isArray(images) || images.some((i) => typeof i !== 'string')) {
-    throw new Error('images must be a list of file names');
+    throw new Error('media must be a list of file names');
   }
   for (const image of images as string[]) {
     if (image.includes('/') || image.includes('\\') || image.startsWith('.')) {

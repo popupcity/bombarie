@@ -75,7 +75,7 @@ A post file:
 date: 2026-12-01T09:00
 title: Launch
 status: planned
-images: [01.jpg]
+media: [01.jpg]
 ---
 Opening today at [[Pop-Up City]].
 
