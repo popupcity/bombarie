@@ -65,7 +65,7 @@ const format = (day: string, options: Intl.DateTimeFormatOptions) => new Date(`$
       {
         groups.map((group) => (
           <div data-panel={group.day}>
-            {group.cards.map((card) => <i data-tone={STATUS_TONE[card.status]} />)}
+            {group.cards.map((card) => <i data-tone={card.feed ? 'feed' : STATUS_TONE[card.status]} />)}
           </div>
         ))
       }

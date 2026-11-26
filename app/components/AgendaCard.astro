@@ -42,7 +42,8 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
           {card.type && <span class="rounded-sm bg-track px-2 py-1 text-xs capitalize">{card.type}</span>}
         </span>
         <span class="ml-auto flex items-center gap-2">
-          <StatusBadge status={card.status} manual={card.manual} />
+          <StatusBadge status={card.status} manual={card.manual} feed={card.feed} />
+          {card.feed && <Icon name="arrow-square-out" class="text-ink-soft" />}
           {hasMenu && (
             <button type="button" popovertarget={menuId} aria-label="Actions" title="Actions" style={`anchor-name:--${menuId}`} class="relative z-10 -mr-2 grid size-8 cursor-pointer place-items-center rounded-lg text-lg text-ink-soft hover:bg-page hover:text-ink"><Icon name="dots-three" weight="bold" /></button>
           )}

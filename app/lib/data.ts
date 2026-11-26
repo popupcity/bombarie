@@ -61,7 +61,7 @@ export async function loadCalendar(now = new Date()): Promise<CalendarData> {
   });
   return {
     ...data,
-    cards: data.cards.map((card) => ({ ...card, manual: card.manual || Boolean(connections[card.channel]) })),
+    cards: data.cards.map((card) => ({ ...card, manual: card.manual || (card.status === 'draft' && Boolean(connections[card.channel])) })),
     channels: data.channels.map((channel) => ({ ...channel, ...(connections[channel.name] ? { problem: connections[channel.name]! } : {}) }))
   };
 }

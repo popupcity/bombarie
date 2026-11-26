@@ -79,6 +79,7 @@ function shortDate(day: string): string {
 }
 
 export interface CardModel {
+  feed?: boolean;
   id: string;
   day: string;
   time: string;
@@ -172,6 +173,7 @@ function cardModels(input: CalendarInput): CardModel[] {
       day: ymd(at),
       time: clock(at),
       status: 'posted' as Status,
+      feed: true,
       channel: item.channel,
       label: info.label,
       platform: info.platform,

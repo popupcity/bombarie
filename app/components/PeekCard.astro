@@ -33,7 +33,7 @@ const when = `${card.day}T${card.time}`;
         <span class="truncate">{card.label}</span>
         {card.type && <span class="rounded-sm bg-track px-2 py-1 text-xs capitalize">{card.type}</span>}
       </Text>
-      <span class="flex shrink-0 items-center gap-2"><StatusBadge status={card.status} manual={card.manual} /></span>
+      <span class="flex shrink-0 items-center gap-2"><StatusBadge status={card.status} manual={card.manual} feed={card.feed} /></span>
     </div>
     <div class:list={['grid gap-3', image && 'grid-cols-[minmax(0,1fr)_80px]']}>
       <div class="flex min-w-0 flex-col gap-2">

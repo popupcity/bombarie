@@ -1,4 +1,5 @@
 ---
+import Icon from 'ui/src/components/Icon.astro';
 import type { CardModel } from '../../src/calendar.ts';
 import { cardActions, STATUS_TONE, TINTED } from '../lib/ui.ts';
 import ChannelAvatar from './ChannelAvatar.astro';
@@ -14,9 +15,20 @@ const id = `peek-${card.id.replace(/[^a-zA-Z0-9]/g, '-')}`;
 ---
 
 <div data-chip data-channel={card.channel} draggable={movable ? 'true' : undefined} data-drag-id={movable ? card.id : undefined} data-drag-day={card.day} data-drag-time={card.time}>
-  <button type="button" data-plain popovertarget={id} style={`anchor-name:--${id}`} data-tone={STATUS_TONE[card.status]} class:list={['flex w-full cursor-pointer items-center gap-1 rounded-sm px-1 py-1 text-left text-xs', TINTED]}>
+  <button type="button" data-plain popovertarget={id} style={`anchor-name:--${id}`} data-tone={card.feed ? undefined : STATUS_TONE[card.status]} class:list={['flex w-full cursor-pointer items-center gap-1 rounded-sm px-1 py-1 text-left text-xs', card.feed ? 'bg-track text-ink-soft' : TINTED]}>
     <ChannelAvatar channel={card} class="size-4 text-[7px]" small />
-    {card.manual && <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true" class="shrink-0"><polygon points="6,0.5 11.5,6 6,11.5 0.5,6" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>}
+    {card.manual && (
+      <span data-tone="manual" title="You post this yourself" class="grid size-4 shrink-0 place-items-center rounded-sm bg-(--tone) text-(--tone-on)">
+        <Icon name="hand" class="size-3" />
+        <span class="sr-only">Manual</span>
+      </span>
+    )}
+    {card.feed && (
+      <span class="grid size-4 shrink-0 place-items-center">
+        <Icon name="rss" weight="bold" class="size-3" />
+        <span class="sr-only">Feed</span>
+      </span>
+    )}
     <span class="min-w-0 truncate">{card.time} {card.campaign}</span>
   </button>
   <PeekCard id={id} card={card} siblings={siblings} />

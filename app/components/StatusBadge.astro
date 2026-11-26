@@ -1,4 +1,5 @@
 ---
+import Icon from 'ui/src/components/Icon.astro';
 import { STATUS_LABEL } from '../../src/calendar.ts';
 import type { Status } from '../../src/calendar.ts';
 import { STATUS_TONE, TINTED } from '../lib/ui.ts';
@@ -6,8 +7,9 @@ import { STATUS_TONE, TINTED } from '../lib/ui.ts';
 interface Props {
   status: Status;
   manual?: boolean;
+  feed?: boolean | undefined;
 }
-const { status, manual = false } = Astro.props;
+const { status, manual = false, feed = false } = Astro.props;
 const shapes: Record<Status, string> = {
   posted: '<circle cx="6" cy="6" r="4.5" fill="currentColor" />',
   planned: '<circle cx="6" cy="6" r="4" fill="none" stroke="currentColor" stroke-width="1.5" />',
@@ -26,14 +28,21 @@ const shapes: Record<Status, string> = {
 {
   manual && (
     <span data-tone="manual" title="You post this yourself" class:list={['inline-flex w-fit items-center gap-1 rounded-sm px-2 py-1 text-xs', TINTED]}>
-      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" class="shrink-0">
-        <polygon points="6,0.5 11.5,6 6,11.5 0.5,6" fill="none" stroke="currentColor" stroke-width="1.5" />
-      </svg>
+      <Icon name="hand" class="size-3" />
       Manual
     </span>
   )
 }
-<span data-tone={STATUS_TONE[status]} class:list={['inline-flex w-fit items-center gap-1 rounded-sm px-2 py-1 text-xs', TINTED]}>
+{
+  feed ? (
+    <span title="Read from the feed of this channel, not posted from here" class="inline-flex w-fit items-center gap-1 rounded-sm bg-track px-2 py-1 text-xs text-ink-soft">
+      <Icon name="rss" weight="bold" class="size-3" />
+      Feed
+    </span>
+  ) : (
+    <span data-tone={STATUS_TONE[status]} class:list={['inline-flex w-fit items-center gap-1 rounded-sm px-2 py-1 text-xs', TINTED]}>
   <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" class="shrink-0" set:html={shapes[status]} />
   {STATUS_LABEL[status]}
 </span>
+  )
+}
