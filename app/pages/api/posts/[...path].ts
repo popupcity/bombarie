@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { PlanBlocked, saveVariant, syncFolder } from '../../../../src/campaign.ts';
 import { RevisionConflict } from '../../../../src/content-store.ts';
 import { relinkIdeas } from '../../../../src/ideas.ts';
+import { rearm } from '../../../../src/state.ts';
 import { content, json, loadConnections, root, states } from '../../../lib/data.ts';
 
 export const POST: APIRoute = async ({ params, request }) => {
@@ -11,10 +12,12 @@ export const POST: APIRoute = async ({ params, request }) => {
   if (typeof raw !== 'string' || typeof revision !== 'string') return json({ error: 'raw and revision are required' }, 400);
   try {
     const variant = await saveVariant(root, content, folder, base, { raw, revision }, new Date(), async (name) => (await loadConnections())[name] ?? null);
+    const rearmed = variant.post ? await rearm(states, `${folder}/${base}.md`, variant.post.date) : false;
     const next = sync === false ? folder : await syncFolder(root, content, states, folder).catch(() => folder);
     if (next !== folder) await relinkIdeas(root, content, folder, next);
     return json({
       folder: next,
+      rearmed,
       revision: variant.revision,
       error: variant.error,
       due: variant.post?.date.toISOString() ?? null

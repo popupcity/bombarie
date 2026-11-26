@@ -559,7 +559,7 @@ function init(root: HTMLElement) {
     let ok = false;
     try {
       const response = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ raw: text, revision, sync: !quiet }) });
-      const data = (await response.json()) as { folder?: string; revision?: string | null; error?: string | null; problems?: string[]; due?: string | null };
+      const data = (await response.json()) as { folder?: string; rearmed?: boolean; revision?: string | null; error?: string | null; problems?: string[]; due?: string | null };
       if (response.status === 409) {
         theirs = data.revision ?? '';
         $('conflict').hidden = false;
@@ -578,7 +578,7 @@ function init(root: HTMLElement) {
         savedRaw = text;
         localStorage.removeItem(draftKey);
         autosaveStopped = false;
-        if (data.folder && data.folder !== folder) {
+        if (data.folder && (data.folder !== folder || data.rearmed)) {
           sending = false;
           toastAfterReload('Saved.', 'ok');
           location.replace(`/posts/${encodeURIComponent(data.folder)}/${encodeURIComponent(variant)}`);

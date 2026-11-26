@@ -21,7 +21,7 @@ import { needsCover } from '../../src/types.ts';
 import { readTokens, tokensPath } from '../../src/secrets.ts';
 import { createHash } from 'node:crypto';
 import { readFeed } from '../../src/feed.ts';
-import { attention, fileStore } from '../../src/state.ts';
+import { attention, fileStore, rearm } from '../../src/state.ts';
 import type { State } from '../../src/state.ts';
 import type { Post } from '../../src/types.ts';
 
@@ -173,7 +173,8 @@ export async function cardAction(action: string, id: string, value: string): Pro
       if (saved.planned && !saved.manual && Date.now() - date.getTime() > LATE_AFTER_MS) return { ok: false, text: 'Pick a time in the future.' };
       raw = withDate(current.text, value);
     } else return { ok: false, text: 'Unknown action.' };
-    await saveVariant(root, content, folder, base, { raw, revision: current.revision }, new Date(), async (name) => (await loadConnections())[name] ?? null);
+    const saved = await saveVariant(root, content, folder, base, { raw, revision: current.revision }, new Date(), async (name) => (await loadConnections())[name] ?? null);
+    if (saved.post) await rearm(states, id, saved.post.date);
     return { ok: true, text: action === 'plan' ? 'Planned.' : action === 'draft' ? 'Back to draft.' : 'Date changed.' };
   } catch (err) {
     if (err instanceof PlanBlocked) return { ok: false, text: sentence(err.problems.join('; ')) };

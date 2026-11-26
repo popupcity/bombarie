@@ -3,7 +3,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { attention, checkpoint, claim, complete, fail, fileStore, unstarted } from './state.ts';
+import { attention, checkpoint, claim, complete, fail, fileStore, rearm, unstarted } from './state.ts';
 import type { Post } from './types.ts';
 
 const now = new Date('2026-11-20T09:00:00Z');
@@ -108,4 +108,18 @@ test('the name that started a post travels from the claim to the posted state', 
   await claim(store, 'f/a.md', new Date('2026-11-24T10:00:00Z'), 'anna');
   await complete(store, 'f/a.md', 'r1', undefined, new Date('2026-11-24T10:01:00Z'));
   assert.equal((await store.get('f/a.md') as { by?: string }).by, 'anna');
+});
+
+test('a reminder is forgotten when the post gets a date after it was sent, and nothing else ever is', async () => {
+  const store = fresh();
+  await store.create('f/a.md', { status: 'reminded', at: now.toISOString() });
+  assert.equal(await rearm(store, 'f/a.md', later(-60_000)), false);
+  assert.equal((await store.get('f/a.md'))?.status, 'reminded');
+  assert.equal(await rearm(store, 'f/a.md', later(60_000)), true);
+  assert.equal(await store.get('f/a.md'), null);
+
+  await claim(store, 'f/b.md', now);
+  await complete(store, 'f/b.md', 'r', undefined, now);
+  assert.equal(await rearm(store, 'f/b.md', later(60_000)), false);
+  assert.equal((await store.get('f/b.md'))?.status, 'posted');
 });

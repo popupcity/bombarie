@@ -62,6 +62,13 @@ export async function fail(store: StateStore, id: string, message: string, now: 
   );
 }
 
+export async function rearm(store: StateStore, id: string, date: Date): Promise<boolean> {
+  const state = await store.get(id);
+  if (state?.status !== 'reminded' || date.getTime() <= Date.parse(state.at)) return false;
+  await store.remove(id);
+  return true;
+}
+
 export async function unstarted(store: Pick<StateStore, 'get'>, posts: Post[]): Promise<Post[]> {
   const states = await Promise.all(posts.map((p) => store.get(p.id)));
   return posts.filter((_, i) => states[i] === null);
