@@ -22,9 +22,10 @@ const hint = `The RSS address of this ${platform === 'substack' ? 'publication' 
 ---
 
 <div class="grid gap-8 lg:grid-cols-3">
-  <form id={formId} method="post" class="flex flex-col gap-4 lg:col-span-2">
+  <form id={formId} method="post" class="flex flex-col gap-8 lg:col-span-2">
     <slot name="top" />
     <div class="flex flex-wrap items-center gap-2"><slot name="identity" /></div>
+    <div class="flex flex-col gap-4">
     {
       platform === 'instagram' && (
         <Field label="Handle" for="handle">
@@ -58,6 +59,7 @@ const hint = `The RSS address of this ${platform === 'substack' ? 'publication' 
         </>
       )
     }
+    </div>
   </form>
   <ActionPanel remove={remove?.id} removeLabel={remove?.label} blocked={remove?.blocked}>
     <slot name="rows" />
