@@ -57,7 +57,7 @@ export function parseFeed(xml: string): FeedItem[] {
     const title = plain(inner(block, 'title') ?? '');
     const url = (inner(block, 'link') ?? '').trim() || atomLink(block);
     const guid = (inner(block, 'guid') ?? inner(block, 'id') ?? '').trim() || url;
-    const stamp = inner(block, 'pubDate') ?? inner(block, 'posted') ?? inner(block, 'updated') ?? '';
+    const stamp = inner(block, 'pubDate') ?? inner(block, 'published') ?? inner(block, 'updated') ?? '';
     const date = new Date(stamp.trim());
     if (guid === '' || Number.isNaN(date.getTime())) continue;
     const summary = inner(block, 'description') ?? inner(block, 'summary') ?? '';

@@ -11,7 +11,7 @@ const RSS = `<?xml version="1.0"?><rss version="2.0"><channel><title>Site</title
 <item><title>Zonder datum</title><link>https://x.substack.com/p/x</link></item>
 </channel></rss>`;
 
-const ATOM = `<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Atom post</title><link rel="alternate" href="https://b.example/a"/><id>tag:b,1</id><posted>2026-11-10T10:00:00Z</posted><summary>Samenvatting</summary></entry></feed>`;
+const ATOM = `<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Atom post</title><link rel="alternate" href="https://b.example/a"/><id>tag:b,1</id><published>2026-11-10T10:00:00Z</published><updated>2026-11-20T10:00:00Z</updated><summary>Samenvatting</summary></entry></feed>`;
 
 test('an RSS feed is read, with CDATA, entities and html stripped, and items without a date skipped', () => {
   const items = parseFeed(RSS);
