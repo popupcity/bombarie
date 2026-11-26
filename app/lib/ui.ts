@@ -6,8 +6,8 @@ export const brandName = 'Bombarie';
 export const CARET = 'transition-[rotate] in-aria-expanded:rotate-180';
 
 export const OVERLAY =
-  'origin-top -translate-y-1 scale-98 opacity-0 transition-[opacity,scale,translate,overlay,display] transition-discrete open:translate-y-0 open:scale-100 open:opacity-100 starting:open:-translate-y-1 starting:open:scale-98 starting:open:opacity-0';
-export const DIALOG = `${OVERLAY} backdrop:opacity-0 backdrop:transition-[opacity,overlay,display] backdrop:transition-discrete open:backdrop:opacity-100 starting:open:backdrop:opacity-0`;
+  'origin-top -translate-y-1 scale-98 opacity-0 ease-leave open:ease-pop transition-[opacity,scale,translate,overlay,display] transition-discrete open:translate-y-0 open:scale-100 open:opacity-100 starting:open:-translate-y-1 starting:open:scale-98 starting:open:opacity-0';
+export const DIALOG = `${OVERLAY} backdrop:opacity-0 backdrop:ease-leave open:backdrop:ease-pop backdrop:transition-[opacity,overlay,display] backdrop:transition-discrete open:backdrop:opacity-100 starting:open:backdrop:opacity-0`;
 
 export const MENU = `${OVERLAY} m-0 rounded-xl bg-surface p-2 text-sm text-ink shadow-float ring-1 ring-line ring-inset`;
 export const MENU_ITEM =

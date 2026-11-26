@@ -1,9 +1,10 @@
 import { loadChannels } from '../../src/channels.ts';
 import { localDeps } from '../../src/local.ts';
 import { readPosts } from '../../src/posts.ts';
-import { remind, telegram } from '../../src/remind.ts';
+import { remind } from '../../src/remind.ts';
+import { telegram } from '../../src/telegram.ts';
 import { refreshFeeds } from '../../src/feed.ts';
-import { tokensPath } from '../../src/secrets.ts';
+import { appsPath, readSetting, tokensPath } from '../../src/secrets.ts';
 import { refreshThreadsTokens } from '../../src/threads.ts';
 import { run } from '../../src/run.ts';
 import { startScheduler } from '../../src/scheduler.ts';
@@ -22,7 +23,7 @@ async function tick(): Promise<void> {
   await refreshFeeds(root, deps.channels, fetch, now);
   await refreshThreadsTokens(tokensPath(), Object.entries(deps.channels).filter(([, channel]) => channel.platform === 'threads').map(([name]) => name), fetch, now);
   const bot = await telegramOf();
-  if (bot) await remind(posts, { store: deps.store, notify: telegram(bot.token, bot.chat), now });
+  if (bot) await remind(posts, { store: deps.store, notify: telegram(bot.token, bot.chat), now, channels: deps.channels, base: (await readSetting(appsPath(), 'publicUrl')) ?? undefined });
 }
 
 export function ensureScheduler(): void {

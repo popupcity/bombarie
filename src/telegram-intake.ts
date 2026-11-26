@@ -2,6 +2,8 @@ import { createHmac } from 'node:crypto';
 import type { ContentStore } from './content-store.ts';
 import { addIdeaImage, attachPreview, createIdea, ideaTitle, readIdea, titleFrom } from './ideas.ts';
 import { MAX_IMAGE_BYTES, saveImage } from './media.ts';
+import { telegram } from './telegram.ts';
+import type { Message } from './telegram.ts';
 
 const API = 'https://api.telegram.org';
 
@@ -25,13 +27,7 @@ export interface Intake {
 
 export const webhookSecret = (token: string): string => createHmac('sha256', token).update('bombarie-telegram').digest('hex').slice(0, 48);
 
-async function send(intake: Intake, text: string): Promise<void> {
-  await (intake.fetchImpl ?? fetch)(`${API}/bot${intake.token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ chat_id: intake.chat, text, disable_web_page_preview: true })
-  }).catch(() => undefined);
-}
+const send = (intake: Intake, message: Message): Promise<void> => telegram(intake.token, intake.chat, intake.fetchImpl ?? fetch)(message).catch(() => undefined);
 
 async function download(intake: Intake, photo: Photo): Promise<Uint8Array> {
   const fetchImpl = intake.fetchImpl ?? fetch;
@@ -61,10 +57,11 @@ export async function handleUpdate(update: Update, intake: Intake): Promise<'sav
     }
     await attachPreview(intake.root, intake.store, folder);
     const idea = readIdea(intake.root, folder);
-    await send(intake, `Saved: ${idea ? ideaTitle(idea) || folder : folder}\n${intake.origin}/ideas/${encodeURIComponent(folder)}`);
+    const title = (idea && ideaTitle(idea)) || 'Untitled';
+    await send(intake, { text: `Saved to Ideas:\n\n${title}`, bold: title, view: `${intake.origin}/ideas/${encodeURIComponent(folder)}` });
     return 'saved';
   } catch (err) {
-    await send(intake, `Not saved: ${err instanceof Error ? err.message : String(err)}`);
+    await send(intake, { text: `Not saved: ${err instanceof Error ? err.message : String(err)}` });
     return 'failed';
   }
 }

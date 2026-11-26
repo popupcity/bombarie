@@ -11,8 +11,8 @@ const host = (): HTMLElement =>
   document.body.appendChild(h('div', { id: 'toasts', 'aria-live': 'polite', class: 'pointer-events-none fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-3 px-4' }));
 
 function dismiss(item: HTMLElement): void {
-  item.classList.add('-translate-y-1', 'scale-98', 'opacity-0');
-  setTimeout(() => item.remove(), 150);
+  item.classList.add('ease-leave', '-translate-y-1', 'scale-98', 'opacity-0');
+  void Promise.allSettled(item.getAnimations().map((animation) => animation.finished)).then(() => item.remove());
 }
 
 export function working(text: string): () => void {

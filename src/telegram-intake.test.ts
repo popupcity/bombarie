@@ -21,7 +21,7 @@ test('a message from the owner becomes an idea and gets a reply with its address
   const { root, sent, intake } = setup();
   assert.equal(await handleUpdate({ message: { chat: { id: 42 }, text: 'Rent a truck, hang art in it' } }, intake), 'saved');
   assert.equal(listIdeas(root).length, 1);
-  assert.match(sent[0] ?? '', /^Saved: .+\nhttps:\/\/x\.test\/ideas\//);
+  assert.match(sent[0] ?? '', /^Saved to Ideas:\n\nRent a truck/);
 });
 
 test('a message from anyone else is ignored and nothing is saved', async () => {

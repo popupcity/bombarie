@@ -9,6 +9,7 @@
   --radius-xl: 12px;
   --duration-pop: 150ms;
   --ease-pop: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-leave: cubic-bezier(0.8, 0, 0.8, 0.2);
   --default-transition-duration: var(--duration-pop);
   --default-transition-timing-function: var(--ease-pop);
   --color-track: color-mix(in srgb, var(--line) 55%, var(--surface));

@@ -32,7 +32,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
   <time class="relative hidden h-8 items-center self-start text-sm text-ink-soft tabular-nums md:mt-6 md:flex">
     {showTime ? card.time : ''}
   </time>
-  <Card data-drag-card interactive alert={Boolean(card.problem)} class:list={['relative grid gap-4', first ? 'min-h-40 grid-cols-[minmax(0,1fr)_auto] gap-x-0 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-xl after:[box-shadow:inherit]' : 'grid-cols-1']}>
+  <Card data-drag-card interactive alert={Boolean(card.problem)} class:list={['relative grid gap-4', first ? 'grid-cols-[minmax(0,1fr)_auto] gap-x-0 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-xl after:[box-shadow:inherit]' : 'grid-cols-1']}>
     <div class:list={['flex min-w-0 flex-col gap-4', first && 'pr-6']}>
       <div class="flex min-h-8 flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-soft">
         <time class="tabular-nums md:hidden">{card.time}</time>
