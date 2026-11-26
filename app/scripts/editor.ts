@@ -501,10 +501,10 @@ function init(root: HTMLElement) {
     scheduleAutosave();
   }
 
-  async function submit(rollback?: string, trigger: HTMLButtonElement = save, quiet = false) {
+  async function submit(rollback?: string, trigger: HTMLButtonElement = save, quiet = false, rename = false) {
     if (quiet && sending) return;
     while (sending) await new Promise((done) => setTimeout(done, 50));
-    if (!dirty()) return;
+    if (!dirty() && !rename) return;
     const typed = readFields(raw);
     const saved = readFields(savedRaw);
     if (typed.ok && typed.status === 'planned' && !(saved.ok && saved.status === 'planned') && !manualOnly && root.dataset.connection) raw = withManual(raw, true);
@@ -678,6 +678,12 @@ function init(root: HTMLElement) {
   });
   source.addEventListener('input', () => edit(source.value));
   title.addEventListener('input', () => readFields(raw).ok && edit(withTitle(raw, title.value)));
+  title.addEventListener('change', () => {
+    const now = readFields(raw);
+    if (!now.ok || now.status === 'planned' || plan.dataset.recorded !== undefined || !$('conflict').hidden) return;
+    clearTimeout(autosaveTimer);
+    void submit(undefined, save, false, true);
+  });
   date.addEventListener('input', () => edit(withDate(raw, date.value)));
   manual.addEventListener('input', () => edit(withManual(raw, manual.checked)));
   for (const option of document.querySelectorAll<HTMLElement>('[data-mode]')) {
