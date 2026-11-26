@@ -8,7 +8,10 @@ import { PLATFORM_LABEL } from '../../../../src/types.ts';
 import { sentence } from '../../../../src/text.ts';
 import { callbackUrl } from '../../../lib/connect.ts';
 import ChannelForm from '../../../components/ChannelForm.astro';
-import PageHeader from '../../../components/PageHeader.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import PlatformMark from '../../../components/PlatformMark.astro';
+import TitleField from '../../../components/TitleField.astro';
+import { quiet } from '../../../lib/ui.ts';
 import { appSaved, saveApp, setOutcome, startConnect } from '../../../lib/connect.ts';
 import { root } from '../../../lib/data.ts';
 import Shell from '../../../layouts/Shell.astro';
@@ -52,9 +55,18 @@ const redirectUri = callbackUrl(Astro.url.origin);
 
 <Shell title="Add channel">
   <div class="flex max-w-wide flex-col gap-8">
-    <PageHeader title={`Add ${PLATFORM_LABEL[platform]} channel`} />
-    <ChannelForm formId="add-form" platform={platform} name={values.name} handle={values.handle} feed={values.feed} setup={connectable && !savedApp ? { clientId: values.clientId, secretSaved: false, configId: values.configId, redirectUri } : undefined}>
+    <header class="flex h-20 items-center">
+      <Heading variant="page" as="h1" class="sr-only">{`Add ${PLATFORM_LABEL[platform]} channel`}</Heading>
+      <div class="min-w-0 flex-1">
+        <TitleField form="add-form" name="name" value={values.name} placeholder="Name" aria-label="Name" required pattern=".*[A-Za-z0-9À-ÿ].*" title="Use at least one letter or number." autofocus {...quiet} />
+      </div>
+    </header>
+    <ChannelForm formId="add-form" platform={platform} handle={values.handle} feed={values.feed} setup={connectable && !savedApp ? { clientId: values.clientId, secretSaved: false, configId: values.configId, redirectUri } : undefined}>
       {error && <Alert slot="top">{error}</Alert>}
+      <div slot="identity" class="inline-flex h-(--control-md) items-center gap-3 rounded-lg bg-surface pr-4 pl-2 text-sm ring-1 ring-line ring-inset">
+        <PlatformMark platform={platform} class="size-6" />
+        <span>{PLATFORM_LABEL[platform]}</span>
+      </div>
       <Text slot="rows" variant="small" class="text-ink-soft">{connectable ? `Saves the channel and opens ${PLATFORM_LABEL[platform]} so you can give access.` : 'Saves the channel.'}</Text>
       <Button slot="actions" type="submit" form="add-form" name="intent" value={connectable ? 'connect' : 'add'} >{connectable ? 'Connect channel' : 'Add channel'}</Button>
     </ChannelForm>

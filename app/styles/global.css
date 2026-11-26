@@ -12,9 +12,10 @@
   --color-track: color-mix(in srgb, var(--line) 55%, var(--surface));
   --color-line-strong: color-mix(in srgb, var(--ink) 25%, transparent);
   --color-ink-faint: color-mix(in srgb, var(--ink-soft) 55%, transparent);
-  --color-veil: color-mix(in srgb, var(--ink) 70%, transparent);
-  --color-scrim: color-mix(in srgb, var(--ink) 30%, transparent);
-  --color-scrim-strong: color-mix(in srgb, var(--ink) 75%, transparent);
+  --color-charcoal: var(--puc-charcoal);
+  --color-veil: color-mix(in srgb, var(--puc-charcoal) 70%, transparent);
+  --color-scrim: color-mix(in srgb, var(--puc-charcoal) 30%, transparent);
+  --color-scrim-strong: color-mix(in srgb, var(--puc-charcoal) 75%, transparent);
   --color-linkedin: #0a66c2;
   --color-instagram: #e1306c;
   --color-facebook: #1877f2;

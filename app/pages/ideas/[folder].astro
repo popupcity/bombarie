@@ -71,7 +71,7 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
     <header class="flex h-20 items-center">
       <Heading variant="page" as="h1" class="sr-only">{idea.title || 'Untitled idea'}</Heading>
       <div class="min-w-0 flex-1">
-        <TitleField form="idea-form" name="title" value={idea.title} />
+        <TitleField form="idea-form" name="title" value={idea.title} autofocus={idea.title === '' && idea.text === ''} />
       </div>
     </header>
     {error && <Alert>{error}</Alert>}

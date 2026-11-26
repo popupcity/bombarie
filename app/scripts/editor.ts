@@ -875,6 +875,8 @@ function init(root: HTMLElement) {
   if (stored && stored.revision === revision && stored.raw !== raw) offered = stored.raw;
   localStorage.removeItem(draftKey);
   show(readFields(raw).ok ? ((localStorage.getItem(MODE_KEY) as Mode | null) ?? 'edit') : 'source');
+  const opened = readFields(raw);
+  if (opened.ok && opened.body.trim() === '') $('body').focus();
   function watchPosting() {
     for (const button of [save, plan]) button.disabled = true;
     const url = `/api/state/${encodeURIComponent(folder)}/${encodeURIComponent(variant)}`;

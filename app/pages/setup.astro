@@ -9,7 +9,7 @@ import { sentence } from '../../src/text.ts';
 import Field from '../components/Field.astro';
 import Wordmark from '../components/Wordmark.astro';
 import { githubApp, installed, setupOpen } from '../lib/auth.ts';
-import { brandName } from '../lib/ui.ts';
+import { brandName, HTML_CLASS, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
 import '../styles/global.css';
 
 if (await installed()) return Astro.redirect('/login');
@@ -29,7 +29,7 @@ const callback = `${Astro.url.origin}/login/github/callback`;
 ---
 
 <!doctype html>
-<html lang="en" data-theme="social" class="scheme-light scroll-smooth bg-page text-[106.25%]">
+<html lang="en" data-theme="social" data-scheme={schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value)} class={HTML_CLASS}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

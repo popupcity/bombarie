@@ -1,0 +1,7 @@
+---
+import { createIdea } from '../../../src/ideas.ts';
+import { content, root } from '../../lib/data.ts';
+
+const folder = await createIdea(root, content, { name: 'untitled' });
+return Astro.redirect(`/ideas/${encodeURIComponent(folder)}`, 303);
+---

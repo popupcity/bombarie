@@ -1,0 +1,40 @@
+---
+import Icon from 'ui/src/components/Icon.astro';
+import { MENU, MENU_ITEM, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
+
+const user = Astro.locals.user;
+const current = schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value) ?? 'auto';
+const schemes = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' }
+] as const;
+---
+
+<div>
+  <button type="button" popovertarget="account-menu" style="anchor-name:--account-menu" class:list={[MENU_ITEM, 'w-full']}>
+    {user ? <img src={`https://github.com/${user}.png?size=64`} alt="" class="size-6 rounded-sm" /> : <Icon name="sliders-horizontal" class="text-base text-ink-soft" />}
+    <span class="min-w-0 flex-1 truncate text-left">{user ?? 'Appearance'}</span>
+    <Icon name="caret-down" class="text-ink-soft" />
+  </button>
+  <div id="account-menu" popover style="position-anchor:--account-menu" class:list={[MENU, 'w-52 [inset:auto] [position-try-fallbacks:flip-block] [bottom:anchor(top)] [left:anchor(left)]']}>
+    <div role="group" aria-label="Appearance">
+      {
+        schemes.map((scheme) => (
+          <button type="button" data-scheme-choice={scheme.value} data-cookie={SCHEME_COOKIE} aria-pressed={scheme.value === current ? 'true' : 'false'} class:list={[MENU_ITEM, 'group w-full']}>
+            <span class="flex-1 text-left">{scheme.label}</span>
+            <Icon name="check" class="invisible group-aria-pressed:visible" />
+          </button>
+        ))
+      }
+    </div>
+    {
+      user && (
+        <>
+          <hr class="-mx-2 my-2 border-line" />
+          <a href="/logout" class={MENU_ITEM}>Sign out</a>
+        </>
+      )
+    }
+  </div>
+</div>

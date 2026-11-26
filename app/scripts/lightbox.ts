@@ -27,7 +27,7 @@ let refit: () => void = () => {};
 window.addEventListener('resize', () => refit());
 
 function film(url: string): HTMLElement {
-  const video = h('video', { src: url, controls: true, autoplay: true, playsinline: true, class: 'self-center justify-self-center rounded-lg bg-ink' }) as HTMLVideoElement;
+  const video = h('video', { src: url, controls: true, autoplay: true, playsinline: true, class: 'self-center justify-self-center rounded-lg bg-charcoal' }) as HTMLVideoElement;
   const fit = () => {
     const box = stage.getBoundingClientRect();
     if (!video.videoWidth || box.width === 0) return;

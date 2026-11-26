@@ -9,28 +9,19 @@ import Hint from './Hint.astro';
 import ValueButton from './ValueButton.astro';
 
 interface Props {
-  name: string;
   linkedin: string;
   instagram: string;
-  titled?: boolean;
   error?: string;
 }
 const SPELLING = 'Type @ in a post to mention it. On LinkedIn the name must be spelled exactly like the page, capitals included.';
-const { name, linkedin, instagram, titled = false, error = '' } = Astro.props;
+const { linkedin, instagram, error = '' } = Astro.props;
 ---
 
 <Form id="entity-form">
   <input type="hidden" name="intent" value="save" />
   {error && <Alert>{error}</Alert>}
   <div class="flex flex-col gap-4">
-    {
-      !titled && (
-    <Field label="Name" for="name" hint={SPELLING}>
-        <Input id="name" name="name" label="Name" value={name} required autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />
-    </Field>
-      )
-    }
-    <Field label="LinkedIn" for="linkedin" hint={titled ? SPELLING : undefined}>
+    <Field label="LinkedIn" for="linkedin" hint={SPELLING}>
       <div class="flex items-center gap-2">
         <div class="min-w-0 flex-1">
           <Input id="linkedin" name="linkedin" label="LinkedIn" value={linkedin} placeholder="Paste a company page address, or a urn:li:organization: urn" autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />

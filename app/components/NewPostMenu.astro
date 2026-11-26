@@ -1,4 +1,6 @@
 ---
+import Heading from 'ui/src/components/Heading.astro';
+import Icon from 'ui/src/components/Icon.astro';
 import { channelInfos, loadChannels } from '../../src/channels.ts';
 import { loadConnections, root } from '../lib/data.ts';
 import { MENU, MENU_ITEM } from '../lib/ui.ts';
@@ -9,14 +11,16 @@ interface Props {
   id?: string;
   pick?: boolean;
   align?: 'left' | 'right';
+  idea?: boolean;
 }
-const { id = 'new-menu', pick = false, align = 'left' } = Astro.props;
+const { id = 'new-menu', pick = false, align = 'left', idea = false } = Astro.props;
 const Item = pick ? 'button' : 'a';
 const connections = await loadConnections();
 const options = variantOptions(channelInfos(loadChannels(root)));
 ---
 
 <div id={id} popover style={`position-anchor:--${id}`} class:list={[MENU, 'w-72 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]', align === 'right' ? '[right:anchor(right)]' : '[left:anchor(left)]']}>
+  {idea && <Heading variant="label" as="p" data-idea-part class="px-3 py-2">Post</Heading>}
   <div class="scroll-fade">
     {
       options.map((option) => (
@@ -26,4 +30,15 @@ const options = variantOptions(channelInfos(loadChannels(root)));
       ))
     }
   </div>
+  {
+    idea && (
+      <div data-idea-part>
+        <hr class="-mx-2 my-2 border-line" />
+        <a href="/ideas/new" class={MENU_ITEM}>
+          <Icon name="lightbulb" class="text-base text-ink-soft" />
+          Idea
+        </a>
+      </div>
+    )
+  }
 </div>

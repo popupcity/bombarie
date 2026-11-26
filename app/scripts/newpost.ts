@@ -12,6 +12,7 @@ document.addEventListener(
     }
     trigger.style.anchorName = ANCHOR;
     trigger.setAttribute('data-new-anchor', '');
+    for (const part of menu.querySelectorAll<HTMLElement>('[data-idea-part]')) part.hidden = !trigger.hasAttribute('data-with-idea');
     const day = trigger.dataset.day;
     for (const link of menu.querySelectorAll<HTMLAnchorElement>('a[data-base]')) {
       link.href = `/new/${day ? `${day}/` : ''}${encodeURIComponent(link.dataset.base ?? '')}`;

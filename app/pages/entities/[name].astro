@@ -46,7 +46,7 @@ const toast = failure ? { tone: 'bad', text: failure } : outcome && outcome.name
     </header>
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
     <div class="lg:w-2/3">
-      <EntityForm name={entity.name} linkedin={entity.linkedin ?? ''} instagram={entity.instagram ?? ''} titled>
+      <EntityForm linkedin={entity.linkedin ?? ''} instagram={entity.instagram ?? ''}>
         <span slot="actions" title={blocked} class="ml-auto inline-block">
           <TrashButton label="Delete entity" title={blocked ? undefined : 'Delete entity'} data-open="delete-entity" disabled={blocked !== undefined} />
         </span>

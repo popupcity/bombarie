@@ -2,7 +2,7 @@
 import Alert from 'ui/src/components/Alert.astro';
 import Button from 'ui/src/components/Button.astro';
 import Heading from 'ui/src/components/Heading.astro';
-import { brandName } from '../lib/ui.ts';
+import { brandName, HTML_CLASS, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
 import Wordmark from '../components/Wordmark.astro';
 import { installed } from '../lib/auth.ts';
 import '../styles/global.css';
@@ -12,7 +12,7 @@ const failure = Astro.url.searchParams.get('error');
 ---
 
 <!doctype html>
-<html lang="en" data-theme="social" class="scheme-light scroll-smooth bg-page text-[106.25%]">
+<html lang="en" data-theme="social" data-scheme={schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value)} class={HTML_CLASS}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

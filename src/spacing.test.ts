@@ -19,6 +19,8 @@ const MARGINS = new Set([
   'components/DeleteDialog.astro',
   'components/CardActions.astro',
   'components/AgendaCard.astro',
+  'components/AccountMenu.astro',
+  'components/NewPostMenu.astro',
   'pages/ideas.astro'
 ]);
 

@@ -11,11 +11,11 @@
   --puc-blue: #4f99e3;
   --puc-red: #ff563b;
   --puc-purple: #d9afff;
-  --page: color-mix(in srgb, var(--puc-light-gray) 25%, var(--puc-white));
-  --surface: var(--puc-white);
-  --ink: var(--puc-charcoal);
-  --ink-soft: color-mix(in srgb, var(--puc-charcoal) 68%, var(--puc-white));
-  --line: var(--puc-light-gray);
+  --page: light-dark(color-mix(in srgb, var(--puc-light-gray) 25%, var(--puc-white)), color-mix(in srgb, var(--puc-charcoal) 65%, black));
+  --surface: light-dark(var(--puc-white), var(--puc-charcoal));
+  --ink: light-dark(var(--puc-charcoal), color-mix(in srgb, var(--puc-white) 90%, var(--puc-charcoal)));
+  --ink-soft: color-mix(in srgb, var(--ink) 68%, var(--surface));
+  --line: light-dark(var(--puc-light-gray), color-mix(in srgb, var(--puc-white) 14%, var(--puc-charcoal)));
   --radius-control: 8px;
   --radius-field: 8px;
   --control-ring: 1px;
@@ -41,10 +41,10 @@
 }
 
 [data-theme='social'] [data-tone='ink'] {
-  --tone: var(--puc-charcoal);
-  --tone-on: var(--puc-white);
-  --tone-text: var(--puc-charcoal);
-  --tone-soft: color-mix(in srgb, var(--puc-charcoal) 12%, transparent);
+  --tone: var(--ink);
+  --tone-on: var(--surface);
+  --tone-text: var(--ink);
+  --tone-soft: color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
 [data-theme='social'] [data-tone='paper'] {
@@ -55,43 +55,43 @@
 }
 
 [data-theme='social'] [data-tone='accent'] {
-  --tone: var(--puc-charcoal);
-  --tone-on: var(--puc-white);
-  --tone-text: var(--puc-charcoal);
-  --tone-soft: color-mix(in srgb, var(--puc-charcoal) 12%, transparent);
+  --tone: var(--ink);
+  --tone-on: var(--surface);
+  --tone-text: var(--ink);
+  --tone-soft: color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
 [data-theme='social'] [data-tone='info'] {
   --tone: var(--puc-blue);
   --tone-on: var(--puc-charcoal);
-  --tone-text: color-mix(in srgb, var(--puc-blue) 45%, var(--puc-charcoal));
+  --tone-text: light-dark(color-mix(in srgb, var(--puc-blue) 45%, var(--puc-charcoal)), color-mix(in srgb, var(--puc-blue) 70%, var(--puc-white)));
   --tone-soft: color-mix(in srgb, var(--puc-blue) 22%, transparent);
 }
 
 [data-theme='social'] [data-tone='ok'] {
   --tone: var(--puc-green);
   --tone-on: var(--puc-charcoal);
-  --tone-text: color-mix(in srgb, var(--puc-green) 45%, var(--puc-charcoal));
+  --tone-text: light-dark(color-mix(in srgb, var(--puc-green) 45%, var(--puc-charcoal)), color-mix(in srgb, var(--puc-green) 70%, var(--puc-white)));
   --tone-soft: color-mix(in srgb, var(--puc-green) 22%, transparent);
 }
 
 [data-theme='social'] [data-tone='warn'] {
   --tone: var(--puc-yellow);
   --tone-on: var(--puc-charcoal);
-  --tone-text: color-mix(in srgb, var(--puc-yellow) 45%, var(--puc-charcoal));
+  --tone-text: light-dark(color-mix(in srgb, var(--puc-yellow) 45%, var(--puc-charcoal)), color-mix(in srgb, var(--puc-yellow) 70%, var(--puc-white)));
   --tone-soft: color-mix(in srgb, var(--puc-yellow) 22%, transparent);
 }
 
 [data-theme='social'] [data-tone='bad'] {
   --tone: var(--puc-red);
   --tone-on: var(--puc-charcoal);
-  --tone-text: color-mix(in srgb, var(--puc-red) 45%, var(--puc-charcoal));
+  --tone-text: light-dark(color-mix(in srgb, var(--puc-red) 45%, var(--puc-charcoal)), color-mix(in srgb, var(--puc-red) 70%, var(--puc-white)));
   --tone-soft: color-mix(in srgb, var(--puc-red) 22%, transparent);
 }
 
 [data-theme='social'] [data-tone='manual'] {
   --tone: var(--puc-purple);
   --tone-on: var(--puc-charcoal);
-  --tone-text: color-mix(in srgb, var(--puc-purple) 45%, var(--puc-charcoal));
+  --tone-text: light-dark(color-mix(in srgb, var(--puc-purple) 45%, var(--puc-charcoal)), color-mix(in srgb, var(--puc-purple) 70%, var(--puc-white)));
   --tone-soft: color-mix(in srgb, var(--puc-purple) 22%, transparent);
 }

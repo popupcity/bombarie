@@ -8,7 +8,7 @@ import { attachPreview, cleanLink, createIdea, titleFrom } from '../../../src/id
 import { sentence } from '../../../src/text.ts';
 import Field from '../../components/Field.astro';
 import { content, root } from '../../lib/data.ts';
-import { brandName, quiet } from '../../lib/ui.ts';
+import { brandName, quiet, HTML_CLASS, SCHEME_COOKIE, schemeOf } from '../../lib/ui.ts';
 import '../../styles/global.css';
 
 let values = { title: '', link: '', text: '' };
@@ -34,7 +34,7 @@ if (Astro.request.method === 'POST') {
 ---
 
 <!doctype html>
-<html lang="en" data-theme="social" class="scheme-light scroll-smooth bg-page text-[106.25%]">
+<html lang="en" data-theme="social" data-scheme={schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value)} class={HTML_CLASS}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

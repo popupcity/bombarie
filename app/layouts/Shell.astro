@@ -1,6 +1,6 @@
 ---
 import Sidebar from '../components/Sidebar.astro';
-import { brandName } from '../lib/ui.ts';
+import { brandName, HTML_CLASS, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
 import '../styles/global.css';
 
 interface Props {
@@ -10,7 +10,7 @@ const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" data-theme="social" class="scheme-light scroll-smooth bg-page text-[106.25%]">
+<html lang="en" data-theme="social" data-scheme={schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value)} class={HTML_CLASS}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -26,6 +26,7 @@ const { title } = Astro.props;
     </div>
     <slot name="after" />
     <script>
+      import '../scripts/account.ts';
       import '../scripts/dialogs.ts';
       import '../scripts/lightbox.ts';
       import '../scripts/newpost.ts';

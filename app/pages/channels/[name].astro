@@ -121,7 +121,7 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
       </div>
     </header>
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
-    <ChannelForm formId="channel-form" titled platform={channel.platform} name={info.label} handle={channel.handle ?? ''} feed={channel.feed ?? ''} setup={fit ? { clientId: savedId ?? '', secretSaved: savedId !== null, configId: savedConfig, redirectUri } : undefined} remove={{ id: 'delete-channel', label: 'Delete channel', blocked: inUse > 0 ? `${inUse} ${inUse === 1 ? 'post uses' : 'posts use'} this channel, so it cannot be deleted.` : undefined }}>
+    <ChannelForm formId="channel-form" platform={channel.platform} handle={channel.handle ?? ''} feed={channel.feed ?? ''} setup={fit ? { clientId: savedId ?? '', secretSaved: savedId !== null, configId: savedConfig, redirectUri } : undefined} remove={{ id: 'delete-channel', label: 'Delete channel', blocked: inUse > 0 ? `${inUse} ${inUse === 1 ? 'post uses' : 'posts use'} this channel, so it cannot be deleted.` : undefined }}>
       <input slot="top" type="hidden" name="intent" value="save" />
       <div slot="identity" class="inline-flex h-(--control-md) items-center gap-3 rounded-lg bg-surface pr-4 pl-1 text-sm ring-1 ring-line ring-inset">
         <ChannelMark channel={info} size="lg" on="surface" />

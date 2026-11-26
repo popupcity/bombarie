@@ -2,9 +2,11 @@
 import { addEntity } from '../../../src/entities.ts';
 import { sentence } from '../../../src/text.ts';
 import EntityForm from '../../components/EntityForm.astro';
-import PageHeader from '../../components/PageHeader.astro';
+import Heading from 'ui/src/components/Heading.astro';
+import TitleField from '../../components/TitleField.astro';
 import { setOutcome } from '../../lib/connect.ts';
 import { root } from '../../lib/data.ts';
+import { quiet } from '../../lib/ui.ts';
 import Shell from '../../layouts/Shell.astro';
 
 let error = '';
@@ -24,9 +26,14 @@ if (Astro.request.method === 'POST') {
 
 <Shell title="Add entity">
   <div class="flex max-w-wide flex-col gap-8">
-    <PageHeader title="Add entity" />
+    <header class="flex h-20 items-center">
+      <Heading variant="page" as="h1" class="sr-only">Add entity</Heading>
+      <div class="min-w-0 flex-1">
+        <TitleField form="entity-form" name="name" value={values.name} placeholder="Name" aria-label="Name" required autofocus {...quiet} />
+      </div>
+    </header>
     <div class="lg:w-2/3">
-      <EntityForm {...values} error={error} />
+      <EntityForm linkedin={values.linkedin} instagram={values.instagram} error={error} />
     </div>
   </div>
 </Shell>
