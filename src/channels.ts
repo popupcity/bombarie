@@ -170,11 +170,12 @@ export function channelInfos(channels: Channels): ChannelInfo[] {
     const label = (a.name ?? name).toLowerCase();
     if (a.avatar !== undefined && !lent.has(label)) lent.set(label, a.avatar);
   }
-  return Object.entries(channels).map(([name, a]) => {
+  const infos = Object.entries(channels).map(([name, a]) => {
     const label = a.name ?? name;
     const avatar = a.avatar ?? lent.get(label.toLowerCase());
     return { name, platform: a.platform, label, ...(avatar !== undefined && { avatar }), ...(a.handle !== undefined && { handle: a.handle }) };
   });
+  return infos.sort((a, b) => a.label.localeCompare(b.label, 'en', { sensitivity: 'base' }) || PLATFORMS.indexOf(a.platform) - PLATFORMS.indexOf(b.platform));
 }
 
 export function resolveName(base: string, channels: Channels): { channel: string; type: string | null } | null {

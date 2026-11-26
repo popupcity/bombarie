@@ -42,8 +42,8 @@ test('channels get a display name and an avatar from avatars/, with safe paths o
     write('a-linkedin:\n  platform: linkedin\n  name: " Pop-Up City "\n  avatar: avatars/puc.jpg\nb-instagram:\n  platform: instagram\n')
   );
   assert.deepEqual(channelInfos(channels), [
-    { name: 'a-linkedin', platform: 'linkedin', label: 'Pop-Up City', avatar: 'avatars/puc.jpg' },
-    { name: 'b-instagram', platform: 'instagram', label: 'b-instagram' }
+    { name: 'b-instagram', platform: 'instagram', label: 'b-instagram' },
+    { name: 'a-linkedin', platform: 'linkedin', label: 'Pop-Up City', avatar: 'avatars/puc.jpg' }
   ]);
 
   for (const bad of ['../secret.jpg', '/etc/passwd', 'posts/x.jpg', 'avatars/../x.jpg', 'avatars/x.svg', 'avatars/a/b.jpg']) {
@@ -99,4 +99,16 @@ test('an empty folder has no channels, and the first channel creates channels.ym
   assert.equal(await addChannel(root, { platform: 'threads', name: 'Studio' }), 'studio-threads');
   assert.match(readFileSync(join(root, 'channels.yml'), 'utf8'), /studio-threads:\n {2}platform: threads\n {2}name: Studio/);
   assert.deepEqual(Object.keys(loadChannels(root)), ['studio-threads']);
+});
+
+test('channels come in the order of their name, then in a fixed platform order', () => {
+  const infos = channelInfos({
+    'pop-threads': { platform: 'threads', name: 'Pop-Up City' },
+    'poppo-instagram': { platform: 'instagram', name: 'PoPPo' },
+    'pop-linkedin': { platform: 'linkedin', name: 'Pop-Up City' },
+    'joop-linkedin': { platform: 'linkedin', name: 'Joop' },
+    'jeroen-linkedin': { platform: 'linkedin', name: 'Jeroen' },
+    'pop-instagram': { platform: 'instagram', name: 'pop-up city' }
+  });
+  assert.deepEqual(infos.map((info) => info.name), ['jeroen-linkedin', 'joop-linkedin', 'pop-linkedin', 'pop-instagram', 'pop-threads', 'poppo-instagram']);
 });
