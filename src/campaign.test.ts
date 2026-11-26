@@ -144,20 +144,15 @@ test('saving an already planned post is not checked again: it stays planned even
   assert.ok(saved.fields.ok && saved.fields.status === 'planned');
 });
 
-test('a post that is not manual cannot be planned for a channel that is not connected, a reminder can', async () => {
+test('planning for a channel that is not connected makes the post a reminder', async () => {
   const root = repo();
   const file = join(root, 'posts', FILE, 'jeroen-linkedin.md');
-  const before = readFileSync(file, 'utf8');
   const raw = '---\nstatus: planned\ndate: 2026-11-20T10:30\n---\nOpent [[Pop-Up City]].\n';
-  const offline = async () => 'no token';
-  const store = fileContentStore(root);
   const input = { raw, revision: variantOf(root, 'jeroen-linkedin').revision };
   const now = new Date('2026-11-18T09:00:00Z');
-  await assert.rejects(saveVariant(root, store, FILE, 'jeroen-linkedin', input, now, offline), (err) => err instanceof PlanBlocked && /No token\./.test(err.problems.join()));
-  assert.equal(readFileSync(file, 'utf8'), before);
-  const manual = raw.replace('status: planned', 'status: planned\nmanual: true');
-  const saved = await saveVariant(root, store, FILE, 'jeroen-linkedin', { raw: manual, revision: input.revision }, now, offline);
+  const saved = await saveVariant(root, fileContentStore(root), FILE, 'jeroen-linkedin', input, now, async () => 'no token');
   assert.equal(saved.post?.manual, true);
+  assert.match(readFileSync(file, 'utf8'), /^manual: true$/m);
 });
 
 test('a new empty draft shows no problems, and the problems come back once it has text or is planned', async () => {

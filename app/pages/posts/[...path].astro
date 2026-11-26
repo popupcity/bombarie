@@ -34,7 +34,7 @@ import { telegramOf } from '../../lib/telegram.ts';
 import { content, deleteFromPlatform, loadConnections, markPosted, outcomeWording, postRepliesNow, root, setFlash, startPostNow, states, takeFlash, unmarkPosted } from '../../lib/data.ts';
 import { forgetOutcome, lastOutcome } from '../../../src/progress.ts';
 import { isAutomatic } from '../../../src/connect.ts';
-import { jsonForScript, CHIP, MENU, MENU_ITEM } from '../../lib/ui.ts';
+import { jsonForScript, plannedText, CHIP, MENU, MENU_ITEM } from '../../lib/ui.ts';
 import { variantOptions } from '../../lib/variants.ts';
 import ActionPanel from '../../components/ActionPanel.astro';
 import ActionRow from '../../components/ActionRow.astro';
@@ -106,10 +106,13 @@ const settled = lastOutcome(`${campaign.folder}/${variant.base}.md`);
 const settledToast = settled && Date.now() - new Date(settled.at).getTime() < 120_000 ? { text: outcomeWording(settled.status, settled.message), tone: settled.status === 'posted' ? 'ok' : settled.status === 'unconfirmed' ? 'warn' : 'bad' } : null;
 if (settled) forgetOutcome(`${campaign.folder}/${variant.base}.md`);
 const stays = recorded?.status === 'posted' ? ` It stays on ${PLATFORM_LABEL[variant.platform]} until you delete it there.` : '';
+const postedBy = recorded?.status === 'posted' || recorded?.status === 'posting' ? recorded.by : undefined;
 const markedByHand = recorded?.status === 'posted' && recorded.remoteId === MANUAL_ID;
 const repliable = recorded?.status === 'posted' && !markedByHand && canReply(providers, variant.platform);
 const unpostable = recorded?.status === 'posted' && !markedByHand && canUnpost(providers, variant.platform);
-const manualNow = !isAutomatic(variant.platform) || (fields.ok && fields.manual);
+const connections = await loadConnections();
+const unplanned = !(fields.ok && fields.status === 'planned');
+const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (unplanned && Boolean(connections[variant.channel]))));
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
 const videoOk = takesMedia(variant.platform, 'a.mp4');
 const accept = ['image/jpeg,image/png,image/gif,image/webp', pdfOk && 'application/pdf', videoOk && 'video/mp4'].filter(Boolean).join(',');
@@ -120,8 +123,7 @@ const copyText = manualNow && variant.type !== 'story';
 const planned = fields.ok && fields.status === 'planned';
 const shown = toEdit(fields.body, new Map(Object.entries(campaign.entities)));
 const field = 'rounded-lg bg-surface p-6 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
-const connections = await loadConnections();
-const instant = fields.ok && !planned && recorded === null && postsNow({ manual: fields.manual || !isAutomatic(variant.platform), connected: !connections[variant.channel], date: fields.date, now: new Date() });
+const instant = fields.ok && !planned && recorded === null && postsNow({ manual: manualNow, connected: !connections[variant.channel], date: fields.date, now: new Date() });
 const addable = variantOptions(channelInfos(loadChannels(root))).filter((option) => !campaign.variants.some((candidate) => candidate.base === option.base));
 const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-pressed:bg-ink aria-pressed:text-page';
 ---
@@ -279,17 +281,18 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
                 <div class="flex items-center gap-2">
                 {
                   recorded?.status === 'posted' && !markedByHand ? (
-                    <Chip size="control" id="state" tone="ok">Posted</Chip>
+                    <Chip size="control" id="state" tone="ok" by={postedBy}>Posted</Chip>
                   ) : (
                     <ChoiceMenu
                       id="status-menu"
+                      by={postedBy}
                       triggerId="state"
                       labelId="state-label"
                       label={markedByHand ? 'Posted' : planned ? 'Planned' : 'Draft'}
                       tone={markedByHand ? 'ok' : planned ? 'info' : 'warn'}
                       options={[
                         { label: 'Draft', text: 'Not planned yet.', active: !markedByHand && !planned, attrs: { 'data-status': 'draft' } },
-                        { label: 'Planned', text: manualNow ? 'You get a reminder at the date.' : 'Posts by itself at the date.', active: !markedByHand && planned, attrs: { 'data-status': 'planned' } },
+                        { label: 'Planned', text: plannedText(manualNow), active: !markedByHand && planned, attrs: { 'data-status': 'planned' } },
                         { label: 'Posted', text: 'Already posted manually.', active: markedByHand, attrs: { 'data-status': 'posted', hidden: !manualNow } }
                       ]}
                     />
@@ -299,7 +302,6 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
                     <span data-on hidden><Icon name="bell" /></span>
                     <span data-off hidden><Icon name="bell-slash" /></span>
                   </span>
-                  {(recorded?.status === 'posted' || recorded?.status === 'posting') && recorded.by && <Text variant="small" class="text-ink-soft">by {recorded.by}</Text>}
                 </div>
               </ActionRow>
               {
@@ -322,7 +324,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
               {!forcedManual && (
               <ActionRow label="Posting">
                 {
-                  connections[variant.channel] ? (
+                  connections[variant.channel] && manualNow ? (
                     <Button variant="soft" tone="manual" tabindex="-1" title="This channel has no connection yet, so you post it yourself" class="cursor-default hover:opacity-100">Manual</Button>
                   ) : (
                     <ChoiceMenu

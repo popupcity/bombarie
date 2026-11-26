@@ -63,4 +63,6 @@ export const schemeOf = (value: string | undefined): 'light' | 'dark' | undefine
 
 export const HTML_CLASS = 'scheme-light-dark data-[scheme=light]:scheme-light data-[scheme=dark]:scheme-dark scroll-smooth bg-page text-[106.25%]';
 
+export const plannedText = (manual: boolean): string => (manual ? 'You get a reminder at the date.' : 'Posts by itself at the date.');
+
 export const CHIP = 'inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';

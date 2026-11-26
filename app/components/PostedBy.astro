@@ -1,0 +1,8 @@
+---
+interface Props {
+  name: string;
+}
+const { name } = Astro.props;
+---
+
+<img src={`https://github.com/${encodeURIComponent(name)}.png?size=64`} alt={`Posted by ${name}`} title={`Posted by ${name}`} class="size-8 rounded-lg" />

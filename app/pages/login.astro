@@ -2,6 +2,7 @@
 import Alert from 'ui/src/components/Alert.astro';
 import Button from 'ui/src/components/Button.astro';
 import Heading from 'ui/src/components/Heading.astro';
+import Text from 'ui/src/components/Text.astro';
 import { brandName, HTML_CLASS, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
 import Wordmark from '../components/Wordmark.astro';
 import { installed } from '../lib/auth.ts';
@@ -22,7 +23,10 @@ const failure = Astro.url.searchParams.get('error');
   </head>
   <body>
     <main class="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-8 px-6">
-      <Heading variant="page" as="h1" aria-label={brandName}><Wordmark /></Heading>
+      <div class="flex flex-col gap-2">
+        <Heading variant="page" as="h1" aria-label={brandName}><Wordmark /></Heading>
+        <Text variant="body" class="text-ink-soft">All your noise in one place.</Text>
+      </div>
       {failure && <Alert variant="plain">{failure}</Alert>}
       <div>
         <Button href="/login/github" data-pending="Signing in…">Sign in with GitHub</Button>

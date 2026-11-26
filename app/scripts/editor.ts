@@ -12,7 +12,7 @@ import { coverLabel, isDocument, mediaKind, needsCover } from '../../src/types.t
 import { pdfCover } from './pdfcover.ts';
 import { videoCover } from './videocover.ts';
 import { PLATFORM_LABEL, type Platform, type PostStatus } from '../../src/types.ts';
-import { SEGMENT_CLASS, SEGMENT_TONE } from '../lib/ui.ts';
+import { plannedText, SEGMENT_CLASS, SEGMENT_TONE } from '../lib/ui.ts';
 import { autocomplete } from './autocomplete.ts';
 import { splitParts } from '../../src/parts.ts';
 import './datepicker.ts';
@@ -42,6 +42,7 @@ type Mode = 'edit' | 'source';
 function init(root: HTMLElement) {
   const { folder = '', variant = '', platform = 'linkedin', connection = '', type = '' } = root.dataset;
   const manualOnly = root.dataset.manualOnly !== undefined;
+  const byHand = (fields: Fields): boolean => fields.ok && (fields.manual || manualOnly || (Boolean(root.dataset.connection) && fields.status !== 'planned'));
   const api = `/api/posts/${encodeURIComponent(folder)}/${encodeURIComponent(variant)}`;
   const draftKey = `draft:${folder}/${variant}`;
   const entities: Entities = new Map(Object.entries(json<Record<string, Entity>>('entities', '{}')));
@@ -379,15 +380,17 @@ function init(root: HTMLElement) {
 
   function refreshReadiness(fields: Fields, result: Preview) {
     const open = plan.dataset.recorded === undefined;
-    const isManual = fields.ok && (fields.manual || manualOnly);
+    const isManual = byHand(fields);
+    const plannedHint = statusOption('planned')?.querySelector('span > span + span');
+    if (plannedHint) plannedHint.textContent = plannedText(isManual);
     const reached = fields.ok && fields.date !== '' && parseDate(fields.date).getTime() <= Date.now();
     const hand = isManual && reached && open;
-    const due = !hand && fields.ok && open && postsNow({ manual: fields.manual || manualOnly, connected: !connection, date: fields.date, now: new Date() });
+    const due = !hand && fields.ok && open && postsNow({ manual: isManual, connected: !connection, date: fields.date, now: new Date() });
     const immediate = due && fields.ok && fields.status !== 'planned';
     const reason = !open
       ? null
       : fields.ok
-      ? readiness({ manual: fields.manual || manualOnly, date: fields.date, images: fields.images.length, needsImage: platform === 'instagram', immediate, preview: result, connection: manualOnly ? null : connection || null, now: new Date() })
+      ? readiness({ manual: isManual, date: fields.date, images: fields.images.length, needsImage: platform === 'instagram', immediate, preview: result, connection: isManual ? null : connection || null, now: new Date() })
       : 'Fix the properties first.';
     const blocked = fields.ok && fields.status === 'planned' && reason !== null;
     $('actions').toggleAttribute('data-planned', fields.ok && fields.status === 'planned');
@@ -404,7 +407,7 @@ function init(root: HTMLElement) {
       plannedOption.title = plannedOption.disabled ? (reason ?? '') : '';
     }
     const postedOption = statusOption('posted');
-    if (postedOption && fields.ok) postedOption.hidden = !(fields.manual || manualOnly);
+    if (postedOption && fields.ok) postedOption.hidden = !byHand(fields);
     save.hidden = !dirty();
     save.disabled = !dirty() || blocked;
     const hint = $('hint');
@@ -444,7 +447,7 @@ function init(root: HTMLElement) {
     scheduleAutosave();
     refreshRepliesButton();
     renderReminder();
-    const showCopy = fields.ok && (fields.manual || manualOnly) && type !== 'story';
+    const showCopy = byHand(fields) && type !== 'story';
     const copyText = document.getElementById('copy-text');
     if (copyText) copyText.hidden = !showCopy;
     body.classList.toggle('pr-14', showCopy);
@@ -502,6 +505,9 @@ function init(root: HTMLElement) {
     if (quiet && sending) return;
     while (sending) await new Promise((done) => setTimeout(done, 50));
     if (!dirty()) return;
+    const typed = readFields(raw);
+    const saved = readFields(savedRaw);
+    if (typed.ok && typed.status === 'planned' && !(saved.ok && saved.status === 'planned') && !manualOnly && root.dataset.connection) raw = withManual(raw, true);
     const text = raw;
     const buttons = [save, plan];
     sending = true;

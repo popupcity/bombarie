@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { revisionOf } from './content-store.ts';
 import type { ContentStore } from './content-store.ts';
 import { readiness } from './plan.ts';
-import { readFields, setFrontmatter, statusOfRaw, withBody, withImages } from './frontmatter.ts';
+import { readFields, setFrontmatter, statusOfRaw, withBody, withImages, withManual } from './frontmatter.ts';
 import type { Fields } from './frontmatter.ts';
 import { loadEntities } from './entities.ts';
 import { preview } from './preview.ts';
@@ -159,9 +159,12 @@ export async function saveVariant(
   const current = await store.read(path);
   if (!current) throw new Error('post not found');
 
-  if (statusOfRaw(input.raw) === 'planned' && statusOfRaw(current.text) !== 'planned') {
-    const checked = analyse(input.raw, folder, src, item);
-    const fields = readFields(input.raw);
+  let raw = input.raw;
+  if (statusOfRaw(raw) === 'planned' && statusOfRaw(current.text) !== 'planned') {
+    const typed = readFields(raw);
+    if (typed.ok && !typed.manual && isAutomatic(item.channel.platform) && (await connection(item.resolved.channel))) raw = withManual(raw, true);
+    const checked = analyse(raw, folder, src, item);
+    const fields = readFields(raw);
     const reason = fields.ok
       ? readiness({
           manual: fields.manual || !isAutomatic(item.channel.platform),
@@ -169,14 +172,14 @@ export async function saveVariant(
           images: fields.images.length,
           needsImage: item.channel.platform === 'instagram',
           preview: checked.preview,
-          connection: await connection(item.resolved.channel),
+          connection: null,
           now
         })
       : null;
     const problems = [...(checked.error ? [checked.error] : []), ...checked.issues, ...(reason ? [reason] : [])];
     if (problems.length > 0) throw new PlanBlocked(problems);
   }
-  await store.write(path, input.raw, input.revision);
+  await store.write(path, raw, input.revision);
   return loadCampaign(root, folder)!.variants.find((variant) => variant.base === base)!;
 }
 

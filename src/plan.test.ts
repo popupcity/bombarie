@@ -59,7 +59,7 @@ test('the first thing that is missing is named, in plain words', () => {
   assert.equal(readiness({ ...ok, preview: text(3001, 3000) }), 'Shorten the text by 1 character.');
   assert.equal(readiness({ ...ok, preview: text(3005, 3000) }), 'Shorten the text by 5 characters.');
   assert.match(readiness({ ...ok, preview: text(5, 3000, 'unknown') }) ?? '', /no entity yet/);
-  assert.match(readiness({ ...ok, connection: 'posting to Instagram is not built yet' }) ?? '', /^Posting to Instagram is not built yet\. Set Posting to Manual/);
+  assert.match(readiness({ ...ok, connection: 'posting to Instagram is not built yet' }) ?? '', /^Posting to Instagram is not built yet\. Set Posting to Manual, or connect/);
 });
 
 test('a date within the last hour is still fine, and a reminder only needs a date', () => {

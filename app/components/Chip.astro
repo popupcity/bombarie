@@ -1,12 +1,14 @@
 ---
 import { TINTED } from '../lib/ui.ts';
+import PostedBy from './PostedBy.astro';
 
 interface Props {
   tone: 'ok' | 'warn' | 'ink' | 'info' | 'bad';
   size?: 'small' | 'control';
+  by?: string | undefined;
   [key: string]: unknown;
 }
-const { tone, size = 'small', ...rest } = Astro.props;
+const { tone, size = 'small', by, ...rest } = Astro.props;
 ---
 
-<span data-tone={tone} class:list={['inline-flex w-fit items-center gap-1', size === 'control' ? 'h-(--control-md) rounded-(--radius-control) px-4 text-sm' : 'rounded-sm px-2 py-1 text-xs', TINTED]} {...rest}><slot /></span>
+<span data-tone={tone} class:list={['inline-flex w-fit items-center', by ? 'gap-2' : 'gap-1', size === 'control' ? ['h-(--control-md) rounded-(--radius-control) text-sm', by ? 'pr-4 pl-1' : 'px-4'] : 'rounded-sm px-2 py-1 text-xs', TINTED]} {...rest}>{by && <PostedBy name={by} />}<slot /></span>

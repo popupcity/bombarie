@@ -46,6 +46,6 @@ export function readiness({ manual, date, images, needsImage, immediate, preview
   const over = preview.limit === undefined ? 0 : preview.length - preview.limit;
   if (over > 0) return `Shorten the text by ${over} ${over === 1 ? 'character' : 'characters'}.`;
   if (preview.segments.some((segment) => segment.kind === 'unknown')) return 'A mention has no entity yet. Create it or remove it.';
-  if (connection) return `${sentence(connection)} Set Posting to Manual to plan it anyway.`;
+  if (connection) return `${sentence(connection)} Set Posting to Manual, or connect the channel.`;
   return null;
 }
