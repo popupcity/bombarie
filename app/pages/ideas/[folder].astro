@@ -22,6 +22,7 @@ import Field from '../../components/Field.astro';
 import Section from '../../components/Section.astro';
 import { content, root } from '../../lib/data.ts';
 import { postHref } from '../../lib/ui.ts';
+import { photoSizes } from '../../lib/photo.ts';
 import TitleField from '../../components/TitleField.astro';
 import Shell from '../../layouts/Shell.astro';
 
@@ -61,6 +62,7 @@ if (Astro.request.method === 'POST') {
   }
 }
 
+const sizes = await photoSizes(readIdea(root, folder)?.images ?? [], root, 'ideas', folder);
 const field = 'block w-full rounded-lg bg-surface p-4 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const tone = { new: 'warn', approved: 'info', made: 'ok' } as const;
 const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
@@ -88,7 +90,7 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
                 <Card variant="row" interactive href={idea.link} target="_blank" rel="noopener noreferrer" class="flex items-center gap-4 overflow-hidden">
                   {idea.linkImage && (
                     <span class="relative -my-4 -ml-4 w-28 self-stretch">
-                      <img src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(idea.linkImage)}?w=256`} alt="" loading="lazy" class="absolute inset-0 size-full object-cover" />
+                      <img data-photo src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(idea.linkImage)}?w=256`} alt="" loading="lazy" class="transition-opacity duration-300 absolute inset-0 size-full object-cover" />
                     </span>
                   )}
                   <span class="flex min-w-0 flex-1 flex-col gap-1">
@@ -106,7 +108,7 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
             <ul id="idea-uploading" class="grid grid-cols-4 items-start gap-4 empty:hidden">
               {
                 idea.images.map((name) => (
-                  <ImageTile src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}?w=512`} full={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`} name={name} removeName={name} />
+                  <ImageTile src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}?w=512`} full={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`} name={name} removeName={name} size={sizes[name]} />
                 ))
               }
             </ul>

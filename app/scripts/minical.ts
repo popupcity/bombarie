@@ -1,15 +1,21 @@
 import { icons } from 'ui/src/components/icons.ts';
 import { addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
+import { SWAPPED } from '../lib/ui.ts';
 import { h } from './dom.ts';
 
-const root = document.getElementById('minical');
-const grid = document.getElementById('minical-grid');
-const panel = document.getElementById('minical-day');
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const NAV = 'grid size-8 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-ink';
 const ORDER = ['bad', 'info', 'warn', 'manual', 'ok'];
 
-if (root && grid && panel) {
+let listening: AbortController | undefined;
+
+function start() {
+  listening?.abort();
+  listening = new AbortController();
+  const root = document.getElementById('minical');
+  const grid = document.getElementById('minical-grid');
+  const panel = document.getElementById('minical-day');
+  if (!root || !grid || !panel) return;
   const today = root.dataset.today ?? '';
   const groups = [...document.querySelectorAll<HTMLElement>('section[data-group]')];
   const days = groups.map((group) => group.id.slice(2));
@@ -143,8 +149,11 @@ if (root && grid && panel) {
       waiting = true;
       requestAnimationFrame(spy);
     },
-    { passive: true }
+    { passive: true, signal: listening.signal }
   );
   spy();
   render();
 }
+
+start();
+document.addEventListener(SWAPPED, start);

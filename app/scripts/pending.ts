@@ -1,4 +1,4 @@
-const SPIN =
+export const spinner =
   '<svg class="size-4 shrink-0 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
 const SHOW_AFTER = 200;
 const GIVE_UP = 20_000;
@@ -12,7 +12,7 @@ export function busy(button: HTMLElement, label?: string): () => void {
   const text = label ?? button.textContent?.trim() ?? '';
   button.style.minWidth = `${button.offsetWidth}px`;
   button.setAttribute('aria-busy', 'true');
-  button.innerHTML = `${SPIN}<span>${text}</span>`;
+  button.innerHTML = `${spinner}<span>${text}</span>`;
   if (button instanceof HTMLButtonElement) button.disabled = true;
   const restore = () => {
     restorers.delete(restore);
@@ -28,14 +28,14 @@ export function busy(button: HTMLElement, label?: string): () => void {
 let timer: ReturnType<typeof setTimeout> | undefined;
 let bar: HTMLElement | null = null;
 
-function stopProgress() {
+export function stopProgress() {
   clearTimeout(timer);
   timer = undefined;
   bar?.remove();
   bar = null;
 }
 
-function startProgress() {
+export function startProgress() {
   if (timer !== undefined || bar) return;
   timer = setTimeout(() => {
     timer = undefined;

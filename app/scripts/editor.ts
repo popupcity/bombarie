@@ -42,7 +42,7 @@ type Mode = 'edit' | 'source';
 function init(root: HTMLElement) {
   const { folder = '', variant = '', platform = 'linkedin', connection = '', type = '' } = root.dataset;
   const manualOnly = root.dataset.manualOnly !== undefined;
-  const byHand = (fields: Fields): boolean => fields.ok && (fields.manual || manualOnly || (Boolean(root.dataset.connection) && fields.status !== 'planned'));
+  const byHand = (fields: Fields): boolean => fields.ok && (fields.manual || manualOnly || (connection !== '' && fields.status !== 'planned'));
   const api = `/api/posts/${encodeURIComponent(folder)}/${encodeURIComponent(variant)}`;
   const draftKey = `draft:${folder}/${variant}`;
   const entities: Entities = new Map(Object.entries(json<Record<string, Entity>>('entities', '{}')));
@@ -228,6 +228,7 @@ function init(root: HTMLElement) {
   }
 
   const unusedSection = document.querySelector<HTMLElement>('[data-unused]');
+  const sizes = JSON.parse(unusedSection?.dataset.sizes ?? '{}') as Record<string, { width?: number; height?: number }>;
   const library = new Set<string>(JSON.parse(unusedSection?.dataset.files ?? '[]') as string[]);
   const unused = (names: string[]): string[] => [...library].filter((name) => !names.includes(name));
 
@@ -239,7 +240,9 @@ function init(root: HTMLElement) {
     $('unused-list').replaceChildren(
       ...left.map((name) => {
         const tile = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
-        tile.querySelector<HTMLImageElement>('[data-unused-thumb]')!.src = `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(name) ? `${name}.cover.jpg` : name)}?w=512`;
+        const thumbnail = tile.querySelector<HTMLImageElement>('[data-unused-thumb]')!;
+        if (sizes[name]?.width) Object.assign(thumbnail, sizes[name]);
+        thumbnail.src = `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(name) ? `${name}.cover.jpg` : name)}?w=512`;
         const label = tile.querySelector<HTMLElement>('[data-unused-label]')!;
         label.hidden = !needsCover(name);
         if (needsCover(name)) label.textContent = coverLabel(`${name}.cover.jpg`);
@@ -263,7 +266,7 @@ function init(root: HTMLElement) {
     const thumb = (name: string) =>
       needsCover(name)
         ? pdfPage(name, 'cursor-zoom-in rounded-lg ring-1 ring-line', true)
-        : h('img', { src: `${full(name)}?w=512`, alt: '', 'data-full': full(name), 'data-full-set': 'editor', class: 'block h-auto w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line' });
+        : h('img', { 'data-photo': true, ...sizes[name], src: `${full(name)}?w=512`, alt: '', 'data-full': full(name), 'data-full-set': 'editor', class: 'block h-auto w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line transition-opacity duration-300' });
     const template = $<HTMLTemplateElement>('image-tile');
     $('image-list').replaceChildren(
       ...names.map((name, index) => {
@@ -302,8 +305,8 @@ function init(root: HTMLElement) {
         needsCover(name)
           ? h('li', {}, pdfPage(name))
           : type === 'story'
-          ? h('li', { class: 'relative' }, h('img', { src: picture(name), alt: '', 'aria-hidden': 'true', class: 'absolute inset-0 size-full scale-125 object-cover blur-2xl brightness-75' }), h('img', { src: picture(name), alt: '', class: 'relative block size-full object-contain' }))
-          : h('li', {}, h('img', { src: picture(name), alt: '', class: platform === 'instagram' ? 'block h-auto max-h-[125cqw] min-h-[52cqw] w-full object-cover' : 'block size-full object-cover' }))
+          ? h('li', { class: 'relative' }, h('img', { src: picture(name), alt: '', 'aria-hidden': 'true', class: 'absolute inset-0 size-full scale-125 object-cover blur-2xl brightness-75' }), h('img', { 'data-photo': true, src: picture(name), alt: '', class: 'transition-opacity duration-300 relative block size-full object-contain' }))
+          : h('li', {}, h('img', { 'data-photo': true, src: picture(name), alt: '', class: platform === 'instagram' ? 'block h-auto max-h-[125cqw] min-h-[52cqw] w-full object-cover' : 'block size-full object-cover' }))
       )
     );
     $('preview-images').hidden = names.length === 0;
@@ -411,7 +414,7 @@ function init(root: HTMLElement) {
   function refreshReadiness(fields: Fields, result: Preview) {
     const open = plan.dataset.recorded === undefined;
     const isManual = byHand(fields);
-    const plannedHint = statusOption('planned')?.querySelector('span > span + span');
+    const plannedHint = statusOption('planned')?.querySelector('[data-option-text]');
     if (plannedHint) plannedHint.textContent = plannedText(isManual);
     const reached = fields.ok && fields.date !== '' && parseDate(fields.date).getTime() <= Date.now();
     const hand = isManual && reached && open;
@@ -511,6 +514,7 @@ function init(root: HTMLElement) {
   };
 
   let sending = false;
+  let renameTimer: number | undefined;
   let autosaveTimer: number | undefined;
   let autosaveStopped = false;
 
@@ -535,9 +539,10 @@ function init(root: HTMLElement) {
     if (quiet && sending) return;
     while (sending) await new Promise((done) => setTimeout(done, 50));
     if (!dirty() && !rename) return;
+    clearTimeout(renameTimer);
     const typed = readFields(raw);
     const saved = readFields(savedRaw);
-    if (typed.ok && typed.status === 'planned' && !(saved.ok && saved.status === 'planned') && !manualOnly && root.dataset.connection) raw = withManual(raw, true);
+    if (typed.ok && typed.status === 'planned' && !(saved.ok && saved.status === 'planned') && !manualOnly && connection) raw = withManual(raw, true);
     const text = raw;
     const buttons = [save, plan];
     sending = true;
@@ -709,10 +714,13 @@ function init(root: HTMLElement) {
   source.addEventListener('input', () => edit(source.value));
   title.addEventListener('input', () => readFields(raw).ok && edit(withTitle(raw, title.value)));
   title.addEventListener('change', () => {
-    const now = readFields(raw);
-    if (!now.ok || now.status === 'planned' || plan.dataset.recorded !== undefined || !$('conflict').hidden) return;
-    clearTimeout(autosaveTimer);
-    void submit(undefined, save, false, true);
+    clearTimeout(renameTimer);
+    renameTimer = window.setTimeout(() => {
+      const now = readFields(raw);
+      if (sending || !now.ok || now.status === 'planned' || plan.dataset.recorded !== undefined || !$('conflict').hidden) return;
+      clearTimeout(autosaveTimer);
+      void submit(undefined, save, false, true);
+    }, 300);
   });
   date.addEventListener('input', () => edit(withDate(raw, date.value)));
   manual.addEventListener('input', () => edit(withManual(raw, manual.checked)));
@@ -919,7 +927,7 @@ function init(root: HTMLElement) {
   localStorage.removeItem(draftKey);
   show(readFields(raw).ok ? ((localStorage.getItem(MODE_KEY) as Mode | null) ?? 'edit') : 'source');
   const opened = readFields(raw);
-  if (opened.ok && opened.body.trim() === '') $('body').focus();
+  if (opened.ok && opened.status === 'draft' && plan.dataset.recorded === undefined && opened.body.trim() === '') $('body').focus();
   function watchPosting() {
     for (const button of [save, plan]) button.disabled = true;
     const url = `/api/state/${encodeURIComponent(folder)}/${encodeURIComponent(variant)}`;

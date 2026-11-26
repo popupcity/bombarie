@@ -57,7 +57,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
     {
       first && (
         <div class="relative -my-6 -mr-6 w-30 self-stretch">
-          <img src={`/img/${encodeURIComponent(folder)}/${encodeURIComponent(first)}?w=384`} alt="" loading="lazy" data-full={source(first)} data-full-kind={mediaKind(first)} data-full-set={card.id} class="absolute inset-0 size-full cursor-zoom-in object-cover" />
+          <img data-photo src={`/img/${encodeURIComponent(folder)}/${encodeURIComponent(first)}?w=384`} alt="" loading="lazy" data-full={source(first)} data-full-kind={mediaKind(first)} data-full-set={card.id} class="transition-opacity duration-300 absolute inset-0 size-full cursor-zoom-in object-cover" />
           {isCover(first) && <span class="absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white">{coverLabel(first)}</span>}
           {others.length > 0 && <span class="absolute right-2 bottom-2 rounded-sm bg-veil px-2 py-1 text-xs text-white tabular-nums">+{others.length}</span>}
           {others.map((name) => <span hidden data-full={source(name)} data-full-kind={mediaKind(name)} data-full-set={card.id} />)}

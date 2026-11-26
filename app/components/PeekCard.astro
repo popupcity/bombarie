@@ -42,7 +42,7 @@ const when = `${card.day}T${card.time}`;
       </div>
       {image && (
         <div class="relative size-20">
-          <img src={image} alt="" width="80" height="80" loading="lazy" data-full={`/img/${encodeURIComponent(card.id.split('/')[0] ?? '')}/${encodeURIComponent((card.images[0] ?? '').replace(/\.cover\.jpg$/i, ''))}`} data-full-kind={mediaKind(card.images[0] ?? '')} data-full-set={`peek-${card.id}`} class="size-20 cursor-zoom-in rounded-lg object-cover" />
+          <img data-photo src={image} alt="" width="80" height="80" loading="lazy" data-full={`/img/${encodeURIComponent(card.id.split('/')[0] ?? '')}/${encodeURIComponent((card.images[0] ?? '').replace(/\.cover\.jpg$/i, ''))}`} data-full-kind={mediaKind(card.images[0] ?? '')} data-full-set={`peek-${card.id}`} class="transition-opacity duration-300 size-20 cursor-zoom-in rounded-lg object-cover" />
           {isCover(card.images[0] ?? '') && <span class="absolute bottom-1 left-1 rounded-sm bg-veil px-1 text-xs text-white">{coverLabel(card.images[0] ?? '')}</span>}
         </div>
       )}

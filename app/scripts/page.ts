@@ -1,5 +1,6 @@
 import './datepicker.ts';
-import { brand } from '../lib/ui.ts';
+import './inplace.ts';
+import { brand, SWAPPED } from '../lib/ui.ts';
 
 const KEY = `${brand}:hidden`;
 const VISIBLE_CHIPS = 3;
@@ -73,6 +74,7 @@ document.addEventListener('click', (event) => {
 });
 
 apply();
+document.addEventListener(SWAPPED, apply);
 const today = document.getElementById('today');
 if (today && (!location.hash || location.hash === '#today')) {
   const land = () => scrollTo({ top: Math.max(0, today.getBoundingClientRect().top + scrollY - parseFloat(getComputedStyle(today).scrollMarginTop)), behavior: 'instant' });

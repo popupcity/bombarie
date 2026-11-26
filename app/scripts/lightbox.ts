@@ -51,7 +51,7 @@ function render(): void {
       ? h('iframe', { src: url, title: 'PDF', class: 'size-full max-w-4xl justify-self-center rounded-lg bg-surface' })
       : item.dataset.fullKind === 'video'
         ? film(url)
-        : h('img', { src: url, alt: '', class: 'size-full object-contain' })
+        : h('img', { 'data-photo': true, src: url, alt: '', class: 'size-full object-contain transition-opacity duration-300' })
   );
   previous.hidden = next.hidden = items.length < 2;
 }

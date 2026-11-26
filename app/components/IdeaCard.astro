@@ -5,6 +5,8 @@ import Text from 'ui/src/components/Text.astro';
 import Button from 'ui/src/components/Button.astro';
 import Icon from 'ui/src/components/Icon.astro';
 import { domainOf } from '../../src/ideas.ts';
+import { root } from '../lib/data.ts';
+import { photoSizes } from '../lib/photo.ts';
 import type { Idea } from '../../src/ideas.ts';
 import Chip from './Chip.astro';
 import ConfirmDialog from './ConfirmDialog.astro';
@@ -16,6 +18,7 @@ const { idea } = Astro.props;
 const href = `/ideas/${encodeURIComponent(idea.folder)}`;
 const shown = idea.images.slice(0, 3);
 const more = idea.images.length - shown.length;
+const sizes = await photoSizes([...shown, ...(idea.linkImage ? [idea.linkImage] : [])], root, 'ideas', idea.folder);
 const tone = { new: 'warn', approved: 'info', made: 'ok' } as const;
 const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
 const cover = 'block focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
@@ -42,14 +45,14 @@ const cover = 'block focus-visible:outline-2 focus-visible:outline-offset-0 focu
   {
     idea.images.length === 0 && idea.linkImage && (
       <a href={href} class={cover}>
-        <img src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(idea.linkImage)}?w=768`} alt="" loading="lazy" class="block h-auto max-h-48 w-full rounded-lg object-cover ring-1 ring-line" />
+        <img data-photo {...sizes[idea.linkImage]} src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(idea.linkImage)}?w=768`} alt="" loading="lazy" class="transition-opacity duration-300 block h-auto max-h-48 w-full rounded-lg object-cover ring-1 ring-line" />
       </a>
     )
   }
   {
     idea.images.length === 1 && (
       <a href={href} class={cover}>
-        <img src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(idea.images[0] as string)}?w=768`} alt="" loading="lazy" class="block h-auto max-h-96 w-full rounded-lg object-cover ring-1 ring-line" />
+        <img data-photo {...sizes[idea.images[0] as string]} src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(idea.images[0] as string)}?w=768`} alt="" loading="lazy" class="transition-opacity duration-300 block h-auto max-h-96 w-full rounded-lg object-cover ring-1 ring-line" />
       </a>
     )
   }
@@ -59,7 +62,7 @@ const cover = 'block focus-visible:outline-2 focus-visible:outline-offset-0 focu
       <ul class="grid grid-cols-3 items-start gap-2">
         {shown.map((name, index) => (
           <li class="relative min-w-0">
-            <img src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(name)}?w=384`} alt="" loading="lazy" class="block h-auto w-full rounded-lg object-cover ring-1 ring-line" />
+            <img data-photo {...sizes[name]} src={`/img/ideas/${encodeURIComponent(idea.folder)}/${encodeURIComponent(name)}?w=384`} alt="" loading="lazy" class="transition-opacity duration-300 block h-auto w-full rounded-lg object-cover ring-1 ring-line" />
             {index === shown.length - 1 && more > 0 && <span class="absolute inset-0 grid place-items-center rounded-lg bg-veil text-sm text-white">+{more}</span>}
           </li>
         ))}

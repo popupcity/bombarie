@@ -11,7 +11,7 @@ import ChannelForm from '../../../components/ChannelForm.astro';
 import Heading from 'ui/src/components/Heading.astro';
 import PlatformMark from '../../../components/PlatformMark.astro';
 import TitleField from '../../../components/TitleField.astro';
-import { quiet } from '../../../lib/ui.ts';
+import { quiet, STATIC_CHIP } from '../../../lib/ui.ts';
 import { appSaved, saveApp, setOutcome, startConnect } from '../../../lib/connect.ts';
 import { root } from '../../../lib/data.ts';
 import Shell from '../../../layouts/Shell.astro';
@@ -63,7 +63,7 @@ const redirectUri = callbackUrl(Astro.url.origin);
     </header>
     <ChannelForm formId="add-form" platform={platform} handle={values.handle} feed={values.feed} setup={connectable && !savedApp ? { clientId: values.clientId, secretSaved: false, configId: values.configId, redirectUri } : undefined}>
       {error && <Alert slot="top">{error}</Alert>}
-      <div slot="identity" class="inline-flex h-(--control-md) items-center gap-3 rounded-lg bg-surface pr-4 pl-2 text-sm ring-1 ring-line ring-inset">
+      <div slot="identity" class={`${STATIC_CHIP} pl-2`}>
         <PlatformMark platform={platform} class="size-6" />
         <span>{PLATFORM_LABEL[platform]}</span>
       </div>

@@ -16,6 +16,7 @@ import ChoiceMenu from '../components/ChoiceMenu.astro';
 import Field from '../components/Field.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Section from '../components/Section.astro';
+import { githubAvatar } from '../lib/ui.ts';
 import Shell from '../layouts/Shell.astro';
 import { users } from '../lib/auth.ts';
 import { setOutcome, takeOutcome } from '../lib/connect.ts';
@@ -67,7 +68,7 @@ const roles: [Role, string][] = [['admin', 'Can add and remove users.'], ['membe
           {
             list.map(([name, role]) => (
               <Card as="li" class="flex items-center gap-4">
-                <img src={`https://github.com/${name}.png?size=64`} alt="" class="size-8 rounded-lg" />
+                <img src={githubAvatar(name)} alt="" class="size-8 rounded-lg" />
                 <Text class="min-w-0 flex-1 truncate">{name}</Text>
                 <form method="post" class="flex items-center gap-2">
                   <input type="hidden" name="name" value={name} />

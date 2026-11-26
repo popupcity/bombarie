@@ -4,7 +4,7 @@ import Card from 'ui/src/components/Card.astro';
 import Heading from 'ui/src/components/Heading.astro';
 import Text from 'ui/src/components/Text.astro';
 import { removeUnusedFile } from '../../../src/media.ts';
-import { COMPOSE_URL, PLATFORM_LABEL, coverLabel, isMedia, needsCover, takesMedia } from '../../../src/types.ts';
+import { COMPOSE_URL, PLATFORM_LABEL, isMedia, takesMedia } from '../../../src/types.ts';
 import { dateLabel, postsNow } from '../../../src/plan.ts';
 import { whenLabel } from '../../../src/time.ts';
 import Chip from '../../components/Chip.astro';
@@ -39,6 +39,7 @@ import { variantOptions } from '../../lib/variants.ts';
 import ActionPanel from '../../components/ActionPanel.astro';
 import ActionRow from '../../components/ActionRow.astro';
 import ValueButton from '../../components/ValueButton.astro';
+import { photoSizes } from '../../lib/photo.ts';
 import PlatformPreview from '../../components/PlatformPreview.astro';
 import Section from '../../components/Section.astro';
 
@@ -101,6 +102,7 @@ const fields = variant.fields;
 const images = fields.ok ? fields.images : [];
 const fits = (name: string): boolean => takesMedia(variant.platform, name);
 const library = (await content.list(`posts/${campaign.folder}`)).filter((name) => isMedia(name) && fits(name));
+const sizes = await photoSizes(library, root, 'posts', campaign.folder);
 const recorded = await states.get(`${campaign.folder}/${variant.base}.md`);
 const settled = lastOutcome(`${campaign.folder}/${variant.base}.md`);
 const settledToast = settled && Date.now() - new Date(settled.at).getTime() < 120_000 ? { text: outcomeWording(settled.status, settled.message), tone: settled.status === 'posted' ? 'ok' : settled.status === 'unconfirmed' ? 'warn' : 'bad' } : null;
@@ -111,8 +113,8 @@ const markedByHand = recorded?.status === 'posted' && recorded.remoteId === MANU
 const repliable = recorded?.status === 'posted' && !markedByHand && canReply(providers, variant.platform);
 const unpostable = recorded?.status === 'posted' && !markedByHand && canUnpost(providers, variant.platform);
 const connections = await loadConnections();
-const unplanned = !(fields.ok && fields.status === 'planned');
-const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (unplanned && Boolean(connections[variant.channel]))));
+const planned = fields.ok && fields.status === 'planned';
+const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (!planned && Boolean(connections[variant.channel]))));
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
 const videoOk = takesMedia(variant.platform, 'a.mp4');
 const accept = ['image/jpeg,image/png,image/gif,image/webp', pdfOk && 'application/pdf', videoOk && 'video/mp4'].filter(Boolean).join(',');
@@ -120,7 +122,6 @@ const threaded = (variant.platform === 'threads' || variant.platform === 'linked
 const compose = variant.platform === 'substack' && variant.type === 'note' ? 'https://substack.com/notes' : COMPOSE_URL[variant.platform];
 const forcedManual = !isAutomatic(variant.platform);
 const copyText = manualNow && variant.type !== 'story';
-const planned = fields.ok && fields.status === 'planned';
 const shown = toEdit(fields.body, new Map(Object.entries(campaign.entities)));
 const field = 'rounded-lg bg-surface p-6 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const instant = fields.ok && !planned && recorded === null && postsNow({ manual: manualNow, connected: !connections[variant.channel], date: fields.date, now: new Date() });
@@ -246,13 +247,13 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
               <template id="image-tile"><ImageTile arrows /></template>
               <Dropzone inputId="image-input" accept={accept} title={pdfOk || videoOk ? 'Add media' : 'Add images'} />
             </div>
-            <div data-unused data-files={JSON.stringify(library)} hidden class="flex flex-col gap-4">
+            <div data-unused data-files={JSON.stringify(library)} data-sizes={JSON.stringify(sizes)} hidden class="flex flex-col gap-4">
               <Heading variant="label" as="h2">Unused in this post</Heading>
               <ul id="unused-list" class="grid grid-cols-4 items-start gap-4"></ul>
             </div>
             <template id="unused-tile">
               <li class="group/tile relative">
-                <img data-unused-thumb alt="" loading="lazy" class="block h-auto w-full rounded-lg object-cover ring-1 ring-line" />
+                <img data-photo data-unused-thumb alt="" loading="lazy" class="transition-opacity duration-300 block h-auto w-full rounded-lg object-cover ring-1 ring-line" />
                 <span data-unused-label hidden class="absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white"></span>
                 <Button data-use-image="" type="button" variant="quiet" size="sm" icon aria-label="Add" class="absolute right-2 bottom-2"><Icon name="plus" /></Button>
                 <Button type="button" data-open="delete-file" data-value="" variant="quiet" size="sm" icon data-tone="bad" aria-label="Delete" class="absolute top-2 right-2 opacity-0 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 pointer-coarse:opacity-100 hover:text-(--tone-text)"><Icon name="trash" /></Button>

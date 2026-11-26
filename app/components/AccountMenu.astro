@@ -1,6 +1,6 @@
 ---
 import Icon from 'ui/src/components/Icon.astro';
-import { MENU, MENU_ITEM, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
+import { githubAvatar, MENU, MENU_ITEM, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
 
 const user = Astro.locals.user;
 const current = schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value) ?? 'auto';
@@ -13,7 +13,7 @@ const schemes = [
 
 <div>
   <button type="button" popovertarget="account-menu" style="anchor-name:--account-menu" class:list={[MENU_ITEM, 'w-full']}>
-    {user ? <img src={`https://github.com/${user}.png?size=64`} alt="" class="size-6 rounded-sm" /> : <Icon name="sliders-horizontal" class="text-base text-ink-soft" />}
+    {user ? <img src={githubAvatar(user)} alt="" class="size-6 rounded-sm" /> : <Icon name="sliders-horizontal" class="text-base text-ink-soft" />}
     <span class="min-w-0 flex-1 truncate text-left">{user ?? 'Appearance'}</span>
     <Icon name="caret-down" class="text-ink-soft" />
   </button>
@@ -21,7 +21,7 @@ const schemes = [
     <div role="group" aria-label="Appearance">
       {
         schemes.map((scheme) => (
-          <button type="button" data-scheme-choice={scheme.value} data-cookie={SCHEME_COOKIE} aria-pressed={scheme.value === current ? 'true' : 'false'} class:list={[MENU_ITEM, 'group w-full']}>
+          <button type="button" data-scheme-choice={scheme.value} aria-pressed={scheme.value === current ? 'true' : 'false'} class:list={[MENU_ITEM, 'group w-full']}>
             <span class="flex-1 text-left">{scheme.label}</span>
             <Icon name="check" class="invisible group-aria-pressed:visible" />
           </button>

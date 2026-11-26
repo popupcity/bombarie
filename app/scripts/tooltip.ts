@@ -1,3 +1,4 @@
+import { SWAPPED } from '../lib/ui.ts';
 import { h } from './dom.ts';
 
 const DELAY = 350;
@@ -71,3 +72,5 @@ document.addEventListener('scroll', hide, true);
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') hide();
 });
+
+document.addEventListener(SWAPPED, hide);

@@ -19,11 +19,3 @@ function apply(name: string) {
 
 for (const button of buttons) button.addEventListener('click', () => apply(button.dataset.show ?? 'open'));
 apply(localStorage.getItem(KEY) ?? 'open');
-
-const composer = document.getElementById('idea') as HTMLTextAreaElement | null;
-composer?.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-    event.preventDefault();
-    composer.form?.requestSubmit();
-  }
-});

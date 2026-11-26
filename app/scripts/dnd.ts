@@ -1,3 +1,4 @@
+import { act, inPlace } from './inplace.ts';
 import { toast } from './toast.ts';
 
 const MIME = 'application/x-bombarie-card';
@@ -25,6 +26,7 @@ async function move(id: string, day: string, time: string): Promise<void> {
   body.set('id', id);
   body.set('day', day);
   body.set('date', `${day}T${time}`);
+  if (inPlace()) return act(location.pathname, body);
   let response: Response;
   try {
     response = await fetch(location.pathname, { method: 'POST', body, redirect: 'manual' });

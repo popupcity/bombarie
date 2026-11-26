@@ -34,7 +34,7 @@ const { id, label, tone, options, submit = false, triggerId, labelId, disableAct
     options.map((option) => (
       <button type={submit ? 'submit' : 'button'} disabled={disableActive && option.active} aria-pressed={option.active} {...option.attrs} class:list={[MENU_ITEM, 'items-start py-2 disabled:cursor-default disabled:hover:bg-transparent']}>
         <Icon name="check" class:list={['mt-1 shrink-0', !option.active && 'invisible']} />
-        <span><span class="block">{option.label}</span>{option.text && <span class="block text-ink-soft">{option.text}</span>}</span>
+        <span><span class="block">{option.label}</span>{option.text && <span class="block text-ink-soft" data-option-text>{option.text}</span>}</span>
       </button>
     ))
   }
