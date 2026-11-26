@@ -60,7 +60,7 @@ export function autocomplete(area: HTMLTextAreaElement, kind: Trigger, entities:
     id: `${area.id}-suggestions`,
     role: 'listbox',
     hidden: true,
-    class: 'absolute z-20 w-72 overflow-hidden rounded-xl bg-surface p-2 text-sm shadow-float ring-1 ring-line ring-inset transition-[opacity,scale,translate,display] transition-discrete duration-(--duration-pop) ease-(--ease-pop) starting:-translate-y-1 starting:scale-98 starting:opacity-0 [&[hidden]]:-translate-y-1 [&[hidden]]:scale-98 [&[hidden]]:opacity-0'
+    class: 'absolute z-20 w-72 overflow-hidden rounded-xl bg-surface p-2 text-sm shadow-float ring-1 ring-line ring-inset transition-[opacity,scale,translate,display] transition-discrete starting:-translate-y-1 starting:scale-98 starting:opacity-0 [&[hidden]]:-translate-y-1 [&[hidden]]:scale-98 [&[hidden]]:opacity-0'
   });
   area.parentElement?.append(list);
   area.setAttribute('aria-autocomplete', 'list');

@@ -32,7 +32,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
   <time class="relative hidden h-8 items-center self-start text-sm text-ink-soft tabular-nums md:mt-6 md:flex">
     {showTime ? card.time : ''}
   </time>
-  <Card data-drag-card interactive alert={Boolean(card.problem)} class:list={['relative grid gap-4', first ? 'min-h-40 grid-cols-[minmax(0,1fr)_auto] gap-x-0 overflow-hidden' : 'grid-cols-1']}>
+  <Card data-drag-card interactive alert={Boolean(card.problem)} class:list={['relative grid gap-4', first ? 'min-h-40 grid-cols-[minmax(0,1fr)_auto] gap-x-0 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-xl after:[box-shadow:inherit]' : 'grid-cols-1']}>
     <div class:list={['flex min-w-0 flex-col gap-4', first && 'pr-6']}>
       <div class="flex min-h-8 flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-soft">
         <time class="tabular-nums md:hidden">{card.time}</time>
@@ -57,7 +57,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
     {
       first && (
         <div class="relative -my-6 -mr-6 w-30 self-stretch">
-          <img data-photo src={`/img/${encodeURIComponent(folder)}/${encodeURIComponent(first)}?w=384`} alt="" loading="lazy" data-full={source(first)} data-full-kind={mediaKind(first)} data-full-set={card.id} class="transition-opacity duration-300 absolute inset-0 size-full cursor-zoom-in object-cover" />
+          <img data-photo src={`/img/${encodeURIComponent(folder)}/${encodeURIComponent(first)}?w=384`} alt="" loading="lazy" data-full={source(first)} data-full-kind={mediaKind(first)} data-full-set={card.id} class="transition-opacity absolute inset-0 size-full cursor-zoom-in object-cover" />
           {isCover(first) && <span class="absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white">{coverLabel(first)}</span>}
           {others.length > 0 && <span class="absolute right-2 bottom-2 rounded-sm bg-veil px-2 py-1 text-xs text-white tabular-nums">+{others.length}</span>}
           {others.map((name) => <span hidden data-full={source(name)} data-full-kind={mediaKind(name)} data-full-set={card.id} />)}

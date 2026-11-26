@@ -11,8 +11,8 @@ const host = (): HTMLElement =>
   document.body.appendChild(h('div', { id: 'toasts', 'aria-live': 'polite', class: 'pointer-events-none fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-3 px-4' }));
 
 function dismiss(item: HTMLElement): void {
-  item.classList.add('-translate-y-2', 'scale-98', 'opacity-0');
-  setTimeout(() => item.remove(), 200);
+  item.classList.add('-translate-y-1', 'scale-98', 'opacity-0');
+  setTimeout(() => item.remove(), 150);
 }
 
 export function working(text: string): () => void {
@@ -20,7 +20,7 @@ export function working(text: string): () => void {
   glyph.innerHTML = GLYPH.info;
   const item = h(
     'div',
-    { 'data-tone': 'info', role: 'status', class: 'pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-xl bg-[color-mix(in_srgb,var(--tone)_22%,var(--surface))] px-4 py-3 text-sm text-(--tone-text) shadow-lg transition duration-200' },
+    { 'data-tone': 'info', role: 'status', class: 'pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-xl bg-[color-mix(in_srgb,var(--tone)_22%,var(--surface))] px-4 py-3 text-sm text-(--tone-text) shadow-lg transition' },
     glyph,
     h('span', { class: 'min-w-0 flex-1' }, text)
   );
@@ -38,7 +38,7 @@ export function toast(text: string, tone: Tone = 'ok'): void {
     {
       'data-tone': tone,
       role: tone === 'bad' ? 'alert' : 'status',
-      class: 'pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-xl bg-[color-mix(in_srgb,var(--tone)_22%,var(--surface))] py-2 pr-2 pl-4 text-sm text-(--tone-text) shadow-float ring-1 ring-(--tone-text)/40 ring-inset transition duration-(--duration-pop) ease-(--ease-pop) starting:-translate-y-2 starting:scale-98 starting:opacity-0'
+      class: 'pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-xl bg-[color-mix(in_srgb,var(--tone)_22%,var(--surface))] py-2 pr-2 pl-4 text-sm text-(--tone-text) shadow-float ring-1 ring-(--tone-text)/40 ring-inset transition starting:-translate-y-1 starting:scale-98 starting:opacity-0'
     },
     glyph,
     h('span', { class: 'min-w-0 flex-1' }, text),

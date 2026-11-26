@@ -1,6 +1,6 @@
 ---
 import Icon from 'ui/src/components/Icon.astro';
-import { githubAvatar, MENU, MENU_ITEM, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
+import { FADE_ABOVE, githubAvatar, MENU, MENU_ITEM, SCHEME_COOKIE, schemeOf, CARET } from '../lib/ui.ts';
 
 const user = Astro.locals.user;
 const current = schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value) ?? 'auto';
@@ -11,11 +11,11 @@ const schemes = [
 ] as const;
 ---
 
-<div>
+<div class:list={[FADE_ABOVE, 'sticky bottom-0 z-10 shrink-0 bg-page py-4']}>
   <button type="button" popovertarget="account-menu" style="anchor-name:--account-menu" class:list={[MENU_ITEM, 'w-full']}>
     {user ? <img src={githubAvatar(user)} alt="" class="size-6 rounded-sm" /> : <Icon name="sliders-horizontal" class="text-base text-ink-soft" />}
     <span class="min-w-0 flex-1 truncate text-left">{user ?? 'Appearance'}</span>
-    <Icon name="caret-down" class="text-ink-soft" />
+    <Icon name="caret-down" class={`text-ink-soft ${CARET}`} />
   </button>
   <div id="account-menu" popover style="position-anchor:--account-menu" class:list={[MENU, 'w-52 [inset:auto] [position-try-fallbacks:flip-block] [bottom:anchor(top)] [left:anchor(left)]']}>
     <div role="group" aria-label="Appearance">

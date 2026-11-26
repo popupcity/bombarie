@@ -273,7 +273,7 @@ function init(root: HTMLElement) {
     const thumb = (name: string) =>
       needsCover(name)
         ? pdfPage(name, 'cursor-zoom-in rounded-lg ring-1 ring-line', true)
-        : h('img', { 'data-photo': true, ...sizes[name], src: `${full(name)}?w=512`, alt: '', 'data-full': full(name), 'data-full-set': 'editor', class: 'block h-auto w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line transition-opacity duration-300' });
+        : h('img', { 'data-photo': true, ...sizes[name], src: `${full(name)}?w=512`, alt: '', 'data-full': full(name), 'data-full-set': 'editor', class: 'block h-auto w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line transition-opacity' });
     const template = $<HTMLTemplateElement>('image-tile');
     $('image-list').replaceChildren(
       ...names.map((name, index) => {
@@ -312,7 +312,7 @@ function init(root: HTMLElement) {
         needsCover(name)
           ? h('li', {}, pdfPage(name))
           : type === 'story'
-          ? h('li', { class: 'relative' }, h('img', { src: picture(name), alt: '', 'aria-hidden': 'true', class: 'absolute inset-0 size-full scale-125 object-cover blur-2xl brightness-75' }), h('img', { 'data-photo': true, src: picture(name), alt: '', class: 'transition-opacity duration-300 relative block size-full object-contain' }))
+          ? h('li', { class: 'relative' }, h('img', { src: picture(name), alt: '', 'aria-hidden': 'true', class: 'absolute inset-0 size-full scale-125 object-cover blur-2xl brightness-75' }), h('img', { 'data-photo': true, src: picture(name), alt: '', class: 'transition-opacity relative block size-full object-contain' }))
           : h('li', {}, h('img', { 'data-photo': true, src: picture(name), alt: '', class: platform === 'instagram' ? 'block h-auto max-h-[125cqw] min-h-[52cqw] w-full object-cover' : 'block size-full object-cover' }))
       )
     );

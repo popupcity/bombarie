@@ -47,7 +47,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
           images.map((name) => (
             <li class="relative">
               <img src={picture(name)} alt="" aria-hidden="true" class="absolute inset-0 size-full scale-125 object-cover blur-2xl brightness-75" />
-              <img data-photo src={picture(name)} alt="" class="transition-opacity duration-300 relative block size-full object-contain" />
+              <img data-photo src={picture(name)} alt="" class="transition-opacity relative block size-full object-contain" />
             </li>
           ))
         }
@@ -85,7 +85,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
         <Icon name="image" class="text-3xl group-has-[#preview-images:not([hidden])]:hidden" />
         <span class="text-xs group-has-[#preview-images:not([hidden])]:hidden">Instagram needs media</span>
         <ul id="preview-images" class="w-full" hidden={images.length === 0}>
-          {images.map((name, index) => <li hidden={index > 0}><img data-photo src={picture(name)} alt="" class={`transition-opacity duration-300 ${feedPicture}`} /></li>)}
+          {images.map((name, index) => <li hidden={index > 0}><img data-photo src={picture(name)} alt="" class={`transition-opacity ${feedPicture}`} /></li>)}
         </ul>
         <span id="slide-count" hidden class="absolute top-3 right-3 rounded-sm bg-veil px-2 py-1 text-xs text-white tabular-nums"></span>
         <button type="button" data-slide="-1" hidden aria-label="Previous image" class={`${slideButton} left-2 rotate-180`}><Icon name="caret-right" /></button>
@@ -122,7 +122,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
         {segments.map((segment) => <span data-tone={segmentLook(platform, segment.kind).tone} class={segmentLook(platform, segment.kind).class} title={segment.kind === 'plain' ? 'posted as plain text' : undefined}>{segment.text}</span>)}
       </Text>
       <ul id="preview-images" class={feedImages} hidden={images.length === 0}>
-        {images.map((name) => <li><img data-photo src={picture(name)} alt="" class="transition-opacity duration-300 block size-full object-cover" /></li>)}
+        {images.map((name) => <li><img data-photo src={picture(name)} alt="" class="transition-opacity block size-full object-cover" /></li>)}
       </ul>
       <footer class="flex items-center justify-between border-t border-line pt-3">
         {actions.map(([icon, label]) => <span class={action}><Icon name={icon} class="text-lg" /><span class="hidden @xs:inline">{label}</span></span>)}

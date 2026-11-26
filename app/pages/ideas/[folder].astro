@@ -21,7 +21,7 @@ import ConfirmDialog from '../../components/ConfirmDialog.astro';
 import Field from '../../components/Field.astro';
 import Section from '../../components/Section.astro';
 import { content, root } from '../../lib/data.ts';
-import { postHref } from '../../lib/ui.ts';
+import { postHref, CARET } from '../../lib/ui.ts';
 import { photoSizes } from '../../lib/photo.ts';
 import TitleField from '../../components/TitleField.astro';
 import Shell from '../../layouts/Shell.astro';
@@ -90,7 +90,7 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
                 <Card variant="row" interactive href={idea.link} target="_blank" rel="noopener noreferrer" class="flex items-center gap-4 overflow-hidden">
                   {idea.linkImage && (
                     <span class="relative -my-4 -ml-4 w-28 self-stretch">
-                      <img data-photo src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(idea.linkImage)}?w=256`} alt="" loading="lazy" class="transition-opacity duration-300 absolute inset-0 size-full object-cover" />
+                      <img data-photo src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(idea.linkImage)}?w=256`} alt="" loading="lazy" class="transition-opacity absolute inset-0 size-full object-cover" />
                     </span>
                   )}
                   <span class="flex min-w-0 flex-1 flex-col gap-1">
@@ -150,7 +150,7 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
           <Button slot="actions" type="submit" name="intent" value="save" variant="outline" data-pending="Saving…">Save</Button>
           <Fragment slot="after">
             {idea.status === 'made' && idea.post && <Button href={`/posts/${encodeURIComponent(idea.post)}`} class="w-full">Open post</Button>}
-            {idea.status !== 'made' && <Button type="button" popovertarget="make-menu" style="anchor-name:--make-menu" class="w-full">Make post<Icon name="caret-down" /></Button>}
+            {idea.status !== 'made' && <Button type="button" popovertarget="make-menu" style="anchor-name:--make-menu" class="w-full">Make post<Icon name="caret-down" class={CARET} /></Button>}
             {idea.status !== 'made' && <NewPostMenu id="make-menu" pick />}
           </Fragment>
         </ActionPanel>

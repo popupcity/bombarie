@@ -18,7 +18,7 @@ const reveal = 'absolute opacity-0 group-hover/tile:opacity-100 group-focus-with
 
 <li data-tile class="group/tile flex min-w-0 flex-col gap-2">
   <div class="relative">
-    <img data-photo {...size} data-tile-thumb src={src || undefined} alt="" loading="lazy" data-full={full || undefined} data-full-set="images" class="transition-opacity duration-300 block h-auto w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line" />
+    <img data-photo {...size} data-tile-thumb src={src || undefined} alt="" loading="lazy" data-full={full || undefined} data-full-set="images" class="transition-opacity block h-auto w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line" />
     <Button data-tile-remove data-tone="bad" type={removeName ? 'submit' : 'button'} name={removeName ? 'intent' : undefined} value={removeName ? `remove:${removeName}` : undefined} formnovalidate={removeName ? true : undefined} variant="quiet" size="sm" icon aria-label={name ? `Remove ${name}` : 'Remove'} title={name ? `Remove ${name}` : 'Remove'} class:list={[reveal, 'top-2 right-2 hover:text-(--tone-text)']}><Icon name="trash" /></Button>
     {arrows && <Button data-tile-prev type="button" variant="quiet" size="sm" icon aria-label="Move earlier" title="Move earlier" class:list={[reveal, 'bottom-2 left-2 disabled:hidden']}><Icon name="arrow-right" class="rotate-180" /></Button>}
     {arrows && <Button data-tile-next type="button" variant="quiet" size="sm" icon aria-label="Move later" title="Move later" class:list={[reveal, 'right-2 bottom-2 disabled:hidden']}><Icon name="arrow-right" /></Button>}

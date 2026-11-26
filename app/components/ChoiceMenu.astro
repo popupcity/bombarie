@@ -1,7 +1,7 @@
 ---
 import Button from 'ui/src/components/Button.astro';
 import Icon from 'ui/src/components/Icon.astro';
-import { MENU, MENU_ITEM } from '../lib/ui.ts';
+import { MENU, MENU_ITEM, CARET } from '../lib/ui.ts';
 import PostedBy from './PostedBy.astro';
 
 interface Option {
@@ -27,7 +27,7 @@ const { id, label, tone, options, submit = false, triggerId, labelId, disableAct
 <Button id={triggerId} type="button" variant="soft" tone={tone} popovertarget={id} style={`anchor-name:--${id}`} class={by ? 'pr-3 pl-1' : 'pr-3 pl-4'}>
   {by && <PostedBy name={by} />}
   <span id={labelId} class:list={[by && 'pl-1']}>{label}</span>
-  <Icon name="caret-down" />
+  <Icon name="caret-down" class={CARET} />
 </Button>
 <div id={id} popover style={`position-anchor:--${id}`} class:list={[MENU, 'w-64 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [right:anchor(right)] [top:anchor(bottom)]']}>
   {

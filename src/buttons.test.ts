@@ -6,7 +6,7 @@ import { test } from 'node:test';
 const files = (dir: string): string[] => readdirSync(dir).flatMap((name) => (statSync(join(dir, name)).isDirectory() ? files(join(dir, name)) : name.endsWith('.astro') ? [join(dir, name)] : []));
 const buttons = files('app').flatMap((file) => [...readFileSync(file, 'utf8').matchAll(/<(Button|ValueButton)\b((?:[^>{]|\{[^}]*\})*)>([\s\S]*?)<\/\1>/g)].map((match) => ({ file, attrs: match[2]!, inner: match[3]! })));
 
-const label = (inner: string): string => inner.replace(/<Icon\b[^>]*\/>/g, '').replace(/\s+/g, ' ').trim();
+const label = (inner: string): string => inner.replace(/<Icon\b[^>]*\/>/g, '').replace(/<\/?span\b(?:[^>{]|\{[^}]*\})*>/g, '').replace(/\s+/g, ' ').trim();
 
 test('a button with a label never starts with an icon: the icon goes after it (an arrow out, a caret) or the button is icon only', () => {
   const bad = buttons.filter(({ inner }) => label(inner) !== '' && inner.trimStart().startsWith('<Icon')).map(({ file, inner }) => `${file}: ${label(inner).slice(0, 40)}`);

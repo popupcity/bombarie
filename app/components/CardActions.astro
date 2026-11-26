@@ -51,7 +51,7 @@ const when = `${card.day}T${card.time}`;
     </a>
   )}
   {showMore && movable && !planHere && (
-    <details class="group [&::details-content]:-translate-y-1 [&::details-content]:opacity-0 [&::details-content]:transition-[opacity,translate,content-visibility] [&::details-content]:duration-(--duration-pop) [&::details-content]:ease-pop [&::details-content]:transition-discrete open:[&::details-content]:translate-y-0 open:[&::details-content]:opacity-100">
+    <details class="group [&::details-content]:-translate-y-1 [&::details-content]:opacity-0 [&::details-content]:transition-[opacity,translate,content-visibility] [&::details-content]:transition-discrete open:[&::details-content]:translate-y-0 open:[&::details-content]:opacity-100">
       <summary class:list={[row, 'list-none [&::-webkit-details-marker]:hidden']}>
         <Icon name="clock" class="text-ink-soft" />
         <span class="flex-1">Change date</span>

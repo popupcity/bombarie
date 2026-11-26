@@ -1,6 +1,6 @@
 import { icons } from 'ui/src/components/icons.ts';
 import { addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
-import { SWAPPED } from '../lib/ui.ts';
+import { CARET, SWAPPED } from '../lib/ui.ts';
 import { h } from './dom.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -40,6 +40,7 @@ function start() {
   const down = (): HTMLElement => {
     const node = h('span', { 'aria-hidden': 'true', class: 'inline-block size-4 [&>svg]:size-full' });
     node.innerHTML = icons.regular['caret-down'];
+    node.classList.add(...CARET.split(' '));
     return node;
   };
 
