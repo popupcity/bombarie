@@ -234,7 +234,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
                   <div class="flex flex-col gap-4">
                     <div id="replies" class="flex flex-col gap-8 empty:hidden"></div>
                     <ReplyTemplate />
-                    <div class="flex justify-end">
+                    <div>
                       <Button id="add-reply" type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a comment under this post'}>{variant.platform === 'threads' ? 'Add reply' : 'Add comment'}</Button>
                     </div>
                   </div>
