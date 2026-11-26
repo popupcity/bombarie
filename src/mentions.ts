@@ -19,7 +19,7 @@ export function expandWikilinks(body: string, platform: Platform, entities: Enti
   const text = body.replace(WIKILINK, (_, raw: string) => {
     const entity = entities.get(entityKey(raw));
     if (!entity) throw new Error(`unknown entity [[${raw.trim()}]]; create entities/${raw.trim()}.md`);
-    if (platform === 'instagram' && entity.instagram) return `@${entity.instagram}`;
+    if ((platform === 'instagram' || platform === 'threads') && entity.instagram) return `@${entity.instagram}`;
     if (platform === 'linkedin' && entity.linkedin) mentions[entity.name] = entity.linkedin;
     return entity.name;
   });

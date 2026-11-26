@@ -211,7 +211,7 @@ export const deleteFromPlatform = (folder: string, base: string): Promise<Done> 
 
 export const postRepliesNow = (folder: string, base: string): Promise<Done> =>
   onPost(folder, base, async (post, id) => {
-    const result = await postReplies(id, post.channel, post.replies ?? [], { ...localDeps(root, new Date()), fetch });
+    const result = await postReplies(id, post.channel, post.replies ?? [], { ...localDeps(root, new Date()), fetch }, post.mentions);
     if (result.warning) throw new Error(result.warning);
     return result.sent === 0 ? 'Nothing new to post.' : result.sent === 1 ? 'Comment posted.' : `${result.sent} comments posted.`;
   });

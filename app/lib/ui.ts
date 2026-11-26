@@ -37,7 +37,10 @@ export const STATUS_TONE: Record<Status, string> = {
 
 export const TINTED = 'bg-(--tone-soft) text-(--tone-text)';
 
-export const SEGMENT_CLASS: Record<string, string> = {
+export const segmentLook = (platform: string, kind: string): { class: string | undefined; tone: string | undefined } =>
+  platform === 'linkedin' && (kind === 'mention' || kind === 'link') ? { class: 'font-semibold text-linkedin', tone: undefined } : { class: SEGMENT_CLASS[kind], tone: SEGMENT_TONE[kind] };
+
+const SEGMENT_CLASS: Record<string, string> = {
   text: '',
   mention: 'text-(--tone-text)',
   handle: 'text-(--tone-text)',
@@ -45,7 +48,7 @@ export const SEGMENT_CLASS: Record<string, string> = {
   unknown: 'text-(--tone-text) ring-1 ring-(--tone-text) ring-inset rounded-sm px-1'
 };
 
-export const SEGMENT_TONE: Record<string, string> = { mention: 'info', handle: 'info', unknown: 'bad' };
+const SEGMENT_TONE: Record<string, string> = { mention: 'info', handle: 'info', unknown: 'bad' };
 
 export function cardActions(card: { status: Status; url?: string }) {
   if (card.url !== undefined) return { toggles: null, movable: false, removable: false, any: false };

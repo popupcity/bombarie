@@ -3,7 +3,7 @@ import Text from 'ui/src/components/Text.astro';
 import Icon from 'ui/src/components/Icon.astro';
 import type { IconName } from 'ui/src/components/icons.ts';
 import type { Platform } from '../../src/types.ts';
-import { SEGMENT_CLASS, SEGMENT_TONE } from '../lib/ui.ts';
+import { segmentLook } from '../lib/ui.ts';
 import ChannelAvatar from './ChannelAvatar.astro';
 
 interface Props {
@@ -101,7 +101,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
       <Text variant="post" class="px-3 pb-3 break-words whitespace-pre-wrap">
         <span class="font-semibold text-ink">{handle}</span>{' '}
         <span id="preview-text">
-          {segments.map((segment) => <span data-tone={SEGMENT_TONE[segment.kind]} class={SEGMENT_CLASS[segment.kind]}>{segment.text}</span>)}
+          {segments.map((segment) => <span data-tone={segmentLook(platform, segment.kind).tone} class={segmentLook(platform, segment.kind).class}>{segment.text}</span>)}
         </span>
       </Text>
     </article>
@@ -119,7 +119,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
         </div>
       </header>
       <Text variant="post" class="break-words whitespace-pre-wrap" id="preview-text">
-        {segments.map((segment) => <span data-tone={SEGMENT_TONE[segment.kind]} class={SEGMENT_CLASS[segment.kind]} title={segment.kind === 'plain' ? 'posted as plain text' : undefined}>{segment.text}</span>)}
+        {segments.map((segment) => <span data-tone={segmentLook(platform, segment.kind).tone} class={segmentLook(platform, segment.kind).class} title={segment.kind === 'plain' ? 'posted as plain text' : undefined}>{segment.text}</span>)}
       </Text>
       <ul id="preview-images" class={feedImages} hidden={images.length === 0}>
         {images.map((name) => <li><img data-photo src={picture(name)} alt="" class="transition-opacity duration-300 block size-full object-cover" /></li>)}
@@ -127,6 +127,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
       <footer class="flex items-center justify-between border-t border-line pt-3">
         {actions.map(([icon, label]) => <span class={action}><Icon name={icon} class="text-lg" /><span class="hidden @xs:inline">{label}</span></span>)}
       </footer>
+      <ol id="preview-replies" aria-label={platform === 'threads' ? 'Replies' : 'Comments'} class="flex flex-col gap-3 border-t border-line pt-3 empty:hidden"></ol>
     </article>
   )
 }

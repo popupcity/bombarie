@@ -12,7 +12,7 @@ import { coverLabel, isDocument, mediaKind, needsCover } from '../../src/types.t
 import { pdfCover } from './pdfcover.ts';
 import { videoCover } from './videocover.ts';
 import { PLATFORM_LABEL, type Platform, type PostStatus } from '../../src/types.ts';
-import { plannedText, SEGMENT_CLASS, SEGMENT_TONE } from '../lib/ui.ts';
+import { plannedText, segmentLook } from '../lib/ui.ts';
 import { autocomplete } from './autocomplete.ts';
 import { splitParts } from '../../src/parts.ts';
 import './datepicker.ts';
@@ -97,10 +97,17 @@ function init(root: HTMLElement) {
     bell.querySelector<HTMLElement>('[data-off]')!.hidden = tip.on;
   };
 
+  const spans = (segments: Preview['segments']): HTMLElement[] =>
+    segments.map((segment) => {
+      const look = segmentLook(platform, segment.kind);
+      return h('span', { class: look.class, 'data-tone': look.tone, title: segment.kind === 'plain' ? 'posted as plain text' : undefined }, segment.text);
+    });
+
   function renderPreview(result: Preview) {
-    document.getElementById('preview-text')?.replaceChildren(
-      ...result.segments.map((segment) =>
-        h('span', { class: SEGMENT_CLASS[segment.kind], 'data-tone': SEGMENT_TONE[segment.kind], title: segment.kind === 'plain' ? 'posted as plain text' : undefined }, segment.text)
+    document.getElementById('preview-text')?.replaceChildren(...spans(result.segments));
+    document.getElementById('preview-replies')?.replaceChildren(
+      ...(result.replies ?? []).map((segments, index) =>
+        h('li', { class: 'flex flex-col gap-1' }, h('span', { class: 'text-xs text-ink-soft' }, `${platform === 'threads' ? 'Reply' : 'Comment'} ${index + 1}`), h('p', { class: 'text-sm break-words whitespace-pre-wrap' }, ...spans(segments)))
       )
     );
     const count = document.getElementById('preview-count');
@@ -500,6 +507,7 @@ function init(root: HTMLElement) {
       fillBody(fields.body);
       showFields(fields);
       renderImages(fields);
+      renderPreview(preview(fields.body, platform as Platform, entities));
     } else source.value = raw;
     mode = next;
     for (const [id, visible] of [['edit-view', mode === 'edit'], ['fields', mode === 'edit'], ['source-view', mode === 'source']] as const) $(id).hidden = !visible;

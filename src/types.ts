@@ -118,6 +118,6 @@ export interface Provider {
   send(post: Post, channel: Channel, credentials: Credentials, context: SendContext): Promise<SendResult>;
   remove?(remoteId: string, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<void>;
   removeReply?(input: { remoteId: string; replyId: string }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<void>;
-  reply?(input: { remoteId: string; texts: string[]; offset: number; last?: string }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<ReplyResult>;
+  reply?(input: { remoteId: string; texts: string[]; mentions?: Record<string, string>; offset: number; last?: string }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<ReplyResult>;
   refresh?(credentials: Credentials, fetchImpl: typeof fetch): Promise<Credentials>;
 }

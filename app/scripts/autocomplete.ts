@@ -93,7 +93,7 @@ export function autocomplete(area: HTMLTextAreaElement, kind: Trigger, entities:
             }
           },
           h('span', {}, entity.name),
-          h('span', { class: 'flex gap-1' }, ...(platform === 'linkedin' || platform === 'instagram' ? [mark(platform, entity[platform] !== undefined)] : []))
+          h('span', { class: 'flex gap-1' }, ...(platform === 'linkedin' ? [mark('linkedin', entity.linkedin !== undefined)] : platform === 'instagram' || platform === 'threads' ? [mark('instagram', entity.instagram !== undefined)] : []))
         )
       )
     );

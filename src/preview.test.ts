@@ -50,3 +50,15 @@ test('the length is what gets posted, and the limit is reported when exceeded', 
   assert.equal(preview('x', 'instagram', entities).limit, 2200);
   assert.equal(preview('x', 'facebook', entities).limit, undefined);
 });
+
+test('replies come back with their own text, the way they will be posted', () => {
+  const entities = new Map([['pop-up city', { name: 'Pop-Up City', slug: 'pop-up-city', instagram: 'popupcity' }]]);
+  const result = preview('Main\n\n---\n\nMore from [[Pop-Up City]]', 'threads', entities);
+  assert.equal(result.replies?.[0]?.map((segment) => segment.text).join(''), 'More from @popupcity');
+});
+
+test('a link is marked on LinkedIn only, without the full stop after it', () => {
+  const kinds = (platform: 'linkedin' | 'threads') => preview('See https://example.com/a. Or www.example.org', platform, new Map()).segments.map((segment) => [segment.kind, segment.text]);
+  assert.deepEqual(kinds('linkedin'), [['text', 'See '], ['link', 'https://example.com/a'], ['text', '. Or '], ['link', 'www.example.org']]);
+  assert.equal(kinds('threads').length, 1);
+});

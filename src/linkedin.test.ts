@@ -259,3 +259,23 @@ test('empty and overlong comments are refused before anything is sent', () => {
   assert.ok(linkedin.validate(post({ replies: ['ok', ''] }), person).includes('comment 2 is empty'));
   assert.ok(linkedin.validate(post({ replies: ['x'.repeat(1251)] }), person).some((issue) => issue.includes('1250')));
 });
+
+test('a comment with an entity goes out with tags, and as plain text when LinkedIn refuses them', async () => {
+  const tagged = { replies: ['Hi Pop-up City'], mentions: { 'Pop-up City': 'urn:li:organization:716321' } };
+  const accepted = setup((url) => (url.includes('/socialActions/') ? created('urn:li:comment:1') : created('urn:li:share:7')));
+  assert.equal((await linkedin.send(post(tagged), person, credentials, accepted.context)).warning, undefined);
+  const sent = accepted.calls.filter((call) => call.url.includes('/socialActions/'));
+  assert.equal(sent.length, 1);
+  assert.match(sent[0]!.url, /\/rest\/socialActions\//);
+  assert.deepEqual((bodyOf(sent[0]) as { message: unknown }).message, { text: 'Hi Pop-up City', attributes: [{ start: 3, length: 11, value: { organization: { organization: 'urn:li:organization:716321' } } }] });
+
+  const refused = setup((url) => (url.includes('/rest/socialActions/') ? new Response('{}', { status: 403 }) : created(url.includes('/socialActions/') ? 'urn:li:comment:2' : 'urn:li:share:7')));
+  const result = await linkedin.send(post(tagged), person, credentials, refused.context);
+  assert.match(result.warning ?? '', /posted without tags.*comment 1/);
+  assert.equal(result.replies?.count, 1);
+  assert.deepEqual((bodyOf(refused.calls.filter((call) => call.url.includes('/v2/socialActions/'))[0]) as { message: unknown }).message, { text: 'Hi Pop-up City' });
+
+  const broken = setup((url) => (url.includes('/socialActions/') ? new Response('{}', { status: 500 }) : created('urn:li:share:7')));
+  assert.match((await linkedin.send(post(tagged), person, credentials, broken.context)).warning ?? '', /comment 1 of 1 failed/);
+  assert.equal(broken.calls.filter((call) => call.url.includes('/socialActions/')).length, 1);
+});

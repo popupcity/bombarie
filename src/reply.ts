@@ -5,7 +5,7 @@ export const canReply = (providers: UnpostDeps['providers'], platform: keyof Unp
 
 export const canRemoveReply = (providers: UnpostDeps['providers'], platform: keyof UnpostDeps['providers']): boolean => typeof providers[platform]?.removeReply === 'function';
 
-export async function postReplies(id: string, channelName: string, texts: string[], deps: UnpostDeps): Promise<{ sent: number; warning?: string }> {
+export async function postReplies(id: string, channelName: string, texts: string[], deps: UnpostDeps, mentions: Record<string, string> = {}): Promise<{ sent: number; warning?: string }> {
   const state = await deps.store.get(id);
   if (state?.status !== 'posted') throw new Error('only a posted post can get a comment from here');
   if (state.remoteId === MANUAL_ID) throw new Error('this post was marked as posted by hand, so add the comment on the platform');
@@ -18,7 +18,7 @@ export async function postReplies(id: string, channelName: string, texts: string
   if (todo.length === 0) return { sent: 0 };
   const credentials = await deps.credentials(channelName);
   if (!credentials) throw new Error('this channel is not connected; connect it first');
-  const result = await withAuthHint(() => provider.reply!({ remoteId: state.remoteId, texts: todo, offset, ...(state.replies?.last !== undefined && { last: state.replies.last }) }, channel, credentials, deps.fetch));
+  const result = await withAuthHint(() => provider.reply!({ remoteId: state.remoteId, texts: todo, mentions, offset, ...(state.replies?.last !== undefined && { last: state.replies.last }) }, channel, credentials, deps.fetch));
   const known = state.replies?.ids ?? [];
   const ids = [...Array.from({ length: offset }, (_, index) => known[index] ?? ''), ...result.ids];
   const last = result.last ?? state.replies?.last;
