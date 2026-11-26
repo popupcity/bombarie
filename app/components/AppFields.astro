@@ -1,7 +1,7 @@
 ---
 import { quiet } from '../lib/ui.ts';
 import Input from 'ui/src/components/Input.astro';
-import type { Platform } from '../../src/types.ts';
+import { PLATFORM_LABEL, type Platform } from '../../src/types.ts';
 import Field from './Field.astro';
 
 interface Props {
@@ -14,9 +14,10 @@ interface Props {
 const { platform, clientId = '', secretSaved = false, configId = '', required = false } = Astro.props;
 const meta = platform === 'instagram' || platform === 'facebook';
 const threads = platform === 'threads';
+const shared = `One app serves every ${PLATFORM_LABEL[platform]} channel: a change here changes them all.`;
 ---
 
-<Field label={meta ? 'Meta app ID' : threads ? 'Threads app ID' : 'Client ID'} for="clientId">
+<Field label={meta ? 'Meta app ID' : threads ? 'Threads app ID' : 'Client ID'} for="clientId" hint={shared}>
   <Input id="clientId" name="clientId" label={meta ? 'Meta app ID' : threads ? 'Threads app ID' : 'Client ID'} value={clientId} required={required} {...quiet} />
 </Field>
 <Field label={meta ? 'Meta app secret' : threads ? 'Threads app secret' : 'Client secret'} for="clientSecret">

@@ -26,7 +26,7 @@ What follows is what has been used live, not what the code claims. Everything el
 | Substack | notes as reminders | nothing is posted automatically |
 | LinkedIn company page | not supported | |
 
-Each platform needs your own developer app (Meta, LinkedIn, Threads). The setup steps are shown in the app under Channels, Add channel. LinkedIn comments use the `w_member_social` scope.
+Each platform needs your own developer app (Meta, LinkedIn, Threads). The setup steps are in the app: open a channel, or add one, and choose Setup guide. LinkedIn comments use the `w_member_social` scope.
 
 ## Run it
 

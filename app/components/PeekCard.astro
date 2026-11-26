@@ -74,12 +74,12 @@ const when = `${card.day}T${card.time}`;
       <Button href={card.url ?? postHref(card.id)} target={card.url ? '_blank' : undefined} rel={card.url ? 'noopener' : undefined}>Open</Button>
       <CardActions card={card} siblings={siblings} part="toggle" />
       {card.live && (
-        <Button href={card.live} target="_blank" rel="noopener" icon variant="outline" class="ml-auto" aria-label={`Open on ${PLATFORM_LABEL[card.platform]}`} title={`Open on ${PLATFORM_LABEL[card.platform]}`}>
+        <Button href={card.live} target="_blank" rel="noopener" icon variant="outline" aria-label={`Open on ${PLATFORM_LABEL[card.platform]}`} title={`Open on ${PLATFORM_LABEL[card.platform]}`}>
           <Icon name="arrow-square-out" />
         </Button>
       )}
       {removable && (
-        <Button icon variant="outline" tone="bad" class:list={[!card.live && 'ml-auto']} aria-label="Delete" title="Delete" data-delete={card.id} data-title={card.campaign} data-siblings={siblings} data-posted={card.status === 'posted' ? PLATFORM_LABEL[card.platform] : undefined}>
+        <Button icon variant="outline" tone="bad" class="ml-auto" aria-label="Delete" title="Delete" data-delete={card.id} data-title={card.campaign} data-siblings={siblings} data-posted={card.status === 'posted' ? PLATFORM_LABEL[card.platform] : undefined}>
           <Icon name="trash" />
         </Button>
       )}

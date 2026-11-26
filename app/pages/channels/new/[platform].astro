@@ -59,16 +59,4 @@ const redirectUri = callbackUrl(Astro.url.origin);
       <Button slot="actions" type="submit" form="add-form" name="intent" value={connectable ? 'connect' : 'add'} >{connectable ? 'Connect channel' : 'Add channel'}</Button>
     </ChannelForm>
   </div>
-  <Fragment slot="after">
-    <script>
-      const copy = document.getElementById('copy');
-      const redirect = document.getElementById('redirect') as HTMLInputElement | null;
-      copy?.addEventListener('click', async () => {
-        if (!redirect) return;
-        await navigator.clipboard.writeText(redirect.value);
-        copy.textContent = 'Copied';
-      });
-      redirect?.addEventListener('focus', () => redirect.select());
-    </script>
-  </Fragment>
 </Shell>

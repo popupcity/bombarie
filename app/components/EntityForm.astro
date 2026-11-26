@@ -46,7 +46,8 @@ const { name, linkedin, instagram, titled = false, error = '' } = Astro.props;
       <Input id="instagram" name="instagram" label="Instagram" value={instagram} placeholder="@username" autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />
     </Field>
   </div>
-  {!titled && <Button slot="actions" type="submit">Save</Button>}
+  <Button slot="actions" type="submit" data-pending="Saving…">Save</Button>
+  <slot name="actions" slot="actions" />
 </Form>
 
 <script>

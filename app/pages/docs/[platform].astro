@@ -1,0 +1,21 @@
+---
+import { PLATFORMS } from '../../../src/channels.ts';
+import { connectProblem } from '../../../src/connect.ts';
+import { PLATFORM_LABEL } from '../../../src/types.ts';
+import AppSteps from '../../components/AppSteps.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import Shell from '../../layouts/Shell.astro';
+
+const platform = PLATFORMS.find((candidate) => candidate === Astro.params.platform);
+if (!platform || connectProblem({ platform }) !== null) return new Response('Not found', { status: 404 });
+const title = `Set up ${PLATFORM_LABEL[platform]}`;
+---
+
+<Shell title={title}>
+  <div class="flex max-w-wide flex-col gap-8">
+    <PageHeader title={title} />
+    <div class="lg:w-2/3">
+      <AppSteps platform={platform} />
+    </div>
+  </div>
+</Shell>

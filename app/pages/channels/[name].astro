@@ -12,6 +12,7 @@ import ConfirmDialog from '../../components/ConfirmDialog.astro';
 import ActionRow from '../../components/ActionRow.astro';
 import ValueButton from '../../components/ValueButton.astro';
 import ChannelForm from '../../components/ChannelForm.astro';
+import ChannelMark from '../../components/ChannelMark.astro';
 import Heading from 'ui/src/components/Heading.astro';
 import TitleField from '../../components/TitleField.astro';
 import { appKey, appSaved, channelState, disconnect, callbackUrl, refreshPhoto, saveApp, setOutcome, startConnect, takeOutcome } from '../../lib/connect.ts';
@@ -122,9 +123,16 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
     <ChannelForm formId="channel-form" titled platform={channel.platform} name={info.label} handle={channel.handle ?? ''} feed={channel.feed ?? ''} setup={fit ? { clientId: savedId ?? '', secretSaved: savedId !== null, configId: savedConfig, redirectUri } : undefined} remove={{ id: 'delete-channel', label: 'Delete channel', blocked: inUse > 0 ? `${inUse} ${inUse === 1 ? 'post uses' : 'posts use'} this channel, so it cannot be deleted.` : undefined }}>
       <input slot="top" type="hidden" name="intent" value="save" />
+      <div slot="identity" class="inline-flex h-(--control-md) items-center gap-3 rounded-lg bg-surface pr-4 pl-1 text-sm ring-1 ring-line ring-inset">
+        <ChannelMark channel={info} size="lg" on="surface" />
+        <span>{PLATFORM_LABEL[channel.platform]}</span>
+      </div>
+      {fit && !problem && channel.platform === 'linkedin' && (
+        <Button slot="identity" type="submit" form="connection-form" name="intent" value="photo" variant="outline">Refresh photo</Button>
+      )}
       {
-        channel.feed && (
-          <Text slot="feed-note" variant="small" class="text-ink-soft">
+        hasFeed && (
+          <Text slot="rows" variant="small" class="text-ink-soft">
             {feedFile ? `${feedFile.items.length} ${feedFile.items.length === 1 ? 'post' : 'posts'} kept. Last read ${new Date(feedFile.fetchedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Amsterdam' })}.` : 'Not read yet.'}
             {feedFile?.error ? ` ${sentence(feedFile.error)}` : ''}
           </Text>
@@ -137,11 +145,6 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
               <Chip size="control" tone={state.broken ? 'warn' : connected ? 'ok' : 'ink'}>{state.broken ? 'Reconnect' : connected ? 'Connected' : 'Not connected'}</Chip>
             </ActionRow>
             {note && <Text variant="small" class="text-ink-soft">{note}</Text>}
-            {fit && !problem && channel.platform === 'linkedin' && (
-              <ActionRow label="Photo">
-                <ValueButton type="submit" form="connection-form" name="intent" value="photo" external={false}>Refresh photo</ValueButton>
-              </ActionRow>
-            )}
             {fit && tokens[key] && (
               <ActionRow label="Access">
                 <ValueButton type="submit" form="connection-form" name="intent" value="disconnect" external={false}>Disconnect</ValueButton>
@@ -153,9 +156,9 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
       <Fragment slot="actions">
         {
           fit && (!tokens[key] || state.broken) ? (
-            <Button type="submit" form="channel-form" name="connect" value="1">{tokens[key] ? 'Save and reconnect' : 'Save and connect'}</Button>
+            <Button type="submit" form="channel-form" name="connect" value="1" data-pending="Saving…">{tokens[key] ? 'Save and reconnect' : 'Save and connect'}</Button>
           ) : (
-            <Button type="submit" form="channel-form">Save</Button>
+            <Button type="submit" form="channel-form" data-pending="Saving…">Save</Button>
           )
         }
         <form id="connection-form" method="post" hidden></form>
@@ -165,17 +168,4 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
       This removes the channel and its connection. Posts are not touched, but a channel with posts cannot be deleted.
     </ConfirmDialog>
   </div>
-  <Fragment slot="after">
-    <script>
-      const copy = document.getElementById('copy');
-      const redirect = document.getElementById('redirect') as HTMLInputElement | null;
-      copy?.addEventListener('click', async () => {
-        if (!redirect) return;
-        await navigator.clipboard.writeText(redirect.value);
-        copy.textContent = 'Copied';
-      });
-      redirect?.addEventListener('focus', () => redirect.select());
-      document.getElementById('clientSecret')?.addEventListener('focus', (event) => (event.target as HTMLInputElement).select());
-    </script>
-  </Fragment>
 </Shell>

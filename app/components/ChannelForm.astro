@@ -1,14 +1,12 @@
 ---
 import { quiet } from '../lib/ui.ts';
+import Button from 'ui/src/components/Button.astro';
+import Icon from 'ui/src/components/Icon.astro';
 import Input from 'ui/src/components/Input.astro';
 import { PLATFORM_LABEL, type Platform } from '../../src/types.ts';
 import ActionPanel from './ActionPanel.astro';
-import ActionRow from './ActionRow.astro';
-import PlatformMark from './PlatformMark.astro';
 import AppFields from './AppFields.astro';
-import AppSteps from './AppSteps.astro';
 import Field from './Field.astro';
-import Section from './Section.astro';
 
 interface Props {
   formId: string;
@@ -26,64 +24,64 @@ const hint = `The RSS address of this ${platform === 'substack' ? 'publication' 
 ---
 
 <div class="grid gap-8 lg:grid-cols-3">
-  <form id={formId} method="post" class="flex flex-col gap-12 lg:col-span-2">
+  <form id={formId} method="post" class="flex flex-col gap-4 lg:col-span-2">
     <slot name="top" />
+    {titled && <div class="flex flex-wrap items-center gap-2"><slot name="identity" /></div>}
     {
-      (!titled || platform === 'instagram') && (
-        <div class="flex flex-col gap-4">
-          {
-            !titled && (
-              <Field label="Name" for="name">
-                <Input id="name" name="name" label="Name" value={name} required pattern=".*[A-Za-z0-9À-ÿ].*" title="Use at least one letter or number." {...quiet} />
-              </Field>
-            )
-          }
-          {
-            platform === 'instagram' && (
-              <Field label="Handle" for="handle">
-                <Input id="handle" name="handle" label="Handle" value={handle} placeholder="@username" {...quiet} />
-              </Field>
-            )
-          }
-        </div>
+      !titled && (
+        <Field label="Name" for="name">
+          <Input id="name" name="name" label="Name" value={name} required pattern=".*[A-Za-z0-9À-ÿ].*" title="Use at least one letter or number." {...quiet} />
+        </Field>
+      )
+    }
+    {
+      platform === 'instagram' && (
+        <Field label="Handle" for="handle">
+          <Input id="handle" name="handle" label="Handle" value={handle} placeholder="@username" {...quiet} />
+        </Field>
       )
     }
     {
       hasFeed && (
-        <Section title="Feed">
-          <div class="flex flex-col gap-4">
-            <Field label="Feed address" for="feed" hint={hint}>
-              <Input id="feed" name="feed" label="Feed address" value={feed} placeholder={platform === 'substack' ? 'https://name.substack.com/feed' : 'https://example.com/feed/'} {...quiet} />
-            </Field>
-            <slot name="feed-note" />
-          </div>
-        </Section>
+        <Field label="Feed address" for="feed" hint={hint}>
+          <Input id="feed" name="feed" label="Feed address" value={feed} placeholder={platform === 'substack' ? 'https://name.substack.com/feed' : 'https://example.com/feed/'} {...quiet} />
+        </Field>
       )
     }
     {
       setup && (
-        <Section title="Setup">
-          <div>
-            <AppSteps platform={platform} redirectUri={setup.redirectUri}>
-              <AppFields platform={platform} clientId={setup.clientId} secretSaved={setup.secretSaved} configId={setup.configId} />
-            </AppSteps>
-          </div>
-        </Section>
+        <>
+          <Field label="Redirect URL" for="redirect">
+            <div class="flex gap-2">
+              <div class="min-w-0 flex-1">
+                <Input id="redirect" label="Redirect URL" value={setup.redirectUri} readonly {...quiet} />
+              </div>
+              <Button id="copy" type="button" variant="outline">Copy</Button>
+            </div>
+          </Field>
+          <AppFields platform={platform} clientId={setup.clientId} secretSaved={setup.secretSaved} configId={setup.configId} />
+          <Button href={`/docs/${platform}`} target="_blank" rel="noopener" variant="outline" class="self-start">
+            Setup guide
+            <Icon name="arrow-square-out" />
+          </Button>
+        </>
       )
     }
   </form>
   <ActionPanel remove={remove?.id} removeLabel={remove?.label} blocked={remove?.blocked}>
-    {
-      titled && (
-        <ActionRow label="Platform">
-          <span class="inline-flex items-center gap-2 text-sm">
-            <PlatformMark platform={platform} class="size-6" />
-            {PLATFORM_LABEL[platform]}
-          </span>
-        </ActionRow>
-      )
-    }
     <slot name="rows" />
     <slot name="actions" slot="actions" />
   </ActionPanel>
 </div>
+
+<script>
+  const copy = document.getElementById('copy');
+  const redirect = document.getElementById('redirect') as HTMLInputElement | null;
+  copy?.addEventListener('click', async () => {
+    if (!redirect) return;
+    await navigator.clipboard.writeText(redirect.value);
+    copy.textContent = 'Copied';
+  });
+  redirect?.addEventListener('focus', () => redirect.select());
+  document.getElementById('clientSecret')?.addEventListener('focus', (event) => (event.target as HTMLInputElement).select());
+</script>

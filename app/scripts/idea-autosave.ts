@@ -1,3 +1,5 @@
+import { toast } from './toast.ts';
+
 const form = document.getElementById('idea-form') as HTMLFormElement | null;
 
 if (form) {
@@ -15,7 +17,10 @@ if (form) {
     body.set('intent', 'save');
     body.set('quiet', '1');
     try {
-      await fetch(location.pathname, { method: 'POST', body, redirect: 'manual' });
+      const response = await fetch(location.pathname, { method: 'POST', body, redirect: 'manual' });
+      if (response.status !== 204) toast(response.status === 422 ? `Not saved: ${await response.text()}` : 'Not saved. Reload the page and try again.', 'bad');
+    } catch {
+      toast('Not saved: no connection to the server.', 'bad');
     } finally {
       sending = false;
       if (again) {

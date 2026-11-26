@@ -1,13 +1,10 @@
 ---
-import Button from 'ui/src/components/Button.astro';
 import { entityMentions, findEntity, removeEntity, updateEntity } from '../../../src/entities.ts';
 import { sentence } from '../../../src/text.ts';
 import ConfirmDialog from '../../components/ConfirmDialog.astro';
-import ActionPanel from '../../components/ActionPanel.astro';
-import ActionRow from '../../components/ActionRow.astro';
-import Text from 'ui/src/components/Text.astro';
 import EntityForm from '../../components/EntityForm.astro';
 import TitleField from '../../components/TitleField.astro';
+import TrashButton from '../../components/TrashButton.astro';
 import Heading from 'ui/src/components/Heading.astro';
 import { setOutcome, takeOutcome } from '../../lib/connect.ts';
 import { root } from '../../lib/data.ts';
@@ -16,6 +13,7 @@ import Shell from '../../layouts/Shell.astro';
 const entity = findEntity(root, Astro.params.name ?? '');
 if (!entity) return new Response('Not found', { status: 404 });
 const mentions = entityMentions(root, entity.name);
+const blocked = mentions > 0 ? `${mentions} ${mentions === 1 ? 'post mentions' : 'posts mention'} it, so it cannot be deleted.` : undefined;
 
 let failure = '';
 if (Astro.request.method === 'POST') {
@@ -47,16 +45,12 @@ const toast = failure ? { tone: 'bad', text: failure } : outcome && outcome.name
       </div>
     </header>
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
-    <div class="grid gap-8 lg:grid-cols-3">
-      <div class="lg:col-span-2">
-        <EntityForm name={entity.name} linkedin={entity.linkedin ?? ''} instagram={entity.instagram ?? ''} titled />
-      </div>
-      <ActionPanel remove="delete-entity" removeLabel="Delete entity" blocked={mentions > 0 ? `${mentions} ${mentions === 1 ? 'post mentions' : 'posts mention'} it, so it cannot be deleted.` : undefined}>
-        <ActionRow label="Mentioned in">
-          <Text>{`${mentions} ${mentions === 1 ? 'post' : 'posts'}`}</Text>
-        </ActionRow>
-        <Button slot="actions" type="submit" form="entity-form">Save</Button>
-      </ActionPanel>
+    <div class="lg:w-2/3">
+      <EntityForm name={entity.name} linkedin={entity.linkedin ?? ''} instagram={entity.instagram ?? ''} titled>
+        <span slot="actions" title={blocked} class="ml-auto inline-block">
+          <TrashButton label="Delete entity" title={blocked ? undefined : 'Delete entity'} data-open="delete-entity" disabled={blocked !== undefined} />
+        </span>
+      </EntityForm>
     </div>
     <ConfirmDialog id="delete-entity" title={`Delete ${entity.name}?`} intent="delete" variant={entity.name} confirm="Delete">
       This removes the note from the entities folder.

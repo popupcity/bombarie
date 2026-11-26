@@ -341,9 +341,9 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
               </ActionRow>
               )}
               <Fragment slot="actions">
+                <Button id="plan" type="button" aria-describedby="hint" data-recorded={recorded !== null ? '1' : undefined} hidden={planned || recorded !== null}>{instant ? 'Post now' : 'Plan'}</Button>
                 {repliable && <Button id="post-replies" type="button" hidden>Post comment</Button>}
                 <Button id="save" type="button" variant="outline" aria-describedby="hint" disabled hidden class="group-data-[planned]:bg-(--tone) group-data-[planned]:text-(--tone-on)">Save</Button>
-                <Button id="plan" type="button" aria-describedby="hint" data-recorded={recorded !== null ? '1' : undefined} hidden={planned || recorded !== null}>{instant ? 'Post now' : 'Plan'}</Button>
               </Fragment>
             </ActionPanel>
         <Section id="preview" title="Preview" hidden={variant.preview.length === 0 && images.length === 0}>
