@@ -9,7 +9,7 @@ interface Props {
 }
 const { weeks, hrefOf, folderCounts = {} } = Astro.props;
 const days = weeks.flat();
-const today = days.findIndex((day) => day.today);
+const today = days.findIndex((day) => day.today && day.inMonth);
 const anchor = today < 0 ? -1 : Math.max(0, today - 7);
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 ---

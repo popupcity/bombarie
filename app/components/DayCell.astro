@@ -17,7 +17,7 @@ const { day, href, folderCounts = {}, anchor = false } = Astro.props;
   id={anchor ? 'today' : undefined}
   data-cell
   data-drop-day={day.day}
-  class:list={['group/cell relative flex min-h-16 flex-col gap-1 min-w-0 scroll-mt-37 md:scroll-mt-28 rounded-lg bg-surface p-2 md:min-h-36', !day.inMonth ? 'bg-transparent' : day.past && 'bg-page', day.today ? 'ring-2 ring-inset ring-ink' : 'ring-1 ring-inset ring-line']}
+  class:list={['group/cell relative flex min-h-16 flex-col gap-1 min-w-0 scroll-mt-37 md:scroll-mt-28 rounded-lg bg-surface p-2 md:min-h-36', !day.inMonth ? 'bg-transparent' : day.past && 'bg-page', day.today && day.inMonth ? 'ring-2 ring-inset ring-ink' : 'ring-1 ring-inset ring-line']}
 >
   <div class="flex h-8 items-center justify-between max-md:justify-center">
     <a href={href} class:list={['transition rounded-sm px-1 text-sm hover:bg-(--tone-hover) max-md:after:absolute max-md:after:inset-0 max-md:after:rounded-lg', !day.inMonth && 'text-ink-soft']} aria-label={`Open ${day.day}`}>{day.date}</a>
@@ -25,12 +25,12 @@ const { day, href, folderCounts = {}, anchor = false } = Astro.props;
       <Icon name="plus" weight="bold" />
     </button>
   </div>
-  <div class="hidden flex-col gap-1 md:flex">
+  <div class:list={['hidden flex-col gap-1 md:flex', !day.inMonth && 'opacity-(--dim)']}>
     {day.cards.map((card) => <PostChip card={card} siblings={folderCounts[card.id.split('/')[0] ?? ''] ?? 1} />)}
     <button data-more data-plain type="button" aria-expanded="false" hidden class="transition group flex w-fit cursor-pointer items-center gap-1 rounded-sm px-1 py-1 text-xs text-ink-soft hover:text-ink">
       <Icon name="caret-down" class="transition group-aria-expanded:rotate-180" />
       <span data-more-label></span>
     </button>
   </div>
-  <span data-dots aria-hidden="true" class="flex h-1 justify-center gap-1 md:hidden"></span>
+  <span data-dots aria-hidden="true" class:list={['flex h-1 justify-center gap-1 md:hidden', !day.inMonth && 'opacity-(--dim)']}></span>
 </div>
