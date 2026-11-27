@@ -17,6 +17,7 @@ export interface Idea {
   linkSite?: string;
   linkImage?: string;
   status: IdeaStatus;
+  statusBy?: string;
   images: string[];
   post?: string;
 }
@@ -48,6 +49,7 @@ function parseIdea(folder: string, raw: string): Idea {
     title: typeof fields.title === 'string' ? fields.title.trim() : '',
     text: body.trim(),
     status,
+    ...(typeof fields.statusBy === 'string' && fields.statusBy !== '' && { statusBy: fields.statusBy }),
     images: Array.isArray(fields.media) ? fields.media.filter((item): item is string => typeof item === 'string') : [],
     ...(typeof fields.link === 'string' && fields.link !== '' && { link: fields.link }),
     ...(typeof fields.linkTitle === 'string' && fields.linkTitle !== '' && { linkTitle: fields.linkTitle }),
@@ -128,8 +130,10 @@ async function syncIdeaFolder(root: string, store: ContentStore, folder: string,
   return next;
 }
 
-export const setIdeaStatus = (root: string, store: ContentStore, folder: string, status: IdeaStatus, post?: string): Promise<void> =>
-  change(root, store, folder, (raw) => setFrontmatter(raw, { status: status === 'new' ? undefined : status, post }));
+export const setIdeaStatus = (root: string, store: ContentStore, folder: string, status: IdeaStatus, post?: string, by?: string): Promise<void> => {
+  const changed = readIdea(root, folder)?.status !== status;
+  return change(root, store, folder, (raw) => setFrontmatter(raw, { status: status === 'new' ? undefined : status, post, ...(changed && { statusBy: by }) }));
+};
 
 export async function attachPreview(root: string, store: ContentStore, folder: string, deps?: PreviewDeps): Promise<void> {
   const idea = readIdea(root, folder);

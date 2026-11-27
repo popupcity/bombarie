@@ -35,7 +35,7 @@ import { telegramOf } from '../../lib/telegram.ts';
 import { content, deleteFromPlatform, loadConnections, markPosted, outcomeWording, postRepliesNow, root, setFlash, startPostNow, states, takeFlash, unmarkPosted } from '../../lib/data.ts';
 import { forgetOutcome, lastOutcome } from '../../../src/progress.ts';
 import { isAutomatic } from '../../../src/connect.ts';
-import { jsonForScript, plannedText, CHIP, MENU, MENU_ITEM, CARET, SEGMENT, SEGMENTS } from '../../lib/ui.ts';
+import { jsonForScript, plannedText, CHIP, MENU, MENU_ITEM, CARET, SEGMENT, SEGMENTS, byWhom } from '../../lib/ui.ts';
 import { variantOptions } from '../../lib/variants.ts';
 import ActionPanel from '../../components/ActionPanel.astro';
 import ActionRow from '../../components/ActionRow.astro';
@@ -112,7 +112,6 @@ const settled = lastOutcome(`${campaign.folder}/${variant.base}.md`);
 const settledToast = settled && Date.now() - new Date(settled.at).getTime() < 120_000 ? { text: outcomeWording(settled.status, settled.message), tone: settled.status === 'posted' ? 'ok' : settled.status === 'unconfirmed' ? 'warn' : 'bad' } : null;
 if (settled) forgetOutcome(`${campaign.folder}/${variant.base}.md`);
 const stays = recorded?.status === 'posted' ? ` It stays on ${PLATFORM_LABEL[variant.platform]} until you delete it there.` : '';
-const postedBy = recorded?.status === 'posted' || recorded?.status === 'posting' ? recorded.by : undefined;
 const markedByHand = recorded?.status === 'posted' && recorded.remoteId === MANUAL_ID;
 const repliable = recorded?.status === 'posted' && !markedByHand && canReply(providers, variant.platform);
 const unpostable = recorded?.status === 'posted' && !markedByHand && canUnpost(providers, variant.platform);
@@ -128,6 +127,9 @@ const pickable = authors.filter((author) => author.usable || author.key === vari
 const commenters = authors.length > 0 ? authors : [{ key: variant.channel, name: variant.label, avatar: variant.avatar, usable: true }];
 const choosing = pickable.length > 1;
 const planned = fields.ok && fields.status === 'planned';
+const statusBy = recorded
+  ? byWhom(recorded.status === 'posted' || recorded.status === 'posting' ? recorded.by : undefined, 'Posted')
+  : byWhom(fields.ok ? fields.statusBy : undefined, planned ? 'Planned' : 'Set to draft');
 const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (!planned && Boolean(connections[variant.channel]))));
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
 const videoOk = takesMedia(variant.platform, 'a.mp4');
@@ -319,11 +321,11 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
                 <div class="flex items-center gap-2">
                 {
                   recorded?.status === 'posted' && !markedByHand ? (
-                    <Chip size="control" id="state" tone="ok" by={postedBy}>Posted</Chip>
+                    <Chip size="control" id="state" tone="ok" by={statusBy}>Posted</Chip>
                   ) : (
                     <ChoiceMenu
                       id="status-menu"
-                      by={postedBy}
+                      by={statusBy}
                       triggerId="state"
                       labelId="state-label"
                       label={markedByHand ? 'Posted' : planned ? 'Planned' : 'Draft'}

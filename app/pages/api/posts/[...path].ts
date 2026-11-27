@@ -5,13 +5,13 @@ import { relinkIdeas } from '../../../../src/ideas.ts';
 import { rearm } from '../../../../src/state.ts';
 import { content, json, loadConnections, root, states } from '../../../lib/data.ts';
 
-export const POST: APIRoute = async ({ params, request }) => {
+export const POST: APIRoute = async ({ params, request, locals }) => {
   const [folder = '', base = ''] = (params.path ?? '').split('/').map(decodeURIComponent);
   const payload: unknown = await request.json().catch(() => null);
   const { raw, revision, sync } = (payload ?? {}) as { raw?: unknown; revision?: unknown; sync?: unknown };
   if (typeof raw !== 'string' || typeof revision !== 'string') return json({ error: 'raw and revision are required' }, 400);
   try {
-    const variant = await saveVariant(root, content, folder, base, { raw, revision }, new Date(), async (name) => (await loadConnections())[name] ?? null);
+    const variant = await saveVariant(root, content, folder, base, { raw, revision, by: locals.user }, new Date(), async (name) => (await loadConnections())[name] ?? null);
     const rearmed = variant.post ? await rearm(states, `${folder}/${base}.md`, variant.post) : false;
     const next = sync === false ? folder : await syncFolder(root, content, states, folder).catch(() => folder);
     if (next !== folder) await relinkIdeas(root, content, folder, next);
@@ -20,6 +20,7 @@ export const POST: APIRoute = async ({ params, request }) => {
       rearmed,
       revision: variant.revision,
       error: variant.error,
+      statusBy: (variant.fields.ok && variant.fields.statusBy) || null,
       due: variant.post?.date.toISOString() ?? null
     });
   } catch (err) {

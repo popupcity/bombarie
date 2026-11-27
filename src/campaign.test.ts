@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { PlanBlocked, loadCampaign, saveVariant } from './campaign.ts';
+import { PlanBlocked, addVariant, loadCampaign, saveVariant } from './campaign.ts';
 import { RevisionConflict, fileContentStore } from './content-store.ts';
 
 function repo(): string {
@@ -185,4 +185,29 @@ test('a variant for another platform leaves the comment authors behind', async (
   const raw = readFileSync(join(root, 'posts', FILE, `${made}.md`), 'utf8');
   assert.match(raw, /\n---\n\nMooi\./);
   assert.doesNotMatch(raw, /nourn-linkedin/);
+});
+
+test('a status change remembers who made it, other saves keep the name, and a new variant starts without it', async () => {
+  const root = repo();
+  const folder = '2026-11-20-expo';
+  const store = fileContentStore(root);
+  const file = () => readFileSync(join(root, 'posts', folder, 'jeroen-linkedin.md'), 'utf8');
+  const save = async (raw: string, by?: string) => saveVariant(root, store, folder, 'jeroen-linkedin', { raw, revision: (await store.read(`posts/${folder}/jeroen-linkedin.md`))!.revision, by }, new Date('2026-11-01T00:00:00Z'));
+  const draft = file();
+  const planned = draft.replace('---\nOpent', 'status: planned\n---\nOpent');
+
+  await save(draft.replace('Opent', 'Sluit'), 'anna');
+  assert.doesNotMatch(file(), /statusBy/);
+  await save(planned, 'anna');
+  assert.match(file(), /statusBy: anna/);
+  await save(planned.replace('Opent', 'Sluit'), 'bob');
+  assert.match(file(), /statusBy: anna/);
+  await save(draft, 'bob');
+  assert.match(file(), /statusBy: bob/);
+  await save(planned, 'bob');
+  rmSync(join(root, 'posts', folder, 'insta.md'));
+  await addVariant(root, store, folder, 'jeroen-linkedin', 'insta');
+  assert.doesNotMatch(readFileSync(join(root, 'posts', folder, 'insta.md'), 'utf8'), /status/);
+  await save(draft);
+  assert.doesNotMatch(file(), /statusBy/);
 });

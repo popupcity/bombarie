@@ -114,3 +114,16 @@ test('saving quietly keeps the folder name, saving normally renames it', async (
   assert.equal(await saveIdea(root, store, '2026-11-25-old', { title: 'Brand new', text: 'Text', link: '' }, true), '2026-11-25-old');
   assert.equal(await saveIdea(root, store, '2026-11-25-old', { title: 'Brand new', text: 'Text', link: '' }), '2026-11-25-brand-new');
 });
+
+test('an idea remembers who changed its status, not who saved it again', async () => {
+  const { root, store } = repo();
+  const folder = await createIdea(root, store, { title: 'Idea' }, NOW);
+  await setIdeaStatus(root, store, folder, 'approved', undefined, 'anna');
+  assert.equal(readIdea(root, folder)?.statusBy, 'anna');
+  await setIdeaStatus(root, store, folder, 'approved', undefined, 'bob');
+  assert.equal(readIdea(root, folder)?.statusBy, 'anna');
+  await setIdeaStatus(root, store, folder, 'new', undefined, 'bob');
+  assert.equal(readIdea(root, folder)?.statusBy, 'bob');
+  await setIdeaStatus(root, store, folder, 'made', 'p');
+  assert.equal(readIdea(root, folder)?.statusBy, undefined);
+});

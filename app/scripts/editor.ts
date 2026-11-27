@@ -1,5 +1,5 @@
 import { icons } from '@popupcity/ui/src/components/icons.ts';
-import { readFields, withBody, withDate, withImages, withManual, withStatus, withTitle } from '../../src/frontmatter.ts';
+import { readFields, statusOfRaw, withBody, withDate, withImages, withManual, withStatus, withTitle } from '../../src/frontmatter.ts';
 import type { Fields } from '../../src/frontmatter.ts';
 import { fromEdit, toEdit } from '../../src/mentions.ts';
 import type { Entities, Entity } from '../../src/mentions.ts';
@@ -12,7 +12,7 @@ import { coverLabel, isDocument, mediaKind, needsCover } from '../../src/types.t
 import { pdfCover } from './pdfcover.ts';
 import { videoCover } from './videocover.ts';
 import { PLATFORM_LABEL, type Platform, type PostStatus } from '../../src/types.ts';
-import { plannedText, segmentLook } from '../lib/ui.ts';
+import { BY_PHOTO, byWhom, githubAvatar, plannedText, segmentLook } from '../lib/ui.ts';
 import { autocomplete } from './autocomplete.ts';
 import { joinThread, splitThread } from '../../src/parts.ts';
 import './datepicker.ts';
@@ -564,6 +564,18 @@ function init(root: HTMLElement) {
     scheduleAutosave();
   }
 
+  function paintBy(name: string | undefined, status: PostStatus) {
+    if (!statusButton || plan.dataset.recorded !== undefined) return;
+    const by = byWhom(name, status === 'planned' ? 'Planned' : 'Set to draft');
+    let photo = statusButton.querySelector('img');
+    if (!by) return photo?.remove();
+    if (!photo) {
+      photo = h('img', { class: BY_PHOTO });
+      statusButton.prepend(photo);
+    }
+    Object.assign(photo, { src: githubAvatar(by.name), alt: by.said, title: by.said });
+  }
+
   async function submit(rollback?: string, trigger: HTMLButtonElement = save, quiet = false, rename = false) {
     if (quiet && sending) return;
     while (sending) await new Promise((done) => setTimeout(done, 50));
@@ -580,7 +592,7 @@ function init(root: HTMLElement) {
     let ok = false;
     try {
       const response = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ raw: text, revision, sync: !quiet }) });
-      const data = (await response.json()) as { folder?: string; rearmed?: boolean; revision?: string | null; error?: string | null; problems?: string[]; due?: string | null };
+      const data = (await response.json()) as { folder?: string; statusBy?: string | null; rearmed?: boolean; revision?: string | null; error?: string | null; problems?: string[]; due?: string | null };
       if (response.status === 409) {
         theirs = data.revision ?? '';
         $('conflict').hidden = false;
@@ -600,6 +612,7 @@ function init(root: HTMLElement) {
         localStorage.removeItem(draftKey);
         autosaveStopped = false;
         if (data.rearmed) document.getElementById('reminder-sent')?.remove();
+        paintBy(data.statusBy ?? undefined, statusOfRaw(text));
         if (data.folder && data.folder !== folder) {
           sending = false;
           toastAfterReload('Saved.', 'ok');

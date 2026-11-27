@@ -1,0 +1,11 @@
+---
+import { BY_PHOTO, githubAvatar } from '../lib/ui.ts';
+import type { By } from '../lib/ui.ts';
+
+interface Props {
+  by: By;
+}
+const { by } = Astro.props;
+---
+
+<img src={githubAvatar(by.name)} alt={by.said} title={by.said} class={BY_PHOTO} />

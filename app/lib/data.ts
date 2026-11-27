@@ -164,7 +164,7 @@ export function takeFlash(): { text: string; tone: 'ok' | 'bad' } | null {
   return found;
 }
 
-export async function cardAction(action: string, id: string, value: string): Promise<{ ok: boolean; text: string }> {
+export async function cardAction(action: string, id: string, value: string, by?: string): Promise<{ ok: boolean; text: string }> {
   const [folder = '', file = ''] = id.split('/');
   const base = file.replace(/\.md$/, '');
   const path = `posts/${folder}/${base}.md`;
@@ -188,7 +188,7 @@ export async function cardAction(action: string, id: string, value: string): Pro
       if (saved.planned && !saved.manual && Date.now() - date.getTime() > LATE_AFTER_MS) return { ok: false, text: 'Pick a time in the future.' };
       raw = withDate(current.text, value);
     } else return { ok: false, text: 'Unknown action.' };
-    const saved = await saveVariant(root, content, folder, base, { raw, revision: current.revision }, new Date(), async (name) => (await loadConnections())[name] ?? null);
+    const saved = await saveVariant(root, content, folder, base, { raw, revision: current.revision, by }, new Date(), async (name) => (await loadConnections())[name] ?? null);
     if (saved.post) await rearm(states, id, saved.post);
     return { ok: true, text: action === 'plan' ? 'Planned.' : action === 'draft' ? 'Back to draft.' : 'Date changed.' };
   } catch (err) {
@@ -197,12 +197,12 @@ export async function cardAction(action: string, id: string, value: string): Pro
   }
 }
 
-export async function handleCardPost(request: Request, page: '/' | '/calendar'): Promise<{ redirect: string | null; problem: string }> {
+export async function handleCardPost(request: Request, page: '/' | '/calendar', by?: string): Promise<{ redirect: string | null; problem: string }> {
   const form = await request.formData();
   const action = String(form.get('action') ?? form.get('intent') ?? '');
   const id = String(form.get('id') ?? form.get('variant') ?? '');
   const date = String(form.get('date') ?? '');
-  const result = await cardAction(action, id, date);
+  const result = await cardAction(action, id, date, by);
   if (!result.ok) return { redirect: null, problem: result.text };
   setFlash({ text: result.text, tone: 'ok' });
   const day = date !== '' && (action === 'replan' || action === 'plan') ? date.slice(0, 10) : String(form.get('day') ?? '');

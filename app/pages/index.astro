@@ -6,7 +6,7 @@ import { folderCountsOf, handleCardPost, loadCalendar, takeFlash } from '../lib/
 
 let problem = '';
 if (Astro.request.method === 'POST') {
-  const result = await handleCardPost(Astro.request, '/');
+  const result = await handleCardPost(Astro.request, '/', Astro.locals.user);
   if (result.redirect) return Astro.redirect(result.redirect, 303);
   problem = result.problem;
 }

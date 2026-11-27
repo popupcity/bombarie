@@ -102,6 +102,13 @@ export const dotClass = (tone: string): string => `size-1 rounded-full ${tone ==
 export const SEGMENTS = 'inline-flex h-10 overflow-hidden rounded-lg border border-ink text-sm';
 export const SEGMENT = 'transition inline-flex h-full cursor-pointer items-center gap-2 px-4 text-ink not-aria-pressed:not-aria-[current=page]:hover:bg-(--tone-hover) aria-pressed:bg-ink aria-pressed:text-page aria-[current=page]:bg-ink aria-[current=page]:text-page';
 
+export interface By {
+  name: string;
+  said: string;
+}
+export const byWhom = (name: string | undefined, said: string): By | undefined => (name ? { name, said: `${said} by ${name}` } : undefined);
+export const BY_PHOTO = 'size-8 rounded-lg';
+
 export const WEEK_ROW = 'grid grid-cols-7 gap-1';
 
 export const QUIET = 'transition grid shrink-0 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-(--tone-hover) hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';

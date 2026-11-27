@@ -18,8 +18,8 @@ if (Astro.request.method === 'POST') {
   const intent = String(form.get('intent') ?? '');
   const folder = String(form.get('folder') ?? '');
   try {
-    if (intent === 'approve') await setIdeaStatus(root, content, folder, 'approved');
-    else if (intent === 'unapprove') await setIdeaStatus(root, content, folder, 'new');
+    if (intent === 'approve') await setIdeaStatus(root, content, folder, 'approved', undefined, Astro.locals.user);
+    else if (intent === 'unapprove') await setIdeaStatus(root, content, folder, 'new', undefined, Astro.locals.user);
     else if (intent === 'delete') await deleteIdea(root, content, String(form.get('variant') ?? ''));
     else error = 'Unknown action.';
     if (!error) return Astro.redirect('/ideas', 303);

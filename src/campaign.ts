@@ -149,7 +149,7 @@ export async function saveVariant(
   store: ContentStore,
   folder: string,
   base: string,
-  input: { raw: string; revision: string },
+  input: { raw: string; revision: string; by?: string | undefined },
   now = new Date(),
   connection: (channel: string) => Promise<string | null> = async () => null
 ): Promise<Variant> {
@@ -188,6 +188,12 @@ export async function saveVariant(
       }
     }
     if (problems.length > 0) throw new PlanBlocked(problems);
+  }
+  const typed = readFields(raw);
+  if (typed.ok) {
+    const before = readFields(current.text);
+    const who = statusOfRaw(raw) !== statusOfRaw(current.text) ? input.by : before.ok ? before.statusBy : undefined;
+    if (who !== typed.statusBy) raw = setFrontmatter(raw, { statusBy: who });
   }
   await store.write(path, raw, input.revision);
   return loadCampaign(root, folder)!.variants.find((variant) => variant.base === base)!;
@@ -250,7 +256,7 @@ export async function createPost(
 
 function withoutStatus(text: string): string {
   try {
-    return setFrontmatter(text, { status: undefined });
+    return setFrontmatter(text, { status: undefined, statusBy: undefined });
   } catch {
     return text;
   }

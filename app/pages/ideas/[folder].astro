@@ -21,7 +21,7 @@ import ConfirmDialog from '../../components/ConfirmDialog.astro';
 import Field from '../../components/Field.astro';
 import Section from '../../components/Section.astro';
 import { content, root } from '../../lib/data.ts';
-import { postHref, CARET } from '../../lib/ui.ts';
+import { postHref, CARET, byWhom } from '../../lib/ui.ts';
 import { photoSizes } from '../../lib/photo.ts';
 import TitleField from '../../components/TitleField.astro';
 import Shell from '../../layouts/Shell.astro';
@@ -45,14 +45,14 @@ if (Astro.request.method === 'POST') {
     folder = await saveIdea(root, content, folder, fields, quiet);
     if (quiet) return new Response(null, { status: 204 });
     await attachPreview(root, content, folder);
-    if (intent === 'approve' || intent === 'unapprove') await setIdeaStatus(root, content, folder, intent === 'approve' ? 'approved' : 'new');
+    if (intent === 'approve' || intent === 'unapprove') await setIdeaStatus(root, content, folder, intent === 'approve' ? 'approved' : 'new', undefined, Astro.locals.user);
     else if (intent.startsWith('remove:')) await removeIdeaImage(root, content, folder, intent.slice('remove:'.length));
     else if (intent === 'make') {
       chosen = [String(form.get('make') ?? '')];
       const images = await Promise.all(idea.images.map(async (name) => ({ name, bytes: (await content.readFile(`ideas/${folder}/${name}`)) ?? new Uint8Array() })));
       const link = cleanLink(fields.link);
       const made = await createPost(root, content, { title: fields.title.trim() || ideaTitle(idea) || folder.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/-/g, ' '), channels: chosen, text: fields.text, ...(link && { link }), images: images.filter((image) => image.bytes.length > 0) });
-      await setIdeaStatus(root, content, folder, 'made', made.folder);
+      await setIdeaStatus(root, content, folder, 'made', made.folder, Astro.locals.user);
       return Astro.redirect(postHref(`${made.folder}/${made.base}.md`), 303);
     } else if (intent !== 'save') error = 'Unknown action.';
     if (!error) return Astro.redirect(`/ideas/${encodeURIComponent(folder)}`, 303);
@@ -66,6 +66,7 @@ const sizes = await photoSizes(readIdea(root, folder)?.images ?? [], root, 'idea
 const field = 'block w-full rounded-lg bg-surface p-4 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const tone = { new: 'warn', approved: 'info', made: 'ok' } as const;
 const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
+const statusBy = byWhom(idea.statusBy, idea.status === 'new' ? 'Reopened' : label[idea.status]);
 ---
 
 <Shell title={idea.title || 'Untitled idea'}>
@@ -123,10 +124,11 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
           <ActionRow label="Status">
             {
               idea.status === 'made' ? (
-                <Chip size="control" tone={tone.made}>{label.made}</Chip>
+                <Chip size="control" tone={tone.made} by={statusBy}>{label.made}</Chip>
               ) : (
                 <ChoiceMenu
                   id="status-menu"
+                  by={statusBy}
                   submit
                   disableActive
                   label={label[idea.status]}
