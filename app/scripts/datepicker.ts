@@ -1,4 +1,4 @@
-import { OUTLINE, PANEL, QUIET, WEEK_ROW } from '../lib/ui.ts';
+import { CARD_HEADING, OUTLINE, PANEL, QUIET, WEEK_ROW } from '../lib/ui.ts';
 import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addDays, addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
@@ -172,7 +172,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
         'div',
         { class: 'flex items-center justify-between' },
         h('button', { type: 'button', 'aria-label': 'Previous month', class: NAV, onclick: () => ((view = addMonths(view, -1)), render()) }, icon('caret-right', true)),
-        h('span', { 'aria-live': 'polite' }, monthLabel(view)),
+        h('span', { 'aria-live': 'polite', class: CARD_HEADING }, monthLabel(view)),
         h('button', { type: 'button', 'aria-label': 'Next month', class: NAV, onclick: () => ((view = addMonths(view, 1)), render()) }, icon('caret-right'))
       ),
       grid,

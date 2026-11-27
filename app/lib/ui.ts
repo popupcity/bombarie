@@ -1,4 +1,4 @@
-import { focus, looks } from '@popupcity/ui/src/components/looks.ts';
+import { cardFace, focus, looks } from '@popupcity/ui/src/components/looks.ts';
 import type { Status } from '../../src/calendar.ts';
 
 export const brand = 'bombarie';
@@ -106,6 +106,8 @@ export const dotTones = (tones: string[]): string[] =>
 export const dotClass = (tone: string): string => `size-1 rounded-full ${tone === 'feed' ? 'bg-ink-faint' : 'bg-(--tone)'}`;
 
 export const OUTLINE = `transition h-10 cursor-pointer rounded-lg px-6 ${looks.outline} ${focus}`;
+
+export const CARD_HEADING = `text-lg ${cardFace}`;
 
 export const SEGMENTS = 'inline-flex h-10 rounded-lg text-sm ring-1 ring-line ring-inset';
 export const SEGMENT = 'transition inline-flex h-full cursor-pointer items-center gap-2 rounded-lg px-4 text-ink-soft not-aria-pressed:not-aria-[current=page]:hover:bg-(--tone-hover) aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-1 aria-pressed:ring-line-strong aria-pressed:ring-inset aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-1 aria-[current=page]:ring-line-strong aria-[current=page]:ring-inset';

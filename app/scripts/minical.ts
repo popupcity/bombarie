@@ -1,6 +1,6 @@
 import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
-import { CARET, dotClass, dotTones, OUTLINE, QUIET, SWAPPED, WEEK_ROW } from '../lib/ui.ts';
+import { CARET, dotClass, dotTones, CARD_HEADING, OUTLINE, QUIET, SWAPPED, WEEK_ROW } from '../lib/ui.ts';
 import { h } from './dom.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -59,9 +59,9 @@ function start() {
     grid!.replaceChildren(
       h(
         'div',
-        { class: 'flex items-center justify-between' },
+        { class: 'flex items-center justify-between pb-2' },
         h('button', { type: 'button', 'aria-label': 'Previous month', class: NAV, onclick: () => ((view = addMonths(view, -1)), render()) }, caret(true)),
-        h('span', { 'aria-live': 'polite', class: 'text-base' }, monthLabel(view)),
+        h('span', { 'aria-live': 'polite', class: CARD_HEADING }, monthLabel(view)),
         h('button', { type: 'button', 'aria-label': 'Next month', class: NAV, onclick: () => ((view = addMonths(view, 1)), render()) }, caret(false))
       ),
       h('div', { class: `${WEEK_ROW} text-center text-xs text-ink-soft` }, ...WEEKDAYS.map((name) => h('span', { class: 'py-1' }, name))),
@@ -105,7 +105,7 @@ function start() {
     if (!empty || !plan) return;
     const when = new Date(`${day}T00:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
     panel!.replaceChildren(
-      h('h3', { class: 'text-base' }, day === today ? `Today, ${when}` : when),
+      h('h3', { class: CARD_HEADING }, day === today ? `Today, ${when}` : when),
       h('p', { class: 'text-sm text-ink-soft' }, 'Nothing planned.'),
       h('button', { type: 'button', popovertarget: 'new-menu', 'data-day': day, 'data-tone': 'ink', class: `${OUTLINE} inline-flex w-fit items-center gap-2 text-sm` }, plus(), 'Plan a post')
     );

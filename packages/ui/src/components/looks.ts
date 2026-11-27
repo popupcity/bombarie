@@ -7,3 +7,5 @@ export const looks = {
 };
 
 export const focus = 'focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+
+export const cardFace = '[font-family:var(--font-heading)] [font-weight:var(--weight-heading-card,var(--weight-heading))] [letter-spacing:var(--tracking-heading-card,0)]';
