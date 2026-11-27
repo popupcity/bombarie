@@ -20,7 +20,7 @@ const metaLink = { href: 'https://developers.facebook.com/apps', label: 'Open Me
 const steps: Record<string, Step[]> = {
   threads: [
     { title: 'Create the app', text: 'One Threads app serves every Threads channel. In the Meta developer dashboard create an app and add the use case "Access the Threads API".', link: metaLink },
-    { title: 'Add the permissions', text: 'Under the use case, add these permissions:', permissions: ['threads_basic', 'threads_content_publish', 'threads_manage_replies'] },
+    { title: 'Add the permissions', text: 'Under the use case, add these permissions:', permissions: ['threads_basic', 'threads_content_publish', 'threads_manage_replies', 'threads_manage_insights'] },
     { title: 'Add yourself as a tester', text: 'While the app is in development mode it only posts for Threads testers. Under App roles choose Add People, then Threads Tester. Accept the invitation in Threads under Settings, Account, Website permissions.' },
     { title: 'Save the redirect URL', text: 'Copy the Redirect URL from the channel page and add it under Redirect Callback URLs in the Threads settings.' },
     { title: 'Paste the app details', text: 'Copy the Threads app ID and secret from App settings, Basic, into the fields on the channel page.' }

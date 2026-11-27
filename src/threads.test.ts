@@ -80,7 +80,7 @@ test('the rules: 500 characters, text or a picture, one video, no PDF, no story,
   assert.ok(threads.validate(post({ images: ['a.pdf'] }), channel).some((issue) => /PDF/.test(issue)));
   assert.ok(threads.validate(post({ type: 'story' }), channel).some((issue) => /no stories/.test(issue)));
   assert.ok(threads.validate(post(), { platform: 'threads' }).some((issue) => /not linked/.test(issue)));
-  assert.match(threadsAuthorizeUrl('app', 'https://x.test/cb', 's'), /^https:\/\/threads\.com\/oauth\/authorize\?client_id=app&redirect_uri=https%3A%2F%2Fx\.test%2Fcb&scope=threads_basic%2Cthreads_content_publish%2Cthreads_manage_replies&response_type=code&state=s$/);
+  assert.match(threadsAuthorizeUrl('app', 'https://x.test/cb', 's'), /^https:\/\/threads\.com\/oauth\/authorize\?client_id=app&redirect_uri=https%3A%2F%2Fx\.test%2Fcb&scope=threads_basic%2Cthreads_content_publish%2Cthreads_manage_replies%2Cthreads_manage_insights&response_type=code&state=s$/);
 });
 
 test('connecting exchanges the code twice, saves the long-lived token and the username, and refuses another account', async () => {

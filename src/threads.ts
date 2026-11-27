@@ -18,7 +18,7 @@ const REFRESH_WITHIN_MS = 14 * 86_400_000;
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 
 export function threadsAuthorizeUrl(appId: string, redirectUri: string, state: string): string {
-  return `https://threads.com/oauth/authorize?${new URLSearchParams({ client_id: appId, redirect_uri: redirectUri, scope: 'threads_basic,threads_content_publish,threads_manage_replies', response_type: 'code', state })}`;
+  return `https://threads.com/oauth/authorize?${new URLSearchParams({ client_id: appId, redirect_uri: redirectUri, scope: 'threads_basic,threads_content_publish,threads_manage_replies,threads_manage_insights', response_type: 'code', state })}`;
 }
 
 const call = (context: SendContext, path: string, token: string, params: Record<string, string>, what: string, final = false, read = false) =>
