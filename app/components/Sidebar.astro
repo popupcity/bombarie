@@ -4,7 +4,7 @@ import Button from '@popupcity/ui/src/components/Button.astro';
 import Icon from '@popupcity/ui/src/components/Icon.astro';
 import { channelInfos, loadChannels } from '../../src/channels.ts';
 import { loadConnections, root } from '../lib/data.ts';
-import { RAIL_COOKIE, brandName, FADE_BELOW, CARET, QUIET } from '../lib/ui.ts';
+import { RAIL_COOKIE, brandName, FADE_BELOW, QUIET } from '../lib/ui.ts';
 import NewPostMenu from './NewPostMenu.astro';
 import AccountMenu from './AccountMenu.astro';
 import Wordmark from './Wordmark.astro';
@@ -28,7 +28,7 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
 
 <header class="sticky top-0 z-40 flex h-16 items-center gap-3 bg-page px-4 md:hidden">
   <a href="/" aria-label={brandName} class:list={[BRAND, 'mr-auto']}><Logo class="size-8" /><Wordmark /></a>
-  <Button type="button" popovertarget="new-menu" data-with-idea>New<Icon name="caret-down" class={CARET} /></Button>
+  <Button type="button" popovertarget="new-menu" data-with-idea><Icon name="plus" weight="bold" />New</Button>
   <Button type="button" variant="outline" icon data-nav-toggle aria-controls="sidebar" aria-expanded="false" aria-label="Menu" class="group">
     <span class="relative size-4">
       <span class="absolute inset-0 transition-[opacity,rotate] group-aria-expanded:rotate-90 group-aria-expanded:opacity-0"><Icon name="list" class="size-full" /></span>
@@ -49,7 +49,7 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
       </button>
     </div>
     <div class="flex flex-col max-md:hidden md:w-full md:in-data-rail:hidden">
-      <Button type="button" popovertarget="new-menu" data-with-idea class="w-full">New<Icon name="caret-down" class={CARET} /></Button>
+      <Button type="button" popovertarget="new-menu" data-with-idea class="w-full"><Icon name="plus" weight="bold" />New</Button>
     </div>
     <div class="hidden justify-center md:in-data-rail:flex">
       <Button type="button" popovertarget="new-menu" data-with-idea icon aria-label="New" title="New"><Icon name="plus" weight="bold" /></Button>

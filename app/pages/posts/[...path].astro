@@ -299,7 +299,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
                     )}
                     <div class="flex flex-wrap items-center gap-3 md:peer-[:not(:empty)]:pl-14">
                       {repliable && <Button id="post-replies" type="button" hidden>Post reply</Button>}
-                      <Button id="add-reply" popovertarget={choosing ? 'reply-menu' : undefined} type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a reply under this post'}>Add reply{choosing && <Icon name="caret-down" class={CARET} />}</Button>
+                      <Button id="add-reply" popovertarget={choosing ? 'reply-menu' : undefined} type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a reply under this post'}><Icon name="plus" weight="bold" />Add reply</Button>
                     </div>
                   </div>
                 )

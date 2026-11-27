@@ -8,8 +8,10 @@ const buttons = files('app').flatMap((file) => [...readFileSync(file, 'utf8').ma
 
 const label = (inner: string): string => inner.replace(/<Icon\b[^>]*\/>/g, '').replace(/<\/?span\b(?:[^>{]|\{[^}]*\})*>/g, '').replace(/\s+/g, ' ').trim();
 
-test('a button with a label never starts with an icon: the icon goes after it (an arrow out, a caret) or the button is icon only', () => {
-  const bad = buttons.filter(({ inner }) => label(inner) !== '' && inner.trimStart().startsWith('<Icon')).map(({ file, inner }) => `${file}: ${label(inner).slice(0, 40)}`);
+const ADDS = '<Icon name="plus" weight="bold" />';
+
+test('a button with a label starts with no icon but the plus of one that adds: other icons go after it (an arrow out, a caret) or the button is icon only', () => {
+  const bad = buttons.filter(({ inner }) => label(inner) !== '' && inner.trimStart().startsWith('<Icon') && !inner.trimStart().startsWith(ADDS)).map(({ file, inner }) => `${file}: ${label(inner).slice(0, 40)}`);
   assert.deepEqual(bad, []);
 });
 
@@ -21,7 +23,7 @@ test('an icon-only button always says what it does', () => {
 test('the trailing icon of a labelled button is an arrow out or a caret', () => {
   const bad = buttons
     .filter(({ inner }) => label(inner) !== '')
-    .flatMap(({ file, inner }) => [...inner.matchAll(/<Icon name="([^"]+)"/g)].map((icon) => `${file}: ${icon[1]}`))
+    .flatMap(({ file, inner }) => [...inner.trimStart().replace(ADDS, '').matchAll(/<Icon name="([^"]+)"/g)].map((icon) => `${file}: ${icon[1]}`))
     .filter((entry) => !/: (arrow-square-out|caret-down|caret-right)$/.test(entry));
   assert.deepEqual(bad, []);
 });

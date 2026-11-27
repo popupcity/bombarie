@@ -5,7 +5,7 @@ import Heading from '@popupcity/ui/src/components/Heading.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
 import type { ListGroup } from '../../src/calendar.ts';
 import Button from '@popupcity/ui/src/components/Button.astro';
-import { STATUS_TONE, CARET } from '../lib/ui.ts';
+import { STATUS_TONE } from '../lib/ui.ts';
 import AgendaCard from './AgendaCard.astro';
 import MonthSection from './MonthSection.astro';
 
@@ -26,7 +26,7 @@ const format = (day: string, options: Intl.DateTimeFormatOptions) => new Date(`$
     groups.length === 0 && (
       <div class="flex flex-col items-start gap-4">
         <Text variant="body" class="text-ink-soft">Nothing is planned yet.</Text>
-        <Button type="button" popovertarget="new-menu">New post<Icon name="caret-down" class={CARET} /></Button>
+        <Button type="button" popovertarget="new-menu"><Icon name="plus" weight="bold" />New post</Button>
       </div>
     )
   }
