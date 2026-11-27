@@ -9,6 +9,7 @@ import { dateLabel, postsNow } from '../../../src/plan.ts';
 import { clock, whenLabel, ymd } from '../../../src/time.ts';
 import Chip from '../../components/Chip.astro';
 import ChannelMark from '../../components/ChannelMark.astro';
+import ChannelAvatar from '../../components/ChannelAvatar.astro';
 import TitleField from '../../components/TitleField.astro';
 import Shell from '../../layouts/Shell.astro';
 import Button from 'ui/src/components/Button.astro';
@@ -34,7 +35,7 @@ import { telegramOf } from '../../lib/telegram.ts';
 import { content, deleteFromPlatform, loadConnections, markPosted, outcomeWording, postRepliesNow, root, setFlash, startPostNow, states, takeFlash, unmarkPosted } from '../../lib/data.ts';
 import { forgetOutcome, lastOutcome } from '../../../src/progress.ts';
 import { isAutomatic } from '../../../src/connect.ts';
-import { jsonForScript, plannedText, CHIP, MENU, MENU_ITEM } from '../../lib/ui.ts';
+import { jsonForScript, plannedText, CHIP, MENU, MENU_ITEM, CARET } from '../../lib/ui.ts';
 import { variantOptions } from '../../lib/variants.ts';
 import ActionPanel from '../../components/ActionPanel.astro';
 import ActionRow from '../../components/ActionRow.astro';
@@ -123,7 +124,9 @@ const authors =
         .filter((info) => isPerson(known[info.name]))
         .map((info) => ({ key: info.name, name: info.label, avatar: info.avatar, usable: !connections[info.name] }))
     : [];
-const pickable = authors.filter((author) => author.usable || author.key === variant.channel);
+const pickable = authors.filter((author) => author.usable || author.key === variant.channel).sort((a, b) => Number(b.key === variant.channel) - Number(a.key === variant.channel));
+const commenters = authors.length > 0 ? authors : [{ key: variant.channel, name: variant.label, avatar: variant.avatar, usable: true }];
+const choosing = pickable.length > 1;
 const planned = fields.ok && fields.status === 'planned';
 const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (!planned && Boolean(connections[variant.channel]))));
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
@@ -167,7 +170,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
         data-revision={variant.revision}
         data-platform={variant.platform}
         data-own={variant.channel}
-        data-authors={JSON.stringify(authors)}
+        data-authors={JSON.stringify(commenters)}
         data-posting={recorded?.status === 'posting' && Date.now() - new Date(recorded.at).getTime() < 10 * 60_000 ? '' : undefined}
         data-type={variant.type ?? undefined}
         data-due={variant.post?.date.toISOString()}
@@ -246,15 +249,37 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
               {
                 threaded && (
                   <div class="flex flex-col gap-4">
-                    <div id="replies" class="flex flex-col gap-8 empty:hidden"></div>
+                    <div id="replies" class="peer flex flex-col gap-8 empty:hidden"></div>
                     <ReplyTemplate />
-                    {pickable.length > 1 && (
-                      <template id="reply-author">
-                        <ChoiceMenu id="reply-author-menu" labelId="reply-author-label" label="" tone="ink" options={pickable.map((author) => ({ label: author.name, active: false, attrs: { 'data-author': author.key } }))} />
+                    {commenters.map((author) => (
+                      <template data-face={author.key}>
+                        <ChannelAvatar channel={{ label: author.name, avatar: author.avatar }} class="size-10 text-xs" />
                       </template>
+                    ))}
+                    {choosing && (
+                      <>
+                        <template id="reply-face">
+                          <button type="button" data-plain popovertarget="reply-menu" class="group relative flex cursor-pointer self-start rounded-lg focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink disabled:cursor-default">
+                            <span class="absolute -right-1 -bottom-1 z-10 grid size-5 place-items-center rounded-sm bg-surface text-xs text-ink opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 group-disabled:hidden group-aria-expanded:opacity-100 pointer-coarse:opacity-100">
+                              <Icon name="caret-down" class={CARET} />
+                            </span>
+                          </button>
+                        </template>
+                        <div id="reply-menu" popover class:list={[MENU, 'w-64 [inset:auto] [left:anchor(left)] [position-anchor:--reply-menu] [position-try-fallbacks:flip-block] [top:anchor(bottom)]']}>
+                          {pickable.map((author) => (
+                            <button type="button" data-author={author.key} class={MENU_ITEM}>
+                              <ChannelMark channel={{ label: author.name, avatar: author.avatar, platform: 'linkedin' }} size="md" on="surface" />
+                              <span class="min-w-0 flex-1 truncate">{author.name}</span>
+                              <span data-check class="invisible">
+                                <Icon name="check" />
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </>
                     )}
-                    <div>
-                      <Button id="add-reply" type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a comment under this post'}>{variant.platform === 'threads' ? 'Add reply' : 'Add comment'}</Button>
+                    <div class="peer-[:not(:empty)]:pl-14">
+                      <Button id="add-reply" popovertarget={choosing ? 'reply-menu' : undefined} type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a comment under this post'}>{variant.platform === 'threads' ? 'Add reply' : 'Add comment'}{choosing && <Icon name="caret-down" class={CARET} />}</Button>
                     </div>
                   </div>
                 )
@@ -365,7 +390,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
           <div class="flex flex-col gap-4 rounded-xl bg-track p-4">
             <PlatformPreview platform={variant.platform} type={variant.type} channel={variant.channel} label={variant.label} avatar={variant.avatar} when={fields.ok && fields.date ? whenLabel(fields.date) : 'No date yet'} folder={campaign.folder} images={images} link={variant.post?.link} handle={loadChannels(root)[variant.channel]?.handle} segments={variant.preview.segments} />
             <Text variant="fine" class="px-2 text-ink-soft tabular-nums" id="preview-count" hidden={variant.type === 'story'}>{variant.preview.length}{variant.preview.limit ? `/${variant.preview.limit}` : ''} characters</Text>
-            {variant.type === 'story' && <Text variant="fine" class="flex items-center gap-1 px-2 text-ink-soft">Story format <Hint text="9:16, 1080 × 1920 px. Keep important things out of the top 14 % and the bottom 18 %, Instagram puts its own buttons there. A story is posted as the image alone: no text and no link." /></Text>}
+            {variant.type === 'story' && <Text variant="fine" class="flex items-center gap-1 px-2 text-ink-soft">Story format <Hint text="9:16, 1080×1920 px. Keep important things out of the top 14% and the bottom 18%, Instagram puts its own buttons there. A story is posted as the image alone: no text and no link." /></Text>}
           </div>
           <ul id="preview-notes" class="flex flex-col gap-2 text-sm text-ink-soft">{variant.preview.notes.map((note) => <li>{sentence(note)}</li>)}</ul>
         </Section>

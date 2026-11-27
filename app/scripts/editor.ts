@@ -648,9 +648,6 @@ function init(root: HTMLElement) {
     edit(withBody(raw, replyBox ? joinThread([{ text: first }, ...later]) : first));
   };
   const noun = platform === 'threads' ? 'Reply' : 'Comment';
-  const numberReplies = () => {
-    for (const [index, label] of [...(replyBox?.querySelectorAll<HTMLElement>('[data-reply-label]') ?? [])].entries()) label.textContent = `${noun} ${index + 1}`;
-  };
   let repliesSent = Number(root.dataset.repliesSent ?? 0);
   const replyIds = JSON.parse(root.dataset.replyIds ?? '[]') as string[];
   const replyDialog = document.getElementById('reply-delete') as HTMLDialogElement | null;
@@ -683,7 +680,6 @@ function init(root: HTMLElement) {
       replyBox?.children[position]?.remove();
       replyIds.splice(position, 1);
       repliesSent -= 1;
-      numberReplies();
       commitBody();
       stop();
       await submit();
@@ -697,40 +693,59 @@ function init(root: HTMLElement) {
   document.getElementById('reply-delete-local')?.addEventListener('click', () => void deleteSentReply('local'));
   document.getElementById('reply-delete-both')?.addEventListener('click', () => void deleteSentReply('both'));
   let replyCounter = 0;
-  function authorMenu(wrapper: HTMLElement): HTMLElement | null {
-    const template = document.getElementById('reply-author') as HTMLTemplateElement | null;
-    if (!template) return null;
-    const copy = template.content.cloneNode(true) as DocumentFragment;
-    const trigger = copy.querySelector<HTMLButtonElement>('[popovertarget]')!;
-    const menu = copy.querySelector<HTMLElement>('[popover]')!;
-    const name = copy.querySelector<HTMLElement>('#reply-author-label')!;
-    menu.id = `reply-author-${replyCounter}`;
-    name.removeAttribute('id');
-    trigger.setAttribute('popovertarget', menu.id);
-    trigger.style.setProperty('anchor-name', `--${menu.id}`);
-    menu.style.setProperty('position-anchor', `--${menu.id}`);
-    const paint = () => {
-      const key = wrapper.dataset.by ?? own;
-      const chosen = authors.find((author) => author.key === key);
-      name.textContent = chosen ? `${chosen.name}${chosen.usable || key === own ? '' : ' (not connected)'}` : key;
-      for (const option of menu.querySelectorAll<HTMLElement>('[data-author]')) {
-        const active = option.dataset.author === key;
-        option.setAttribute('aria-pressed', String(active));
-        option.querySelector('span[aria-hidden]')?.classList.toggle('invisible', !active);
-      }
-    };
-    for (const option of menu.querySelectorAll<HTMLElement>('[data-author]'))
-      option.addEventListener('click', () => {
-        const key = option.dataset.author ?? own;
-        if (key === own) delete wrapper.dataset.by;
-        else wrapper.dataset.by = key;
-        paint();
-        menu.hidePopover();
-        commitBody();
-      });
-    paint();
-    return h('div', {}, ...(copy.children as unknown as HTMLElement[]));
+  const nameOf = (key: string): string => {
+    const chosen = authors.find((author) => author.key === key);
+    return chosen ? `${chosen.name}${chosen.usable || key === own ? '' : ' (not connected)'}` : key;
+  };
+  const face = (key: string): Node => document.querySelector<HTMLTemplateElement>(`template[data-face="${key}"]`)?.content.cloneNode(true) ?? document.createTextNode('');
+
+  function paintAuthor(wrapper: HTMLElement) {
+    const key = wrapper.dataset.by ?? own;
+    const holder = wrapper.querySelector<HTMLElement>('[data-reply-face]')!;
+    wrapper.querySelector('[data-reply-name]')!.textContent = nameOf(key);
+    holder.querySelector('[data-face-image]')!.replaceChildren(face(key));
+    wrapper.querySelector('textarea')!.setAttribute('aria-label', `${noun} by ${nameOf(key)}`);
+    holder.querySelector('button')?.setAttribute('aria-label', `${noun} by ${nameOf(key)}, choose another account`);
   }
+
+  function replyFace(): HTMLElement {
+    const image = h('span', { 'data-face-image': '', class: 'flex' });
+    const button = (document.getElementById('reply-face') as HTMLTemplateElement | null)?.content.firstElementChild?.cloneNode(true) as HTMLElement | undefined;
+    button?.prepend(image);
+    return h('div', { 'data-reply-face': '', class: 'flex self-start' }, button ?? image);
+  }
+
+  const replyMenu = document.getElementById('reply-menu');
+  let menuFor: HTMLElement | null = null;
+  document.addEventListener(
+    'click',
+    (event) => {
+      const trigger = (event.target as Element).closest<HTMLElement>('[popovertarget="reply-menu"]');
+      if (!trigger || !replyMenu) return;
+      for (const other of document.querySelectorAll<HTMLElement>('[popovertarget="reply-menu"]')) other.style.removeProperty('anchor-name');
+      trigger.style.setProperty('anchor-name', '--reply-menu');
+      menuFor = trigger.closest<HTMLElement>('[data-reply]');
+      const current = menuFor ? (menuFor.dataset.by ?? own) : null;
+      for (const option of replyMenu.querySelectorAll<HTMLElement>('[data-author]')) {
+        option.querySelector('[data-check]')!.classList.toggle('invisible', option.dataset.author !== current);
+      }
+    },
+    true
+  );
+  for (const option of replyMenu?.querySelectorAll<HTMLElement>('[data-author]') ?? [])
+    option.addEventListener('click', () => {
+      const key = option.dataset.author ?? own;
+      replyMenu?.hidePopover();
+      if (!menuFor) {
+        addReplyField('', key).focus();
+      } else {
+        if (key === own) delete menuFor.dataset.by;
+        else menuFor.dataset.by = key;
+        paintAuthor(menuFor);
+      }
+      commitBody();
+    });
+
   function addReplyField(text: string, by?: string): HTMLTextAreaElement {
     replyCounter += 1;
     const area = h('textarea', { id: `reply-${replyCounter}`, rows: '4', placeholder: 'Write the reply. Type @ to mention.', 'aria-label': 'Reply', class: `${body.className.replace(/\bpr-14\b/, '').replace(/\bmin-h-56\b/, 'min-h-32')} pr-14` }) as HTMLTextAreaElement;
@@ -740,17 +755,13 @@ function init(root: HTMLElement) {
       const position = [...(replyBox?.children ?? [])].indexOf(wrapper);
       if (position < repliesSent) return openReplyDialog(position);
       wrapper.remove();
-      numberReplies();
       commitBody();
     });
-    const label = h('p', { 'data-reply-label': '', class: 'text-sm text-ink-soft' });
-    const head = h('div', { class: 'flex items-center justify-between gap-4' }, label);
-    const wrapper = h('div', { 'data-reply': '', class: 'flex flex-col gap-2' }, head, h('div', { class: 'relative' }, area, remove));
+    const name = h('p', { 'data-reply-name': '', class: 'text-sm text-ink-soft' });
+    const wrapper = h('div', { 'data-reply': '', class: 'flex gap-4' }, replyFace(), h('div', { class: 'flex min-w-0 flex-1 flex-col gap-2' }, name, h('div', { class: 'relative' }, area, remove)));
     if (by && by !== own) wrapper.dataset.by = by;
-    const menu = authorMenu(wrapper);
-    if (menu) head.append(menu);
+    paintAuthor(wrapper);
     replyBox?.append(wrapper);
-    numberReplies();
     autocomplete(area, 'at', entities, platform);
     area.addEventListener('input', commitBody);
     return area;
@@ -768,6 +779,7 @@ function init(root: HTMLElement) {
   }
   body.addEventListener('input', commitBody);
   document.getElementById('add-reply')?.addEventListener('click', () => {
+    if (replyMenu) return;
     addReplyField('').focus();
     commitBody();
   });
