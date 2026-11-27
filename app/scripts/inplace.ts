@@ -32,7 +32,7 @@ async function send(url: string, body: FormData): Promise<void> {
   }
 }
 
-export const inPlace = (): boolean => document.querySelector('[data-view="list"]') !== null;
+const inPlace = (): boolean => document.querySelector('[data-view]') !== null;
 
 document.addEventListener('submit', (event) => {
   const form = event.target as HTMLFormElement;

@@ -1,10 +1,11 @@
 import './datepicker.ts';
 import './inplace.ts';
-import { brand, dotClass, dotTones, SWAPPED } from '../lib/ui.ts';
+import { brand, dotClass, dotTones, SWAPPED, VISIBLE_CHIPS } from '../lib/ui.ts';
 import { h } from './dom.ts';
+import { resize } from './motion.ts';
 
 const KEY = `${brand}:hidden`;
-const VISIBLE_CHIPS = 3;
+const opened = new Set<string>();
 
 const read = (): Set<string> => {
   try {
@@ -33,7 +34,7 @@ function apply() {
   for (const cell of document.querySelectorAll<HTMLElement>('[data-cell]')) {
     const chips = [...cell.querySelectorAll<HTMLElement>('[data-chip]')];
     const shown = chips.filter((chip) => !hidden.has(chip.dataset.channel ?? ''));
-    const open = cell.dataset.expanded === 'true';
+    const open = opened.has(cell.dataset.cell ?? '');
     const more = cell.querySelector<HTMLElement>('[data-more]');
     if (more) {
       more.hidden = shown.length <= VISIBLE_CHIPS;
@@ -122,6 +123,19 @@ document.addEventListener('click', (event) => {
   const more = (event.target as Element).closest<HTMLElement>('[data-more]');
   const cell = more?.closest<HTMLElement>('[data-cell]');
   if (!cell) return;
-  cell.dataset.expanded = String(cell.dataset.expanded !== 'true');
-  apply();
+  void fold(cell);
 });
+
+async function fold(cell: HTMLElement) {
+  const list = cell.querySelector<HTMLElement>('[data-chips]')!;
+  for (const running of list.getAnimations()) running.cancel();
+  const from = list.offsetHeight;
+  const before = [...list.querySelectorAll<HTMLElement>('[data-chip]:not([hidden])')];
+  const key = cell.dataset.cell ?? '';
+  if (!opened.delete(key)) opened.add(key);
+  apply();
+  const to = list.offsetHeight;
+  if (to < from) for (const chip of before) chip.hidden = false;
+  await resize(list, from, to);
+  apply();
+}

@@ -81,6 +81,7 @@ export const plannedText = (manual: boolean, ago = 0): string => {
   return ago <= 24 * 60 * 60_000 ? 'That time has passed: the reminder comes right away.' : 'That time has passed, so no reminder comes.';
 };
 
+export const VISIBLE_CHIPS = 3;
 export const SWAPPED = 'bombarie:swapped';
 
 export const githubAvatar = (login: string): string => `https://github.com/${encodeURIComponent(login)}.png?size=64`;

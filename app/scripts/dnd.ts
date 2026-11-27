@@ -1,5 +1,4 @@
-import { act, inPlace } from './inplace.ts';
-import { toast } from './toast.ts';
+import { act } from './inplace.ts';
 
 const MIME = 'application/x-bombarie-card';
 const INSIDE = ['outline-2', 'outline-ink', '-outline-offset-2'];
@@ -26,20 +25,7 @@ async function move(id: string, day: string, time: string): Promise<void> {
   body.set('id', id);
   body.set('day', day);
   body.set('date', `${day}T${time}`);
-  if (inPlace()) return act(location.pathname, body);
-  let response: Response;
-  try {
-    response = await fetch(location.pathname, { method: 'POST', body, redirect: 'manual' });
-  } catch {
-    toast('No connection to the server.', 'bad');
-    return;
-  }
-  if (response.type === 'opaqueredirect') {
-    location.reload();
-    return;
-  }
-  const shown = new DOMParser().parseFromString(await response.text(), 'text/html').querySelector<HTMLElement>('[data-toast]');
-  toast(shown?.dataset.toast ?? 'The post could not be moved.', 'bad');
+  return act(location.pathname, body);
 }
 
 document.addEventListener('dragstart', (event) => {
