@@ -8,12 +8,15 @@ interface Props {
   accept: string;
   title: string;
   class?: string;
+  icon?: 'image' | 'upload-simple';
+  name?: string;
+  form?: string;
 }
-const { id = 'image-dropzone', inputId, accept, title, class: className } = Astro.props;
+const { id = 'image-dropzone', inputId, accept, title, class: className, icon = 'image', name, form } = Astro.props;
 ---
 
 <label id={id} class:list={[ADD_TILE, 'has-focus-visible:outline-2 has-focus-visible:outline-offset-0 has-focus-visible:outline-ink data-active:border-ink data-active:bg-surface data-active:text-ink', className]}>
-  <input id={inputId} type="file" accept={accept} multiple class="sr-only" />
-  <Icon name="image" class="text-xl" />
+  <input id={inputId} type="file" accept={accept} name={name} form={form} multiple class="sr-only" />
+  <Icon name={icon} class="text-xl" />
   <span>{title}</span>
 </label>

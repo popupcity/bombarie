@@ -65,9 +65,9 @@ test('collecting happens once a day, and a failure is tried again after an hour'
     return new Response('{"error":{"message":"no"}}', { status: 400 });
   }) as unknown as typeof fetch;
   const run = (fetchImpl: typeof fetch, time: string) => collectStats(root, channels, async () => credentials, fetchImpl, new Date(time));
-  assert.equal((await run(failing, '2026-11-27T08:00:00Z')).length, 1);
+  assert.equal((await run(failing, '2026-11-27T08:00:00Z')).length, 2);
   await run(failing, '2026-11-27T08:30:00Z');
-  assert.equal(calls, 1);
+  assert.equal(calls, 2);
   const good = threads(895);
   assert.deepEqual(await run(good.fetchImpl, '2026-11-27T09:01:00Z'), []);
   const asked = good.asked.length;

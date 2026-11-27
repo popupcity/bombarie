@@ -34,8 +34,16 @@ test('likes and replies count the posts of the period against the one before', (
   assert.equal(engagement(accounts, '', '').change, null);
 });
 
-test('the follower line only has days on which every account was measured', () => {
+test('the follower line starts once every account was measured, and carries the last count of each on', () => {
   assert.deepEqual(followerLine(accounts, ''), [{ date: '2026-11-27', value: 151 }]);
+  const counted = (...days: [string, number][]) => ({ platform: 'instagram' as const, posts: [], days: days.map(([date, followers]) => ({ date, followers: String(followers) })) });
+  const two = [counted(['2026-11-01', 10], ['2026-11-04', 12]), counted(['2026-11-02', 100], ['2026-11-03', 101], ['2026-11-06', 105])];
+  assert.deepEqual(followerLine(two, '').map((point) => [point.date, point.value]), [['2026-11-02', 110], ['2026-11-03', 111], ['2026-11-04', 113], ['2026-11-06', 117]]);
+  assert.deepEqual(followerLine(two, '2026-11-05'), [{ date: '2026-11-06', value: 117 }]);
+});
+test('a channel without views does not take the change in views away', () => {
+  const silent = { platform: 'substack' as const, posts: [], days: [{ date: '2026-11-27', followers: '6455' }] };
+  assert.deepEqual(viewTotal([...accounts.slice(1), silent], since('month', now), before('month', now)), { value: 1, change: -1 });
 });
 
 test('the lines of a chart are round numbers that cover the values', () => {
@@ -90,4 +98,9 @@ test('posts rank by the followers they brought, and a post without that number i
     { url: 'reel', date: '2026-11-22T10:00:00Z', follows: '' }
   ];
   assert.deepEqual(topPosts([{ channel: 'ig', platform: 'instagram', posts }, { channel: 't', platform: 'threads', posts: [{ url: 'c', date: '2026-11-22T10:00:00Z', views: '9' }] }], 'follows', '').map((post) => [post.url, post.value]), [['b', 26], ['a', 1]]);
+});
+
+test('newsletters have no likes or replies, so they are not counted among the posts that got them', () => {
+  const letters = { platform: 'substack' as const, days: [], posts: [{ url: 'n', date: '2026-11-20T10:00:00Z', views: '5' }] };
+  assert.deepEqual(engagement([...accounts, letters], since('month', now), before('month', now)), engagement(accounts, since('month', now), before('month', now)));
 });

@@ -7,13 +7,14 @@ document.addEventListener('click', (event) => {
   event.preventDefault();
   const group = link.closest('nav')?.getAttribute('aria-label');
   const menu = link.closest('[popover]')?.id;
+  const more = link.hasAttribute('data-more-places') ? 'data-more-places' : 'data-more-posts';
   const place = [...(link.closest('nav')?.querySelectorAll('a') ?? [])].indexOf(link);
   void show(link.href).then(() => {
     const again = menu
       ? document.querySelector<HTMLElement>(`main [popovertarget="${menu}"]`)
       : group
         ? document.querySelector(`main nav[aria-label="${group}"]`)?.querySelectorAll('a')[place]
-        : document.querySelector<HTMLElement>('main [data-more-posts]');
+        : document.querySelector<HTMLElement>(`main [${more}]`);
     again?.focus({ preventScroll: true });
   });
 });

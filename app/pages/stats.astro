@@ -8,7 +8,9 @@ import { channelInfos, loadChannels } from '../../src/channels.ts';
 import { METRICS, SORTS, UNITS, grouped, timeline, before, dailyOf, engagement, engagementLine, followerLine, followersOf, metricOf, rangeOf, scale, since, sortOf, summed, topPosts, viewTotal } from '../../src/insights.ts';
 import type { Metric, Range, Sort } from '../../src/insights.ts';
 import { readPosts } from '../../src/posts.ts';
-import { readStats } from '../../src/stats.ts';
+import { placeKindOf, placeName, sharesOf } from '../../src/audience.ts';
+import { PLACE_KINDS, readStats } from '../../src/stats.ts';
+import type { PlaceKind } from '../../src/stats.ts';
 import { ymd } from '../../src/time.ts';
 import { PLATFORM_LABEL, needsCover } from '../../src/types.ts';
 import ChannelChip from '../components/ChannelChip.astro';
@@ -16,6 +18,7 @@ import Change from '../components/Change.astro';
 import Chart from '../components/Chart.astro';
 import ChoiceMenu from '../components/ChoiceMenu.astro';
 import ChannelMark from '../components/ChannelMark.astro';
+import Spark from '../components/Spark.astro';
 import StatTile from '../components/StatTile.astro';
 import TopMark from '../components/TopMark.astro';
 import { standoutPosts } from '../../src/signs.ts';
@@ -36,6 +39,8 @@ const shown = Math.max(Number(query.get('top')) || PAGE, PAGE);
 const from = since(range, now);
 const earlier = before(range, now);
 const metric = metricOf(query.get('metric'));
+const where = placeKindOf(query.get('audience'));
+const listed = Math.max(Number(query.get('places')) || PAGE, PAGE);
 
 const channels = loadChannels(root);
 const measured = channelInfos(channels)
@@ -66,6 +71,9 @@ const rows = picked.map((channel, index) => ({
   change: metric === 'followers' ? people[index]!.change : null
 }));
 const widest = Math.max(...rows.map((row) => row.value ?? 0), 1);
+const audienceRows = new Map(measured.map((channel) => [channel.info.name, readStats(root, channel.info.name, 'audience')]));
+const located = [...audienceRows.values()].some((found) => found.length > 0);
+const places = sharesOf(picked.map((channel) => audienceRows.get(channel.info.name)!), where, from);
 const first = [daily[0]?.date, ...own.map((line) => line[0]?.date)].filter((date) => date !== undefined).sort()[0] ?? ymd(now);
 const time = timeline(first > from ? first : from, ymd(now), unit);
 const standing = new Map(measured.flatMap((channel) => [...standoutPosts(channel.posts, now)]));
@@ -81,20 +89,23 @@ for (const post of readPosts(root, channels).posts) {
   made.set(state.url, { href: postHref(post.id), ...(first && { image: `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(first) ? `${first}.cover.jpg` : first)}?size=96` }) });
 }
 
-const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: Sort; top?: number }): string => {
-  const next = { range, hide: [...hidden], metric, sort, top: 0, ...change };
+const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: Sort; top?: number; audience?: PlaceKind; places?: number }): string => {
+  const next = { range, hide: [...hidden], metric, sort, top: 0, audience: where, places: 0, ...change };
   const params = new URLSearchParams();
   params.set('range', next.range);
   if (next.hide.length > 0) params.set('hide', next.hide.join(','));
   if (next.metric !== 'views') params.set('metric', next.metric);
   if (next.sort !== 'views') params.set('sort', next.sort);
   if (next.top > PAGE) params.set('top', String(next.top));
+  if (next.audience !== 'country') params.set('audience', next.audience);
+  if (next.places > PAGE) params.set('places', String(next.places));
   return `/stats?${params.toString().replaceAll('%2C', ',')}`;
 };
 
 const RANGE_LABELS: Record<Range, string> = { week: 'Week', month: 'Month', quarter: 'Quarter', year: 'Year', all: 'All time' };
 const SORT_LABELS: Record<Sort, string> = { views: 'Views', likes: 'Likes', replies: 'Replies', follows: 'Follows' };
 const ONE: Record<Sort, string> = { views: 'view', likes: 'like', replies: 'reply', follows: 'follow' };
+const PLACE_LABELS: Record<PlaceKind, string> = { country: 'Countries', city: 'Cities' };
 const METRIC_LABELS: Record<Metric, string> = { views: 'Views', reach: 'Reach', followers: 'Followers' };
 const compact = (value: number): string => value.toLocaleString('en-GB', { notation: 'compact', maximumFractionDigits: 1 });
 const number = (value: number): string => value.toLocaleString('en-GB');
@@ -192,6 +203,41 @@ const split = (point: { date: string; value: number }): string =>
                       </li>
                     ))}
                   </Card>
+                  {located && (
+                    <div class="flex flex-col gap-4">
+                      <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
+                        <Heading variant="block" as="h2">Audience</Heading>
+                        <nav aria-label="Audience by" class:list={[SEGMENTS, 'w-fit']}>
+                          {PLACE_KINDS.map((key) => (
+                            <a href={href({ audience: key })} aria-current={key === where ? 'page' : undefined} class={SEGMENT}>{PLACE_LABELS[key]}</a>
+                          ))}
+                        </nav>
+                      </div>
+                      {places.length === 0 ? (
+                        <Text variant="body" class="text-ink-faint">No data yet.</Text>
+                      ) : (
+                        <Card as="ul" variant="bare" class="divide-y divide-line">
+                          {places.slice(0, listed).map((found) => {
+                            const name = placeName(where, found.place);
+                            const change = found.change === null ? null : Math.round(found.change * 10) / 10;
+                            return (
+                              <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 p-4 md:p-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_128px]" data-tip={`${name}: ${number(found.count)} people`}>
+                                <span class="min-w-0 truncate text-sm">{name}</span>
+                                <span class="hidden min-w-0 sm:block">
+                                  <Spark points={found.points} fromZero={false} />
+                                </span>
+                                <span class="flex items-baseline justify-end gap-2 tabular-nums">
+                                  <span>{found.share.toLocaleString('en-GB', { maximumFractionDigits: 1, minimumFractionDigits: 1 })}%</span>
+                                  {change !== null && <Change value={change} unit=" pt" class="text-xs" />}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </Card>
+                      )}
+                      {places.length > listed && <div><Button href={href({ places: listed + PAGE })} data-more-places variant="outline">Show {Math.min(PAGE, places.length - listed)} more</Button></div>}
+                    </div>
+                  )}
                 </section>
 
                 <section aria-label="Top posts" class="flex min-w-0 flex-col gap-4">

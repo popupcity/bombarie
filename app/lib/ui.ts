@@ -72,7 +72,7 @@ export const SCHEME_COOKIE = 'bombarie_scheme';
 
 export const RAIL_COOKIE = 'bombarie_rail';
 
-export const SERIES = ['fill-series-1', 'fill-series-2', 'fill-series-3', 'fill-series-4'];
+export const SERIES = ['fill-series-1', 'fill-series-2', 'fill-series-3', 'fill-series-4', 'fill-series-5'];
 
 export const schemeOf = (value: string | undefined): 'light' | 'dark' | undefined => (value === 'light' || value === 'dark' ? value : undefined);
 

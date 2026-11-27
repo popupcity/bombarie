@@ -6,12 +6,15 @@ import { connectProblem } from '../../../src/connect.ts';
 import { channelInfos, channelPosts, loadChannels, removeChannel, renameChannel, setFeed, setHandle } from '../../../src/channels.ts';
 import { appsPath, readApp, readTokens, tokensPath } from '../../../src/secrets.ts';
 import { readFeed, refreshFeed } from '../../../src/feed.ts';
+import { MAX_EXPORT_BYTES, countedTo, parseExport, saveExport } from '../../../src/substack.ts';
 import { PLATFORM_LABEL } from '../../../src/types.ts';
 import { sentence } from '../../../src/text.ts';
 import ConfirmDialog from '../../components/ConfirmDialog.astro';
 import ActionRow from '../../components/ActionRow.astro';
 import ValueButton from '../../components/ValueButton.astro';
 import ChannelForm from '../../components/ChannelForm.astro';
+import Field from '../../components/Field.astro';
+import Dropzone from '../../components/Dropzone.astro';
 import ChannelMark from '../../components/ChannelMark.astro';
 import Heading from '@popupcity/ui/src/components/Heading.astro';
 import TitleField from '../../components/TitleField.astro';
@@ -63,6 +66,24 @@ if (Astro.request.method === 'POST') {
       setOutcome({ name: key, ok: true, message });
       return Astro.redirect(here, 303);
     }
+    if (intent === 'statistics' && channel.platform === 'substack') {
+      const files = form.getAll('file').filter((file): file is File => file instanceof File && file.size > 0);
+      if (files.length === 0) throw new Error('choose the CSV files first');
+      const reads = await Promise.all(
+        files.map(async (file) => {
+          try {
+            if (file.size > MAX_EXPORT_BYTES) throw new Error('the file is over 1 MB');
+            return parseExport(await file.text());
+          } catch (err) {
+            throw new Error(`nothing is read, ${file.name}: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        })
+      );
+      for (const read of reads) await saveExport(root, key, read, { items: readFeed(root, key)?.items ?? [], feed: channel.feed });
+      const names = [...new Set(reads.map((read) => ({ followers: 'subscribers', views: 'views', posts: 'posts', countries: 'countries' })[read.kind]))];
+      setOutcome({ name: key, ok: true, message: `Read: ${names.join(', ')}.` });
+      return Astro.redirect(here, 303);
+    }
     if (intent === 'connect') return Astro.redirect(await startConnect(root, key, Astro.url.origin), 303);
     failure = 'Unknown action.';
   } catch (err) {
@@ -111,6 +132,10 @@ const note = connected
 
 const stored = hasFeed ? readFeed(root, key) : null;
 const feedFile = stored && stored.source === channel.feed ? stored : null;
+const substack = channel.platform === 'substack';
+const counted = ([['Subscribers', 'followers'], ['Views', 'views'], ['Posts', 'posts'], ['Countries', 'countries']] as const).map(([label, kind]) => [label, substack ? countedTo(root, key, kind) : undefined] as const);
+const shortDay = (day: string): string => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(day.slice(0, 4) !== String(new Date().getFullYear()) && { year: 'numeric' }), timeZone: 'UTC' });
+const EXPORTS = 'Download these in the statistics of your Substack and drop them here, together or one by one: the total of subscribers (a file named followers), the traffic for 90 days or less (traffic), the table of posts (email_stats) and the countries of your audience (audience_location, upload it soon after downloading). The subscriber list with e-mail addresses is not needed.';
 ---
 
 <Shell title={info.label}>
@@ -140,6 +165,25 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
         )
       }
       {
+        substack && (
+          <Fragment slot="fields">
+            <Field label="Statistics" hint={EXPORTS}>
+              <ul class="grid grid-cols-3 gap-3 sm:grid-cols-5">
+                {counted.map(([label, to]) => (
+                  <li class="flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-lg bg-surface p-2 text-center ring-1 ring-line ring-inset">
+                    <Text variant="small">{label}</Text>
+                    <Text variant="small" class="text-ink-soft tabular-nums">{to ? shortDay(to) : '–'}</Text>
+                  </li>
+                ))}
+                <li class="contents">
+                  <Dropzone id="statistics-dropzone" inputId="statistics-file" name="file" form="statistics-form" accept=".csv,text/csv" icon="upload-simple" title="Add CSV" />
+                </li>
+              </ul>
+            </Field>
+          </Fragment>
+        )
+      }
+      {
         !hasFeed && (
           <Fragment slot="rows">
             <ActionRow label="Status">
@@ -163,6 +207,7 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
           )
         }
         <form id="connection-form" method="post" hidden></form>
+        {substack && <form id="statistics-form" method="post" enctype="multipart/form-data" hidden><input type="hidden" name="intent" value="statistics" /></form>}
       </Fragment>
     </ChannelForm>
     <ConfirmDialog id="delete-channel" title={`Delete ${info.label} on ${PLATFORM_LABEL[info.platform]}?`} intent="delete" variant={key} confirm="Delete">
@@ -170,3 +215,6 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
     </ConfirmDialog>
   </div>
 </Shell>
+<script>
+  import '../../scripts/csv-drop.ts';
+</script>

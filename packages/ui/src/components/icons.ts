@@ -41,6 +41,7 @@ import globe from '@phosphor-icons/core/assets/regular/globe.svg?raw';
 import list from '@phosphor-icons/core/assets/regular/list.svg?raw';
 import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?raw';
 import threadsLogo from '@phosphor-icons/core/assets/bold/threads-logo-bold.svg?raw';
+import uploadSimple from '@phosphor-icons/core/assets/regular/upload-simple.svg?raw';
 import downloadSimple from '@phosphor-icons/core/assets/regular/download-simple.svg?raw';
 import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
 import bell from '@phosphor-icons/core/assets/regular/bell.svg?raw';
@@ -97,6 +98,7 @@ export const icons = {
     gear,
     copy,
     'download-simple': downloadSimple,
+    'upload-simple': uploadSimple,
     bell,
     'bell-slash': bellSlash,
     globe,
