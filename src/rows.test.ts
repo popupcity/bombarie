@@ -5,7 +5,7 @@ import { test } from 'node:test';
 
 const files = (dir: string): string[] => readdirSync(dir).flatMap((name) => (statSync(join(dir, name)).isDirectory() ? files(join(dir, name)) : name.endsWith('.astro') ? [join(dir, name)] : []));
 
-const CONTROL = /<(?:Button|TrashButton|ChoiceMenu|ValueButton|Input)\b|\{CHIP\}|\$\{CHIP\}|<slot name="actions"/g;
+const CONTROL = /<(?:ChannelChip|Button|TrashButton|ChoiceMenu|ValueButton|Input)\b|\{CHIP\}|\$\{CHIP\}|<slot name="actions"/g;
 const depth = (line: string): number => line.length - line.trimStart().length;
 
 function rows(file: string): { where: string; classes: string; gaps: string[] }[] {
@@ -19,7 +19,7 @@ function rows(file: string): { where: string; classes: string; gaps: string[] }[
       inside.push(next);
     }
     const body = line.includes('<slot name="identity"') ? line : inside.join('\n');
-    const oneStandsForMore = body.includes('CHIP}') || line.includes('<slot name="identity"');
+    const oneStandsForMore = body.includes('CHIP}') || body.includes('<ChannelChip') || line.includes('<slot name="identity"');
     if (!line.includes('<slot name="identity"') && (body.match(CONTROL) ?? []).length < (oneStandsForMore ? 1 : 2)) return [];
     return [{ where: `${file}:${index + 1}`, classes, gaps: [...classes.matchAll(/(?<![\w-])(?:[a-z]+:)?gap(?:-[xy])?-\d+/g)].map((match) => match[0]) }];
   });

@@ -1,5 +1,6 @@
 import images from '@phosphor-icons/core/assets/regular/images.svg?raw';
 import thumbsUp from '@phosphor-icons/core/assets/regular/thumbs-up.svg?raw';
+import chartBar from '@phosphor-icons/core/assets/regular/chart-bar.svg?raw';
 import chatCircle from '@phosphor-icons/core/assets/regular/chat-circle.svg?raw';
 import repeat from '@phosphor-icons/core/assets/regular/repeat.svg?raw';
 import paperPlaneTilt from '@phosphor-icons/core/assets/regular/paper-plane-tilt.svg?raw';
@@ -68,6 +69,7 @@ export const icons = {
     'arrow-right': arrowRight,
     'arrow-square-out': arrowSquareOut,
     'thumbs-up': thumbsUp,
+    'chart-bar': chartBar,
     'chat-circle': chatCircle,
     'repeat': repeat,
     'paper-plane-tilt': paperPlaneTilt,

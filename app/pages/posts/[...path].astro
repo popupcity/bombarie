@@ -5,6 +5,7 @@ import Heading from '@popupcity/ui/src/components/Heading.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
 import { removeUnusedFile } from '../../../src/media.ts';
 import { allMedia } from '../../../src/parts.ts';
+import ChannelChip from '../../components/ChannelChip.astro';
 import { isNotice } from '../../../src/state.ts';
 import { COMPOSE_URL, PLATFORM_LABEL, isMedia, takesMedia } from '../../../src/types.ts';
 import { dateLabel, postsNow } from '../../../src/plan.ts';
@@ -37,7 +38,7 @@ import { telegramOf } from '../../lib/telegram.ts';
 import { content, deleteFromPlatform, loadConnections, markPosted, outcomeWording, postRepliesNow, root, setFlash, startPostNow, states, takeFlash, unmarkPosted } from '../../lib/data.ts';
 import { forgetOutcome, lastOutcome } from '../../../src/progress.ts';
 import { isAutomatic } from '../../../src/connect.ts';
-import { jsonForScript, plannedText, CHIP, MENU, MENU_ITEM, CARET, SEGMENT, SEGMENTS, byWhom, PANEL, BOX, BOX_MEDIA, BOX_TEXT, FIELD } from '../../lib/ui.ts';
+import { jsonForScript, plannedText, MENU, MENU_ITEM, CARET, SEGMENT, SEGMENTS, byWhom, PANEL, BOX, BOX_MEDIA, BOX_TEXT, FIELD } from '../../lib/ui.ts';
 import { variantOptions } from '../../lib/variants.ts';
 import ActionPanel from '../../components/ActionPanel.astro';
 import ActionRow from '../../components/ActionRow.astro';
@@ -200,18 +201,14 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
         <nav class="flex flex-wrap gap-3" aria-label="Variants">
           {
             campaign.variants.map((candidate) => (
-              <a
+              <ChannelChip
+                channel={candidate}
                 href={`/posts/${encodeURIComponent(campaign.folder)}/${encodeURIComponent(candidate.base)}`}
-                aria-current={candidate === variant ? 'page' : undefined}
-                aria-label={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}${candidate.type ? `, ${candidate.type}` : ''}`}
+                said={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}${candidate.type ? `, ${candidate.type}` : ''}`}
                 title={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}`}
-                data-control
-                class={`${CHIP} pl-1 ${candidate === variant ? 'pr-4' : 'pr-2'}`}
-              >
-                <ChannelMark channel={candidate} size="lg" />
-                {candidate === variant && <span aria-hidden="true">{candidate.label}</span>}
-                {candidate.type && <span aria-hidden="true" class="rounded-sm bg-track px-2 py-1 text-xs text-ink-soft capitalize">{candidate.type}</span>}
-              </a>
+                active={candidate === variant}
+                type={candidate.type}
+              />
             ))
           }
           {

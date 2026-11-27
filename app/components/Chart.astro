@@ -1,0 +1,45 @@
+---
+import type { Axis, Point } from '../../src/insights.ts';
+
+interface Props {
+  points: Point[];
+  kind: 'line' | 'bars';
+  label: string;
+  said: (point: Point) => string;
+  time: Axis;
+  dated?: boolean;
+}
+const { points, kind, label, said, time, dated = false } = Astro.props;
+const values = points.map((point) => point.value);
+const high = Math.max(...values);
+const low = kind === 'bars' ? 0 : Math.min(...values);
+const span = high - low || 1;
+const step = 100 / time.days;
+const top = (value: number): number => (high === low && kind === 'line' ? 20 : 38 - ((value - low) / span) * 36);
+const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 8 ? 'start' : at > 92 ? 'end' : 'middle');
+---
+
+<div class="flex flex-col gap-1">
+  <svg viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label={label} class="block h-16 w-full text-ink">
+    {kind === 'line' && <polyline points={points.map((point) => `${time.at(point.date)},${top(point.value)}`).join(' ')} fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />}
+    {
+      points.map((point) => (
+        <g>
+          {kind === 'bars' && <rect x={time.at(point.date) - step * 0.35} y={point.value === 0 ? 39 : top(point.value)} width={step * 0.7} height={point.value === 0 ? 1 : 40 - top(point.value)} class="fill-ink-soft" />}
+          <rect x={time.at(point.date) - step / 2} y="0" width={step} height="40" fill="transparent">
+            <title>{said(point)}</title>
+          </rect>
+        </g>
+      ))
+    }
+  </svg>
+  {
+    dated && (
+      <svg aria-hidden="true" class="block h-4 w-full text-2xs">
+        {time.ticks.map((tick) => (
+          <text x={`${anchor(tick.at) === 'start' ? 0 : anchor(tick.at) === 'end' ? 100 : tick.at}%`} y="12" text-anchor={anchor(tick.at)} class="fill-ink-soft">{tick.label}</text>
+        ))}
+      </svg>
+    )
+  }
+</div>

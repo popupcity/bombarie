@@ -1,0 +1,190 @@
+---
+import Button from '@popupcity/ui/src/components/Button.astro';
+import Card from '@popupcity/ui/src/components/Card.astro';
+import Heading from '@popupcity/ui/src/components/Heading.astro';
+import Text from '@popupcity/ui/src/components/Text.astro';
+import { channelInfos, loadChannels } from '../../src/channels.ts';
+import { DAILY, SORTS, audience, axis, rangeOf, since, sortOf, topPosts } from '../../src/insights.ts';
+import type { Range, Sort } from '../../src/insights.ts';
+import { readPosts } from '../../src/posts.ts';
+import { readStats } from '../../src/stats.ts';
+import { ymd } from '../../src/time.ts';
+import { PLATFORM_LABEL, needsCover } from '../../src/types.ts';
+import ChannelChip from '../components/ChannelChip.astro';
+import Chart from '../components/Chart.astro';
+import ChannelMark from '../components/ChannelMark.astro';
+import Hint from '../components/Hint.astro';
+import PlatformMark from '../components/PlatformMark.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Shell from '../layouts/Shell.astro';
+import { root, states } from '../lib/data.ts';
+import { SEGMENT, SEGMENTS, postHref } from '../lib/ui.ts';
+
+const PAGE = 10;
+const now = new Date();
+const query = Astro.url.searchParams;
+const range = rangeOf(query.get('range'));
+const sort = sortOf(query.get('sort'));
+const shown = Math.max(Number(query.get('top')) || PAGE, PAGE);
+const from = since(range, now);
+
+const channels = loadChannels(root);
+const measured = channelInfos(channels)
+  .map((info) => ({ info, days: readStats(root, info.name, 'days'), posts: readStats(root, info.name, 'posts') }))
+  .filter((channel) => channel.days.length > 0 || channel.posts.length > 0);
+const hidden = new Set((query.get('hide') ?? '').split(',').filter((name) => measured.some((channel) => channel.info.name === name)));
+const picked = measured.filter((channel) => !hidden.has(channel.info.name));
+const cards = picked.map((channel) => {
+  const found = audience(channel.days, channel.posts, channel.info.platform, from);
+  const earliest = [found.daily[0]?.date, found.growth[0]?.date].filter((date) => date !== undefined).sort()[0] ?? ymd(now);
+  return { ...channel, audience: found, time: axis(earliest > from ? earliest : from, ymd(now)) };
+});
+const top = topPosts(picked.map((channel) => ({ channel: channel.info.name, platform: channel.info.platform, posts: channel.posts })), sort, from);
+const infoOf = new Map(measured.map((channel) => [channel.info.name, channel.info]));
+
+const made = new Map<string, { href: string; image?: string }>();
+for (const post of readPosts(root, channels).posts) {
+  const state = await states.get(post.id);
+  if (state?.status !== 'posted' || !state.url) continue;
+  const [folder = ''] = post.id.split('/');
+  const first = post.images[0];
+  made.set(state.url, { href: postHref(post.id), ...(first && { image: `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(first) ? `${first}.cover.jpg` : first)}?size=96` }) });
+}
+
+const href = (change: { range?: Range; hide?: string[]; sort?: Sort; top?: number }): string => {
+  const next = { range, hide: [...hidden], sort, top: 0, ...change };
+  const params = new URLSearchParams();
+  if (next.range !== '30') params.set('range', next.range);
+  if (next.hide.length > 0) params.set('hide', next.hide.join(','));
+  if (next.sort !== 'views') params.set('sort', next.sort);
+  if (next.top > PAGE) params.set('top', String(next.top));
+  return params.size > 0 ? `/stats?${params}` : '/stats';
+};
+
+const RANGE_LABELS: Record<Range, string> = { '30': '30 days', '90': '90 days', '365': '1 year', all: 'All time' };
+const SORT_LABELS: Record<Sort, string> = { views: 'Views', likes: 'Likes', replies: 'Replies' };
+const number = (value: number): string => value.toLocaleString('en-GB');
+const signed = (value: number): string => (value > 0 ? `+${number(value)}` : number(value));
+const dayLabel = (day: string): string => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(day.slice(0, 4) !== ymd(now).slice(0, 4) && { year: 'numeric' }), timeZone: 'UTC' });
+---
+
+<Shell title="Stats">
+  <div class="flex flex-col gap-8">
+    <div class="flex flex-col gap-4 xl:sticky xl:top-0 xl:z-20 xl:-mx-12 xl:flex-row xl:items-center xl:justify-between xl:bg-page xl:px-12">
+      <PageHeader title="Stats" />
+      {
+        measured.length > 0 && (
+          <nav aria-label="Period" class:list={[SEGMENTS, 'w-fit max-w-full']}>
+            {(Object.keys(RANGE_LABELS) as Range[]).map((key) => (
+              <a href={href({ range: key })} aria-current={key === range ? 'page' : undefined} class={SEGMENT}>{RANGE_LABELS[key]}</a>
+            ))}
+          </nav>
+        )
+      }
+    </div>
+    {
+      measured.length === 0 ? (
+        <Text variant="body" class="text-ink-soft">No numbers yet. They are collected once a day for connected Instagram and Threads channels.</Text>
+      ) : (
+        <div class="grid items-start gap-x-8 gap-y-12 xl:grid-cols-3">
+          <section aria-label="Audience" class="flex min-w-0 flex-col gap-4 xl:col-span-2">
+            <nav aria-label="Channels" class="flex flex-wrap gap-3">
+              {measured.map(({ info }) => {
+                const off = hidden.has(info.name);
+                const named = `${info.label} on ${PLATFORM_LABEL[info.platform]}`;
+                return <ChannelChip channel={info} href={href({ hide: off ? [...hidden].filter((name) => name !== info.name) : [...hidden, info.name] })} said={`${off ? 'Show' : 'Hide'} ${named}`} active={!off} current="true" named={false} />;
+              })}
+            </nav>
+            {picked.length === 0 && <Text variant="body" class="text-ink-faint">All channels are switched off.</Text>}
+            <ul class="flex flex-col gap-4 empty:hidden">
+              {cards.map(({ info, audience: found, time }) => (
+                <Card as="li" class="flex flex-col gap-8">
+                  <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3">
+                      <ChannelMark channel={info} size="lg" on="surface" />
+                      <Text variant="small" class="min-w-0 truncate">{info.label}</Text>
+                    </div>
+                    <p class="flex flex-wrap items-baseline gap-2 tabular-nums">
+                      <span class="text-title">{found.followers === null ? '–' : number(found.followers)}</span>
+                      <span class="text-sm text-ink-soft">followers</span>
+                      {found.change !== null && <span class="text-sm text-ink-soft">{signed(found.change)}</span>}
+                    </p>
+                    {found.growth.length > 1 ? (
+                      <Chart kind="line" points={found.growth} time={time} dated={found.daily.length === 0} label={`Followers of ${info.label}`} said={(point) => `${dayLabel(point.date)}: ${number(point.value)} followers`} />
+                    ) : (
+                      <Text variant="small" class="text-ink-faint">{found.measuredSince ? `Measuring since ${dayLabel(found.measuredSince)}.` : 'Not measured yet.'}</Text>
+                    )}
+                  </div>
+                  <div class="flex flex-col gap-4">
+                    {found.daily.length > 0 && DAILY[info.platform] && (
+                      <div class="flex flex-col gap-2">
+                        <div class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
+                          <span>{DAILY[info.platform]!.label}</span>
+                          <span class="tabular-nums">peak {number(Math.max(...found.daily.map((point) => point.value)))}</span>
+                        </div>
+                        <Chart kind="bars" points={found.daily} time={time} dated label={`${DAILY[info.platform]!.label} for ${info.label}`} said={(point) => `${dayLabel(point.date)}: ${number(point.value)}`} />
+                      </div>
+                    )}
+                    <Text variant="small" class="text-ink-soft">{found.posts === 1 ? '1 post' : `${number(found.posts)} posts`} in this period</Text>
+                  </div>
+                </Card>
+              ))}
+            </ul>
+          </section>
+
+          {picked.length > 0 && (
+          <section aria-label="Top posts" class="flex min-w-0 flex-col gap-4">
+            <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
+              <div class="flex items-center gap-2">
+                <Heading variant="block" as="h2" class="xl:sr-only 2xl:not-sr-only">Top posts</Heading>
+                <Hint text={`${from ? 'Posts published in this period, with their totals to date.' : 'All posts, with their totals to date.'} Stories are left out.`} />
+              </div>
+              <nav aria-label="Sort by" class:list={[SEGMENTS, 'w-fit']}>
+                {SORTS.map((key) => (
+                  <a href={href({ sort: key })} aria-current={key === sort ? 'page' : undefined} class={SEGMENT}>{SORT_LABELS[key]}</a>
+                ))}
+              </nav>
+            </div>
+            {top.posts.length === 0 ? (
+              <Text variant="body" class="text-ink-faint">No posts in this period.</Text>
+            ) : (
+              <ol class="flex flex-col gap-4">
+                {top.posts.slice(0, shown).map((post, index) => {
+                  const own = made.get(post.url);
+                  const info = infoOf.get(post.channel)!;
+                  return (
+                    <li>
+                      <Card variant="row" href={own?.href ?? post.url} target={own ? undefined : '_blank'} rel={own ? undefined : 'noopener noreferrer'} class="flex items-start gap-3">
+                        <span class="w-5 shrink-0 text-sm text-ink-soft tabular-nums">{index + 1}</span>
+                        {own?.image ? (
+                          <span class="relative size-10 shrink-0">
+                            <img src={own.image} alt="" loading="lazy" class="size-10 rounded-lg bg-track object-cover" />
+                            <PlatformMark platform={info.platform} class="absolute -right-1 -bottom-1 size-5 ring-2 ring-surface" />
+                          </span>
+                        ) : (
+                          <span class="flex size-10 shrink-0 items-center justify-center">
+                            <ChannelMark channel={info} size="lg" on="surface" />
+                          </span>
+                        )}
+                        <span class="flex min-w-0 flex-1 flex-col gap-2">
+                          <span class:list={['line-clamp-2 text-sm break-words', !post.text && 'text-ink-faint']}>{post.text || 'No text.'}</span>
+                          <span class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
+                            <span class="truncate">{post.type} · {dayLabel(post.day)}</span>
+                            <span class="shrink-0 tabular-nums"><span class="text-base text-ink">{number(post.value)}</span> {SORT_LABELS[sort].toLowerCase()}</span>
+                          </span>
+                        </span>
+                      </Card>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            {top.unmeasured > 0 && <Text variant="small" class="text-ink-soft">{`${number(top.unmeasured)} ${top.unmeasured === 1 ? 'post has' : 'posts have'} no ${sort} yet.`}</Text>}
+            {top.posts.length > shown && <div><Button href={href({ top: shown + PAGE })} variant="outline">Show {Math.min(PAGE, top.posts.length - shown)} more</Button></div>}
+          </section>
+          )}
+        </div>
+      )
+    }
+  </div>
+</Shell>

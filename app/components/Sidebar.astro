@@ -59,6 +59,7 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
       <NavItem href="/calendar" label="Calendar" icon="calendar-blank" current={on('/calendar')} />
       <NavItem href="/ideas" label="Ideas" icon="lightbulb" current={on('/ideas')} />
       <NavItem href="/entities" label="Entities" icon="at" current={on('/entities')} />
+      <NavItem href="/stats" label="Stats" icon="chart-bar" current={on('/stats')} />
       {Astro.locals.role === 'admin' && <NavItem href="/settings" label="Settings" icon="sliders-horizontal" current={on('/settings')} />}
     </nav>
     <section aria-label="Channels" class="flex flex-1 flex-col gap-4">

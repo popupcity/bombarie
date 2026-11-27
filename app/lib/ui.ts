@@ -122,4 +122,4 @@ export const WEEK_ROW = 'grid grid-cols-7 gap-1';
 
 export const QUIET = 'transition grid shrink-0 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-(--tone-hover) hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 
-export const CHIP = 'transition inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset not-aria-pressed:not-aria-[current=page]:hover:bg-(--tone-hover) aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+export const CHIP = 'transition inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset not-aria-pressed:not-aria-[current]:hover:bg-(--tone-hover) aria-[current]:bg-surface aria-[current]:text-ink aria-[current]:ring-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';

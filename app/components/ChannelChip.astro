@@ -1,0 +1,24 @@
+---
+import type { Platform } from '../../src/types.ts';
+import { CHIP } from '../lib/ui.ts';
+import ChannelMark from './ChannelMark.astro';
+
+interface Props {
+  channel: { label: string; platform: Platform; avatar?: string | undefined };
+  href: string;
+  said: string;
+  title?: string;
+  active: boolean;
+  current?: 'page' | 'true';
+  type?: string | null | undefined;
+  named?: boolean;
+}
+const { channel, href, said, title = said, active, current = 'page', type, named = true } = Astro.props;
+const withName = named && active;
+---
+
+<a href={href} aria-current={active ? current : undefined} aria-label={said} title={title} data-control class={`${CHIP} pl-1 ${withName ? 'pr-4' : 'pr-2'}`}>
+  <ChannelMark channel={channel} size="lg" />
+  {withName && <span aria-hidden="true">{channel.label}</span>}
+  {type && <span aria-hidden="true" class="rounded-sm bg-track px-2 py-1 text-xs text-ink-soft capitalize">{type}</span>}
+</a>
