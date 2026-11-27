@@ -5,16 +5,16 @@ import PlatformMark from './PlatformMark.astro';
 
 interface Props {
   channel: { label: string; platform: Platform; avatar?: string | undefined };
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'chip';
   on?: 'page' | 'surface';
 }
 const { channel, size = 'md', on = 'page' } = Astro.props;
-const avatar = { sm: 'size-5 text-2xs', md: 'size-7 text-2xs', lg: 'size-8 text-xs', xl: 'size-14 text-lg' }[size];
-const mark = { sm: 'size-4 -right-1 -bottom-1', md: 'size-5 -right-1 -bottom-1', lg: 'size-5 -right-1 -bottom-1', xl: 'size-6 -right-2 -bottom-2' }[size];
+const avatar = { sm: 'size-5 text-2xs', md: 'size-7 text-2xs', lg: 'size-8 text-xs', xl: 'size-14 text-lg', chip: 'size-7 text-2xs' }[size];
+const mark = { sm: 'size-4 -right-1 -bottom-1', md: 'size-5 -right-1 -bottom-1', lg: 'size-5 -right-1 -bottom-1', xl: 'size-6 -right-2 -bottom-2', chip: 'size-5 right-0 bottom-0' }[size];
 const ring = { page: 'ring-page', surface: 'ring-surface' }[on];
 ---
 
-<span class="relative inline-flex w-fit shrink-0">
-  <ChannelAvatar channel={channel} class={avatar} small={size === 'sm'} />
+<span class:list={['relative inline-flex w-fit shrink-0', size === 'chip' && 'size-8 items-start']}>
+  <ChannelAvatar channel={channel} class={avatar} small={size === 'sm' || size === 'chip'} />
   <PlatformMark platform={channel.platform} class:list={['absolute ring-2', mark, ring]} />
 </span>

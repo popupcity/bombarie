@@ -17,8 +17,8 @@ const { channel, href, said, title = said, active, current = 'page', type, named
 const withName = named && active;
 ---
 
-<a href={href} aria-current={active ? current : undefined} aria-label={said} title={title} data-control class={`${CHIP} pl-1 ${withName ? 'pr-4' : 'pr-2'}`}>
-  <ChannelMark channel={channel} size="lg" />
+<a href={href} aria-current={active ? current : undefined} aria-label={said} title={title} data-control class={`${CHIP} pl-1 ${withName ? 'pr-4' : type ? 'pr-2' : 'pr-1'}`}>
+  <ChannelMark channel={channel} size="chip" />
   {withName && <span aria-hidden="true">{channel.label}</span>}
   {type && <span aria-hidden="true" class="rounded-sm bg-track px-2 py-1 text-xs text-ink-soft capitalize">{type}</span>}
 </a>
