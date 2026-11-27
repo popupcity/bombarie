@@ -110,7 +110,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
       <header class="flex items-center gap-3">
         <ChannelAvatar channel={who} class="size-10 text-xs" />
         <div class="flex min-w-0 flex-col">
-          <span class="truncate text-sm">{label}</span>
+          <span class:list={['truncate text-sm', platform === 'linkedin' && 'font-semibold']}>{label}</span>
           <span class="flex items-center gap-1 text-xs text-ink-soft">
             {platform === 'substack' ? <span>{type === 'note' ? 'Note' : 'Article'}</span> : null}
             <span id="preview-when">{when}</span>
@@ -128,6 +128,20 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
         {actions.map(([icon, label]) => <span class={action}><Icon name={icon} class="text-lg" /><span class="hidden @xs:inline">{label}</span></span>)}
       </footer>
       <ol id="preview-replies" aria-label={platform === 'threads' ? 'Replies' : 'Comments'} class="flex flex-col gap-3 border-t border-line pt-3 empty:hidden"></ol>
+      {platform === 'linkedin' && (
+        <template id="preview-comment">
+          <li class="flex gap-2">
+            <div class="flex flex-col items-center gap-1">
+              <ChannelAvatar channel={who} class="size-8 text-xs" />
+              <span aria-hidden="true" class="w-0.5 flex-1 bg-line" />
+            </div>
+            <div class="flex min-w-0 flex-1 flex-col gap-1">
+              <span class="truncate text-sm font-semibold">{label}</span>
+              <p data-comment-text class="text-sm break-words whitespace-pre-wrap" />
+            </div>
+          </li>
+        </template>
+      )}
     </article>
   )
 }

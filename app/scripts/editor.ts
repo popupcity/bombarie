@@ -105,10 +105,14 @@ function init(root: HTMLElement) {
 
   function renderPreview(result: Preview) {
     document.getElementById('preview-text')?.replaceChildren(...spans(result.segments));
+    const comment = document.getElementById('preview-comment') as HTMLTemplateElement | null;
     document.getElementById('preview-replies')?.replaceChildren(
-      ...(result.replies ?? []).map((segments, index) =>
-        h('li', { class: 'flex flex-col gap-1' }, h('span', { class: 'text-xs text-ink-soft' }, `${platform === 'threads' ? 'Reply' : 'Comment'} ${index + 1}`), h('p', { class: 'text-sm break-words whitespace-pre-wrap' }, ...spans(segments)))
-      )
+      ...(result.replies ?? []).map((segments, index) => {
+        if (!comment) return h('li', { class: 'flex flex-col gap-1' }, h('span', { class: 'text-xs text-ink-soft' }, `Reply ${index + 1}`), h('p', { class: 'text-sm break-words whitespace-pre-wrap' }, ...spans(segments)));
+        const item = comment.content.firstElementChild!.cloneNode(true) as HTMLElement;
+        item.querySelector('[data-comment-text]')!.replaceChildren(...spans(segments));
+        return item;
+      })
     );
     const count = document.getElementById('preview-count');
     if (count) count.textContent = `${result.length}${result.limit ? `/${result.limit}` : ''} characters`;

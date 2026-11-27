@@ -39,7 +39,6 @@ export function preview(body: string, platform: Platform, entities: Entities): P
       if (platform === 'linkedin' && reply.length > 1250) notes.push(`${word} ${index + 1} is over the LinkedIn comment limit of 1250`);
       notes.push(...reply.notes.map((note) => `${word} ${index + 1}: ${note}`));
     });
-    notes.push(platform === 'threads' ? `${later.length} ${later.length === 1 ? 'reply follows' : 'replies follow'} as a thread` : `${later.length} ${later.length === 1 ? 'comment follows' : 'comments follow'} under the post`);
   } else notes.push(`${PLATFORM_LABEL[platform]} does not take replies; the ${later.length} ${later.length === 1 ? 'part' : 'parts'} after the first --- would not be posted`);
   return { ...main, notes, ...(replies.length > 0 && { replies }) };
 }
