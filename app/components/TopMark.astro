@@ -1,0 +1,14 @@
+---
+import Icon from '@popupcity/ui/src/components/Icon.astro';
+
+interface Props {
+  views: number;
+  class?: string;
+}
+const { views, class: className } = Astro.props;
+---
+
+<span title={`${views.toLocaleString('en-GB')} views`} class:list={['inline-flex shrink-0 items-center', className]}>
+  <Icon name="star" weight="fill" class="size-3" />
+  <span class="sr-only">Top post, </span>
+</span>

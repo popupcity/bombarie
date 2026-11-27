@@ -1,6 +1,7 @@
 import images from '@phosphor-icons/core/assets/regular/images.svg?raw';
 import thumbsUp from '@phosphor-icons/core/assets/regular/thumbs-up.svg?raw';
 import dotMark from '@phosphor-icons/core/assets/regular/dot.svg?raw';
+import starFill from '@phosphor-icons/core/assets/fill/star-fill.svg?raw';
 import chartBar from '@phosphor-icons/core/assets/regular/chart-bar.svg?raw';
 import chatCircle from '@phosphor-icons/core/assets/regular/chat-circle.svg?raw';
 import repeat from '@phosphor-icons/core/assets/regular/repeat.svg?raw';
@@ -107,7 +108,7 @@ export const icons = {
     x
   },
   bold: { 'arrow-right': arrowRightBold, check: checkBold, 'dots-three': dotsThreeBold, plus: plusBold, rss: rssBold, x: xBold },
-  fill: { dot, 'threads-logo': threadsLogo, 'facebook-logo': facebook, 'instagram-logo': instagram, 'linkedin-logo': linkedin, 'substack-logo': substack }
+  fill: { star: starFill, dot, 'threads-logo': threadsLogo, 'facebook-logo': facebook, 'instagram-logo': instagram, 'linkedin-logo': linkedin, 'substack-logo': substack }
 };
 
 export type IconWeight = keyof typeof icons;

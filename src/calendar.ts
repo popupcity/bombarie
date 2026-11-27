@@ -96,6 +96,7 @@ export interface CardModel {
   images: string[];
   url?: string;
   live?: string;
+  top?: number;
 }
 
 export interface NoticeModel {

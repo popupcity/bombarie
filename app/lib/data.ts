@@ -24,6 +24,7 @@ import { needsCover } from '../../src/types.ts';
 import { readTokens, tokensPath } from '../../src/secrets.ts';
 import { createHash } from 'node:crypto';
 import { readFeed } from '../../src/feed.ts';
+import { readStars } from '../../src/signs.ts';
 import { attention, fileStore, rearm } from '../../src/state.ts';
 import type { State } from '../../src/state.ts';
 import type { Post } from '../../src/types.ts';
@@ -62,9 +63,10 @@ export async function loadCalendar(now = new Date()): Promise<CalendarData> {
     ),
     now
   });
+  const stars = readStars(root, channels, now);
   return {
     ...data,
-    cards: data.cards.map((card) => ({ ...card, manual: card.manual || (card.status === 'draft' && Boolean(connections[card.channel])) })),
+    cards: data.cards.map((card) => ({ ...card, ...(card.live !== undefined && stars.has(card.live) && { top: stars.get(card.live)! }), manual: card.manual || (card.status === 'draft' && Boolean(connections[card.channel])) })),
     channels: data.channels.map((channel) => ({ ...channel, ...(connections[channel.name] ? { problem: connections[channel.name]! } : {}) }))
   };
 }

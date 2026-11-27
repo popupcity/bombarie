@@ -12,6 +12,7 @@ import Icon from '@popupcity/ui/src/components/Icon.astro';
 import CardActions from './CardActions.astro';
 import ChannelMark from './ChannelMark.astro';
 import StatusBadge from './StatusBadge.astro';
+import TopMark from './TopMark.astro';
 
 interface Props {
   card: CardModel;
@@ -45,6 +46,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
       <div class="contents @xl:col-start-2 @xl:row-start-1 @xl:flex @xl:items-center @xl:gap-2">
         <span class="col-span-2 row-start-3 flex flex-wrap items-center gap-2 text-sm">
           <StatusBadge status={card.status} manual={card.manual} feed={card.feed} />
+          {card.top !== undefined && <TopMark views={card.top} />}
           {card.feed && <Icon name="arrow-square-out" class="text-ink-soft" />}
         </span>
         {hasMenu && (

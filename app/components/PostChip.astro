@@ -4,6 +4,7 @@ import type { CardModel } from '../../src/calendar.ts';
 import { cardActions, STATUS_TONE, TINTED } from '../lib/ui.ts';
 import ChannelAvatar from './ChannelAvatar.astro';
 import PeekCard from './PeekCard.astro';
+import TopMark from './TopMark.astro';
 
 interface Props {
   card: CardModel;
@@ -24,6 +25,7 @@ const id = `peek-${card.id.replace(/[^a-zA-Z0-9]/g, '-')}`;
         <span class="sr-only">Manual</span>
       </span>
     )}
+    {card.top !== undefined && <TopMark views={card.top} class="size-4 justify-center" />}
     {card.feed && (
       <span class="grid size-4 shrink-0 place-items-center">
         <Icon name="rss" weight="bold" class="size-3" />

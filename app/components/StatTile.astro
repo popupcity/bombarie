@@ -1,14 +1,18 @@
 ---
 import Card from '@popupcity/ui/src/components/Card.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
+import type { Point } from '../../src/insights.ts';
+import Spark from './Spark.astro';
 
 interface Props {
   label: string;
   value: string;
   change?: string | undefined;
   note?: string | undefined;
+  trend: Point[];
+  fromZero?: boolean;
 }
-const { label, value, change, note } = Astro.props;
+const { label, value, change, note, trend, fromZero = true } = Astro.props;
 ---
 
 <Card class="flex flex-col gap-2">
@@ -18,4 +22,7 @@ const { label, value, change, note } = Astro.props;
     {change && <span class="text-sm text-ink-soft">{change}</span>}
   </p>
   {note && <Text variant="small" class="text-ink-soft">{note}</Text>}
+  <div class="flex min-h-12 flex-1 flex-col justify-end">
+    <Spark points={trend} fromZero={fromZero} />
+  </div>
 </Card>

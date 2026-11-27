@@ -1,0 +1,24 @@
+---
+import { axis, scale } from '../../src/insights.ts';
+import type { Point } from '../../src/insights.ts';
+
+interface Props {
+  points: Point[];
+  fromZero?: boolean;
+}
+const { points, fromZero = true } = Astro.props;
+const time = points.length > 1 ? axis(points[0]!.date, points.at(-1)!.date) : null;
+const range = scale(points.map((point) => point.value), fromZero);
+const y = (value: number): number => 39 - ((value - range.low) / (range.high - range.low)) * 37;
+const step = time ? 50 / time.days : 0;
+const line = time ? points.map((point) => `${((time.at(point.date) - step) / (100 - 2 * step)) * 100},${y(point.value)}`).join(' ') : '';
+---
+
+{
+  time && (
+    <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true" class="block h-12 w-full text-ink">
+      <polygon points={`0,40 ${line} 100,40`} class="fill-(--tone-hover)" />
+      <polyline points={line} fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+    </svg>
+  )
+}

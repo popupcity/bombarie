@@ -2,14 +2,14 @@ import type { Row } from './csv.ts';
 import { ymd } from './time.ts';
 import type { Platform } from './types.ts';
 
-export const RANGES = { '30': 30, '90': 90, '365': 365, all: 0 } as const;
+export const RANGES = { week: 7, month: 30, quarter: 90, year: 365, all: 0 } as const;
 export type Range = keyof typeof RANGES;
 export const SORTS = ['views', 'likes', 'replies'] as const;
 export type Sort = (typeof SORTS)[number];
 
-export const rangeOf = (value: string | null | undefined): Range => (value && value in RANGES ? (value as Range) : '30');
+export const rangeOf = (value: string | null | undefined): Range => (value && value in RANGES ? (value as Range) : 'month');
 export const sortOf = (value: string | null | undefined): Sort => SORTS.find((sort) => sort === value) ?? 'views';
-export const since = (range: Range, now: Date): string => (RANGES[range] === 0 ? '' : ymd(new Date(now.getTime() - RANGES[range] * 86_400_000)));
+export const since = (range: Range, now: Date): string => (RANGES[range] === 0 ? '' : ymd(new Date(now.getTime() - (RANGES[range] - 1) * 86_400_000)));
 
 export interface Point {
   date: string;
@@ -22,7 +22,7 @@ export const METRICS = ['views', 'reach', 'followers'] as const;
 export type Metric = (typeof METRICS)[number];
 export const metricOf = (value: string | null | undefined): Metric => METRICS.find((metric) => metric === value) ?? 'views';
 
-export const before = (range: Range, now: Date): string => (RANGES[range] === 0 ? '' : ymd(new Date(now.getTime() - (2 * RANGES[range] + 1) * 86_400_000)));
+export const before = (range: Range, now: Date): string => (RANGES[range] === 0 ? '' : ymd(new Date(now.getTime() - (2 * RANGES[range] - 1) * 86_400_000)));
 const within = (day: string, from: string, to?: string): boolean => day >= from && (to === undefined || day < to);
 
 export interface Account {
@@ -134,6 +134,7 @@ export interface Axis {
   ticks: { at: number; label: string }[];
 }
 
+const DAILY_UP_TO = 7;
 const WEEKLY_UP_TO = 45;
 const MONTHLY_UP_TO = 800;
 const MOST_TICKS = 6;
@@ -144,10 +145,63 @@ export function axis(start: string, end: string): Axis {
   const at = (day: string): number => ((dayNumber(day) - first + 0.5) / days) * 100;
   const all = Array.from({ length: days }, (_, index) => dayOf(first + index));
   const said = (day: string, options: Intl.DateTimeFormatOptions): string => new Date(`${day}T00:00:00Z`).toLocaleDateString('en-GB', { ...options, timeZone: 'UTC' });
+  if (days <= DAILY_UP_TO) return { days, at, ticks: all.map((day) => ({ at: at(day), label: said(day, { weekday: 'short' }) })) };
   if (days <= WEEKLY_UP_TO) return { days, at, ticks: all.filter((_, index) => (days - 1 - index) % 7 === 0).map((day) => ({ at: at(day), label: said(day, { day: 'numeric', month: 'short' }) })) };
   const yearly = days > MONTHLY_UP_TO;
   const marks = all.filter((day) => day.endsWith(yearly ? '-01-01' : '-01'));
   const every = Math.max(Math.ceil(marks.length / MOST_TICKS), 1);
   const label = (day: string): string => (yearly ? day.slice(0, 4) : day.slice(5, 7) === '01' ? day.slice(0, 4) : said(day, { month: 'short' }));
   return { days, at, ticks: marks.filter((_, index) => index % every === 0).map((day) => ({ at: at(day), label: label(day) })) };
+}
+
+const ROLLING_DAYS = 7;
+const MOST_POINTS = 180;
+
+export function engagementLine(accounts: Account[], from: string, today: string): Point[] {
+  const posts = accounts.flatMap((account) => account.posts.map((row) => ({ day: dayNumber(ymd(new Date(row.date!))), value: Number(row.likes || 0) + Number((account.platform === 'instagram' ? row.comments : row.replies) || 0) })));
+  if (posts.length === 0) return [];
+  const first = from ? dayNumber(from) : Math.min(...posts.map((post) => post.day));
+  const last = dayNumber(today);
+  const every = Math.max(Math.ceil((last - first + 1) / MOST_POINTS), 1);
+  return Array.from({ length: Math.floor((last - first) / every) + 1 }, (_, index) => last - index * every)
+    .reverse()
+    .map((day) => ({ date: dayOf(day), value: posts.reduce((total, post) => total + (post.day > day - ROLLING_DAYS && post.day <= day ? post.value : 0), 0) }));
+}
+
+export const UNITS: Record<Range, 'day' | 'week' | 'month'> = { week: 'day', month: 'day', quarter: 'week', year: 'month', all: 'month' };
+export type Unit = (typeof UNITS)[Range];
+
+export function bucketOf(day: string, unit: Unit): string {
+  if (unit === 'day') return day;
+  if (unit === 'month') return `${day.slice(0, 7)}-01`;
+  const number = dayNumber(day);
+  return dayOf(number - ((new Date(number * DAY_MS).getUTCDay() + 6) % 7));
+}
+
+export function grouped(points: Point[], unit: Unit, take: 'sum' | 'last' = 'sum'): Point[] {
+  const found = new Map<string, number>();
+  for (const point of points) {
+    const key = bucketOf(point.date, unit);
+    found.set(key, take === 'last' ? point.value : (found.get(key) ?? 0) + point.value);
+  }
+  return [...found].map(([date, value]) => ({ date, value }));
+}
+
+function buckets(first: string, last: string, unit: Unit): string[] {
+  const found: string[] = [];
+  for (let day = bucketOf(first, unit); day <= last; ) {
+    found.push(day);
+    day = unit === 'month' ? bucketOf(dayOf(dayNumber(day) + 32), unit) : dayOf(dayNumber(day) + 7);
+  }
+  return found;
+}
+
+export function timeline(first: string, last: string, unit: Unit): Axis {
+  if (unit === 'day') return axis(first, last);
+  const all = buckets(first, last, unit);
+  const at = (day: string): number => ((all.indexOf(bucketOf(day, unit)) + 0.5) / all.length) * 100;
+  const marks = all.filter((day, index) => (unit === 'week' ? index > 0 && day.slice(0, 7) !== all[index - 1]!.slice(0, 7) : all.length <= 24 || day.slice(5, 7) === '01'));
+  const every = Math.max(Math.ceil(marks.length / MOST_TICKS), 1);
+  const label = (day: string): string => (unit === 'month' && (day.slice(5, 7) === '01' || all.length > 24) ? day.slice(0, 4) : new Date(`${day}T00:00:00Z`).toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }));
+  return { days: all.length, at, ticks: marks.filter((_, index) => index % every === 0).map((day) => ({ at: at(day), label: label(day) })) };
 }
