@@ -59,7 +59,7 @@ export function parsePost({ id, folder, text, channel, type, platform, entities 
   const expanded = expandWikilinks(first?.text ?? '', platform, entities);
   const replies = later.map((part) => expandWikilinks(part.text, platform, entities));
   const replyBy = later.map((part) => (part.by && part.by !== channel ? part.by : ''));
-  if (platform !== 'linkedin' && replyBy.some(Boolean)) throw new Error('only a LinkedIn comment can be posted by another account');
+  if (platform !== 'linkedin' && replyBy.some(Boolean)) throw new Error('only a LinkedIn reply can be posted by another account');
   if (!manual && status === 'planned' && expanded.text === '') throw new Error('the text is empty; write something before planning');
 
   return {

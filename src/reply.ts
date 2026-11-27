@@ -9,11 +9,11 @@ export const canRemoveReply = (providers: UnpostDeps['providers'], platform: key
 
 export async function postReplies(id: string, channelName: string, texts: string[], deps: UnpostDeps, mentions: Record<string, string> = {}, replyBy: string[] = [], media: { images?: string[][] | undefined; publicImage?: SendContext['publicImage']; publicVideo?: SendContext['publicVideo'] } = {}): Promise<{ sent: number; warning?: string }> {
   const state = await deps.store.get(id);
-  if (state?.status !== 'posted') throw new Error('only a posted post can get a comment from here');
-  if (state.remoteId === MANUAL_ID) throw new Error('this post was marked as posted by hand, so add the comment on the platform');
+  if (state?.status !== 'posted') throw new Error('only a posted post can get a reply from here');
+  if (state.remoteId === MANUAL_ID) throw new Error('this post was marked as posted by hand, so add the reply on the platform');
   const channel = deps.channels[channelName];
   const provider = channel && deps.providers[channel.platform];
-  if (!channel || !provider?.reply) throw new Error('this platform cannot take comments from here');
+  if (!channel || !provider?.reply) throw new Error('this platform cannot take replies from here');
   const offset = state.replies?.count ?? 0;
   const todo = texts.slice(offset);
   if (todo.some((text) => text.trim() === '')) throw new Error('a reply is empty; fill it in or remove it');

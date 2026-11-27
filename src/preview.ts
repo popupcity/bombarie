@@ -31,13 +31,12 @@ export function preview(body: string, platform: Platform, entities: Entities): P
   const notes = [...main.notes];
   const replies: Segment[][] = [];
   if (platform === 'threads' || platform === 'linkedin') {
-    const word = platform === 'threads' ? 'reply' : 'comment';
     later.forEach((part, index) => {
       const reply = previewPart(part, platform, entities);
       replies.push(reply.segments);
-      if (reply.length === 0) notes.push(`${word} ${index + 1} is empty`);
-      if (platform === 'linkedin' && reply.length > 1250) notes.push(`${word} ${index + 1} is over the LinkedIn comment limit of 1250`);
-      notes.push(...reply.notes.map((note) => `${word} ${index + 1}: ${note}`));
+      if (reply.length === 0) notes.push(`reply ${index + 1} is empty`);
+      if (platform === 'linkedin' && reply.length > 1250) notes.push(`reply ${index + 1} is over the LinkedIn reply limit of 1250`);
+      notes.push(...reply.notes.map((note) => `reply ${index + 1}: ${note}`));
     });
   } else notes.push(`${PLATFORM_LABEL[platform]} does not take replies; the ${later.length} ${later.length === 1 ? 'part' : 'parts'} after the first --- would not be posted`);
   return { ...main, notes, ...(replies.length > 0 && { replies }) };

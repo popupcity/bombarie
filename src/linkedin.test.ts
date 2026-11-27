@@ -251,12 +251,12 @@ test('a refused comment leaves the post up and comes back as a warning', async (
   const { context } = setup((url) => (url.includes('/socialActions/') ? new Response('{"message":"no"}', { status: 403 }) : created('urn:li:share:7')));
   const result = await linkedin.send(post({ replies: ['Comment.'] }), person, credentials, context);
   assert.equal(result.id, 'urn:li:share:7');
-  assert.match(result.warning ?? '', /^Posted, but comment 1 of 1 failed/);
-  assert.match(result.warning ?? '', /may not allow comments/);
+  assert.match(result.warning ?? '', /^Posted, but reply 1 of 1 failed/);
+  assert.match(result.warning ?? '', /may not allow replies/);
 });
 
 test('empty and overlong comments are refused before anything is sent', () => {
-  assert.ok(linkedin.validate(post({ replies: ['ok', ''] }), person).includes('comment 2 is empty'));
+  assert.ok(linkedin.validate(post({ replies: ['ok', ''] }), person).includes('reply 2 is empty'));
   assert.ok(linkedin.validate(post({ replies: ['x'.repeat(1251)] }), person).some((issue) => issue.includes('1250')));
 });
 
@@ -271,12 +271,12 @@ test('a comment with an entity goes out with tags, and as plain text when Linked
 
   const refused = setup((url) => (url.includes('/rest/socialActions/') ? new Response('{}', { status: 403 }) : created(url.includes('/socialActions/') ? 'urn:li:comment:2' : 'urn:li:share:7')));
   const result = await linkedin.send(post(tagged), person, credentials, refused.context);
-  assert.match(result.warning ?? '', /posted without tags.*comment 1/);
+  assert.match(result.warning ?? '', /posted without tags.*reply 1/);
   assert.equal(result.replies?.count, 1);
   assert.deepEqual((bodyOf(refused.calls.filter((call) => call.url.includes('/v2/socialActions/'))[0]) as { message: unknown }).message, { text: 'Hi Pop-up City' });
 
   const broken = setup((url) => (url.includes('/socialActions/') ? new Response('{}', { status: 500 }) : created('urn:li:share:7')));
-  assert.match((await linkedin.send(post(tagged), person, credentials, broken.context)).warning ?? '', /comment 1 of 1 failed/);
+  assert.match((await linkedin.send(post(tagged), person, credentials, broken.context)).warning ?? '', /reply 1 of 1 failed/);
   assert.equal(broken.calls.filter((call) => call.url.includes('/socialActions/')).length, 1);
 });
 
@@ -297,7 +297,7 @@ test('a comment is never posted under the author when the chosen account cannot 
   const speaker = async () => Promise.reject(new Error('Joop is not connected'));
   for (const extra of [{ speaker }, {}]) {
     const result = await linkedin.send(post({ replies: ['By Joop.'], replyBy: ['joop-linkedin'] }), person, credentials, { ...context, ...extra });
-    assert.match(result.warning ?? '', /comment 1 of 1 failed/);
+    assert.match(result.warning ?? '', /reply 1 of 1 failed/);
   }
   assert.equal(calls.filter((call) => call.url.includes('/socialActions/')).length, 0);
 });

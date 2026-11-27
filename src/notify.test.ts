@@ -23,8 +23,8 @@ test('a posted post links to the platform and carries the warning and the pictur
   await claim(deps.store, 'f/jeroen-linkedin.md', now);
   await complete(deps.store, 'f/jeroen-linkedin.md', 'r1', 'https://platform.test/p', now);
   const photo = new Uint8Array([1]);
-  await report([post('f/jeroen-linkedin.md')], [{ id: 'f/jeroen-linkedin.md', status: 'posted', message: 'Posted, but comment 1 of 1 failed' }], { ...deps, photo: async () => photo });
-  assert.deepEqual(sent, [{ text: "Posted on Jeroen's LinkedIn: Opening\nPosted, but comment 1 of 1 failed", bold: 'Opening', view: 'https://platform.test/p', photo }]);
+  await report([post('f/jeroen-linkedin.md')], [{ id: 'f/jeroen-linkedin.md', status: 'posted', message: 'Posted, but reply 1 of 1 failed' }], { ...deps, photo: async () => photo });
+  assert.deepEqual(sent, [{ text: "Posted on Jeroen's LinkedIn: Opening\nPosted, but reply 1 of 1 failed", bold: 'Opening', view: 'https://platform.test/p', photo }]);
 });
 
 test('failures link to the post here, and outcomes that will be tried again say nothing', async () => {

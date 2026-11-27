@@ -230,7 +230,7 @@ export const postRepliesNow = (folder: string, base: string): Promise<Done> =>
     const deps = localDeps(root, new Date());
     const result = await postReplies(id, post.channel, post.replies ?? [], { ...deps, fetch }, post.mentions, post.replyBy, { images: post.replyImages, publicImage: deps.context(post).publicImage, publicVideo: deps.context(post).publicVideo });
     if (result.warning) throw new Error(result.warning);
-    return result.sent === 0 ? 'Nothing new to post.' : result.sent === 1 ? 'Comment posted.' : `${result.sent} comments posted.`;
+    return result.sent === 0 ? 'Nothing new to post.' : result.sent === 1 ? 'Reply posted.' : `${result.sent} replies posted.`;
   });
 
 export const deleteReplyNow = (folder: string, base: string, index: number, platformToo: boolean): Promise<Done> =>

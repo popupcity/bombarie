@@ -9,7 +9,7 @@ Built by [Pop-Up City](https://popupcity.net), an urban innovation studio, for i
 - A calendar and a list of everything planned, posted and late, with a live preview per platform.
 - Posts to LinkedIn, Instagram, Facebook and Threads through their APIs. Substack and your own blog are shown from their RSS feeds; Substack posts are reminders, because Substack has no posting API.
 - One post, several channels: a post folder holds one markdown file per channel, so each channel can have its own text and pictures.
-- Replies on Threads (and comments on LinkedIn) after the first `---` in a post. A LinkedIn comment can be posted by another connected account: `--- joop-linkedin`.
+- Replies on Threads and LinkedIn after the first `---` in a post. A LinkedIn reply can be posted by another connected account: `--- joop-linkedin`.
 - An ideas inbox you can fill from a bookmarklet or a Telegram bot (send `/planned` to the bot to see what is coming), and entities (`[[Name]]`) that become real mentions on LinkedIn and Instagram.
 - A late post is skipped, never posted late.
 
@@ -19,14 +19,14 @@ What follows is what has been used live, not what the code claims. Everything el
 
 | Platform | Used live | Built, not verified |
 |---|---|---|
-| LinkedIn (person) | text, images, a comment on a post | delete a post or a comment, PDF, video |
+| LinkedIn (person) | text, images, a reply on a post | delete a post or a reply, PDF, video |
 | Instagram | one picture, a carousel | story, Reel, video |
 | Threads | text, pictures, a video, a reply | delete (Threads does not allow it) |
 | Facebook page | nothing yet | text, pictures |
 | Substack | notes as reminders | nothing is posted automatically |
 | LinkedIn company page | not supported | |
 
-Each platform needs your own developer app (Meta, LinkedIn, Threads). The setup steps are in the app: open a channel, or add one, and choose Setup guide. LinkedIn comments use the `w_member_social` scope.
+Each platform needs your own developer app (Meta, LinkedIn, Threads). The setup steps are in the app: open a channel, or add one, and choose Setup guide. LinkedIn replies use the `w_member_social` scope.
 
 ## Run it
 

@@ -184,7 +184,7 @@ export async function saveVariant(
       for (const [index, author] of checked.post.replyBy.entries()) {
         if (!author) continue;
         const trouble = isPerson(known[author]) ? await connection(author) : 'it is not a personal LinkedIn channel';
-        if (trouble) problems.push(`comment ${index + 1} cannot be posted as ${known[author]?.name ?? author}: ${trouble}`);
+        if (trouble) problems.push(`reply ${index + 1} cannot be posted as ${known[author]?.name ?? author}: ${trouble}`);
       }
     }
     if (problems.length > 0) throw new PlanBlocked(problems);

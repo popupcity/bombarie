@@ -171,7 +171,7 @@ test('a post cannot be planned when a comment is by an account that cannot post'
   const root = repo();
   await assert.rejects(
     save(root, 'jeroen-linkedin', '---\nstatus: planned\ndate: 2026-11-20T10:30\n---\nOpent.\n\n--- nourn-linkedin\n\nMooi.\n'),
-    (err) => err instanceof PlanBlocked && /comment 1 cannot be posted as/.test(err.problems.join())
+    (err) => err instanceof PlanBlocked && /reply 1 cannot be posted as/.test(err.problems.join())
   );
 });
 

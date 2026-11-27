@@ -296,8 +296,9 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
                         </div>
                       </>
                     )}
-                    <div class="md:peer-[:not(:empty)]:pl-14">
-                      <Button id="add-reply" popovertarget={choosing ? 'reply-menu' : undefined} type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a comment under this post'}>{variant.platform === 'threads' ? 'Add reply' : 'Add comment'}{choosing && <Icon name="caret-down" class={CARET} />}</Button>
+                    <div class="flex flex-wrap items-center gap-4 md:peer-[:not(:empty)]:pl-14">
+                      {repliable && <Button id="post-replies" type="button" hidden>Post reply</Button>}
+                      <Button id="add-reply" popovertarget={choosing ? 'reply-menu' : undefined} type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a reply under this post'}>Add reply{choosing && <Icon name="caret-down" class={CARET} />}</Button>
                     </div>
                   </div>
                 )
@@ -394,7 +395,6 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
               </ActionRow>
               <Fragment slot="actions">
                 <Button id="plan" type="button" aria-describedby="hint" data-recorded={recorded !== null ? '1' : undefined} hidden={planned || recorded !== null}>{instant ? 'Post now' : 'Plan'}</Button>
-                {repliable && <Button id="post-replies" type="button" hidden>Post comment</Button>}
                 <Button id="save" type="button" variant="outline" aria-describedby="hint" disabled hidden class="group-data-[planned]:bg-(--tone) group-data-[planned]:text-(--tone-on) group-data-[planned]:not-disabled:hover:bg-(--tone) group-data-[planned]:not-disabled:hover:opacity-(--hover-opacity)">Save</Button>
               </Fragment>
             </ActionPanel>
@@ -422,7 +422,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
         <ManualDialog variant={variant.base} platform={PLATFORM_LABEL[variant.platform]} story={variant.type === 'story'} images={images.length > 0} />
         <DialogShell id="reply-delete">
           <div class="flex flex-col gap-4">
-            <Heading variant="card" as="h2" id="reply-delete-title">Delete this {variant.platform === 'threads' ? 'reply' : 'comment'}?</Heading>
+            <Heading variant="card" as="h2" id="reply-delete-title">Delete this reply?</Heading>
             <Text variant="small" class="text-ink-soft">It is removed here. {variant.platform === 'threads' ? 'Threads does not let other apps delete replies; remove it there yourself.' : `Choose whether it also goes from ${PLATFORM_LABEL[variant.platform]}.`}</Text>
             <div class="flex flex-wrap items-center justify-end gap-2">
               <form method="dialog"><Button type="submit" variant="outline" autofocus>Cancel</Button></form>

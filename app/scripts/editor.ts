@@ -722,7 +722,6 @@ function init(root: HTMLElement) {
     });
     edit(withBody(raw, replyBox ? joinThread([{ text: first }, ...later]) : first));
   };
-  const noun = platform === 'threads' ? 'Reply' : 'Comment';
   let repliesSent = Number(root.dataset.repliesSent ?? 0);
   const replyIds = JSON.parse(root.dataset.replyIds ?? '[]') as string[];
   const replyDialog = document.getElementById('reply-delete') as HTMLDialogElement | null;
@@ -738,7 +737,10 @@ function init(root: HTMLElement) {
     }
   }
   function refreshRepliesButton() {
-    if (repliesButton) repliesButton.hidden = !replyAreas().slice(repliesSent).some((area) => area.value.trim() !== '');
+    if (!repliesButton) return;
+    const waiting = replyAreas().slice(repliesSent).filter((area) => area.value.trim() !== '').length;
+    repliesButton.hidden = waiting === 0;
+    repliesButton.textContent = waiting > 1 ? `Post ${waiting} replies` : 'Post reply';
   }
   function openReplyDialog(position: number) {
     replyIndex = position;
@@ -783,8 +785,8 @@ function init(root: HTMLElement) {
     const holder = wrapper.querySelector<HTMLElement>('[data-reply-face]')!;
     wrapper.querySelector('[data-reply-name]')!.textContent = nameOf(key);
     holder.querySelector('[data-face-image]')!.replaceChildren(face(key));
-    wrapper.querySelector('textarea')!.setAttribute('aria-label', `${noun} by ${nameOf(key)}`);
-    holder.querySelector('button')?.setAttribute('aria-label', `${noun} by ${nameOf(key)}, choose another account`);
+    wrapper.querySelector('textarea')!.setAttribute('aria-label', `Reply by ${nameOf(key)}`);
+    holder.querySelector('button')?.setAttribute('aria-label', `Reply by ${nameOf(key)}, choose another account`);
   }
 
   function replyFace(): HTMLElement {
@@ -883,7 +885,7 @@ function init(root: HTMLElement) {
   });
   repliesButton?.addEventListener('click', () => {
     void (async () => {
-      const stop = working('Posting the comment…');
+      const stop = working('Posting the reply…');
       await submit();
       if (!dirty()) {
         await postAction('post-replies');

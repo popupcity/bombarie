@@ -127,7 +127,7 @@ const actions = platform === 'substack' && type !== 'note' ? [] : (ACTIONS[platf
       <footer class="flex items-center justify-between border-t border-line pt-3">
         {actions.map(([icon, label]) => <span class={action}><Icon name={icon} class="text-lg" /><span class="hidden @xs:inline">{label}</span></span>)}
       </footer>
-      <ol id="preview-replies" aria-label={platform === 'threads' ? 'Replies' : 'Comments'} class="flex flex-col gap-3 border-t border-line pt-3 empty:hidden"></ol>
+      <ol id="preview-replies" aria-label="Replies" class="flex flex-col gap-3 border-t border-line pt-3 empty:hidden"></ol>
       {platform === 'linkedin' && (
         <template id="preview-comment">
           <li class="flex gap-2">

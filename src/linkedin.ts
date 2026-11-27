@@ -97,13 +97,13 @@ async function comment(context: SendContext, headers: Record<string, string>, ow
       let actor = owner;
       let own = headers;
       if (other) {
-        if (!authors.speaker) throw new ProviderError(`no way to comment as ${other}`, 'invalid');
+        if (!authors.speaker) throw new ProviderError(`no way to reply as ${other}`, 'invalid');
         const speaker = await authors.speaker(other);
         actor = speaker.urn;
         own = { ...headers, Authorization: `Bearer ${speaker.credentials.accessToken}` };
       }
       const post = (base: string, using: Record<string, string>, message: object) =>
-        request(context, `${base}/${encodeURIComponent(id)}/comments`, { method: 'POST', headers: using, body: JSON.stringify({ actor, object: id, message }) }, `comment ${number}`, true);
+        request(context, `${base}/${encodeURIComponent(id)}/comments`, { method: 'POST', headers: using, body: JSON.stringify({ actor, object: id, message }) }, `reply ${number}`, true);
       const attributes = commentAttributes(text, mentions);
       let res: Response | undefined;
       if (attributes.length > 0) {
@@ -111,7 +111,7 @@ async function comment(context: SendContext, headers: Record<string, string>, ow
           if (err instanceof ProviderError && (err.code === 'invalid' || err.code === 'auth')) return undefined;
           throw err;
         });
-        if (!res) untagged.push(`comment ${number}`);
+        if (!res) untagged.push(`reply ${number}`);
       }
       res ??= await post(COMMENTS, oldStyle(own), { text });
       const data = (await res.json().catch(() => ({}))) as { id?: unknown };
@@ -120,7 +120,7 @@ async function comment(context: SendContext, headers: Record<string, string>, ow
       sent += 1;
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
-      return { sent, ids, ...who(), warning: [`comment ${number} of ${offset + texts.length} failed: ${reason}${reason.includes('(403)') ? ' LinkedIn may not allow comments with this app yet.' : ''}`, ...told()].join('; ') };
+      return { sent, ids, ...who(), warning: [`reply ${number} of ${offset + texts.length} failed: ${reason}${reason.includes('(403)') ? ' LinkedIn may not allow replies with this app yet.' : ''}`, ...told()].join('; ') };
     }
   }
   return { sent, ids, ...who(), ...(untagged.length > 0 && { warning: told()[0]! }) };
@@ -246,9 +246,9 @@ export const linkedin: Provider = {
   validate(post: Post, channel: Channel): string[] {
     const replies = post.replies ?? [];
     const commentIssues = [
-      ...(post.replyImages ? ['a LinkedIn comment cannot take images from here'] : []),
-      ...(replies.length > MAX_COMMENTS ? [`more than ${MAX_COMMENTS} comments`] : []),
-      ...replies.flatMap((reply, index) => [...(reply === '' ? [`comment ${index + 1} is empty`] : []), ...(reply.length > MAX_COMMENT_CHARS ? [`comment ${index + 1} is over ${MAX_COMMENT_CHARS} characters`] : [])])
+      ...(post.replyImages ? ['a LinkedIn reply cannot take images from here'] : []),
+      ...(replies.length > MAX_COMMENTS ? [`more than ${MAX_COMMENTS} replies`] : []),
+      ...replies.flatMap((reply, index) => [...(reply === '' ? [`reply ${index + 1} is empty`] : []), ...(reply.length > MAX_COMMENT_CHARS ? [`reply ${index + 1} is over ${MAX_COMMENT_CHARS} characters`] : [])])
     ];
     const issues: string[] = [];
     const problem = urnProblem(channel);
@@ -334,7 +334,7 @@ export const linkedin: Provider = {
     const headers = oldStyle({ Authorization: `Bearer ${credentials.accessToken}`, 'LinkedIn-Version': VERSION, 'X-Restli-Protocol-Version': '2.0.0' });
     const url = `${COMMENTS}/${encodeURIComponent(input.remoteId)}/comments/${encodeURIComponent(input.replyId)}?actor=${encodeURIComponent(channel.urn as string)}`;
     try {
-      await request({ fetch: fetchImpl } as SendContext, url, { method: 'DELETE', headers }, 'delete comment');
+      await request({ fetch: fetchImpl } as SendContext, url, { method: 'DELETE', headers }, 'delete reply');
     } catch (err) {
       if (err instanceof ProviderError && err.code === 'invalid' && /\(404\)/.test(err.message)) return;
       throw err;

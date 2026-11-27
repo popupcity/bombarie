@@ -45,7 +45,7 @@ test('a refused comment is reported and the count stays', async () => {
   await store.create('f/jeroen.md', { status: 'posted', at: 'x', remoteId: 'urn:li:share:7' });
   const result = await postReplies('f/jeroen.md', 'jeroen', ['Comment.'], deps);
   assert.equal(result.sent, 0);
-  assert.match(result.warning ?? '', /^comment 1 of 1 failed/);
+  assert.match(result.warning ?? '', /^reply 1 of 1 failed/);
   const state = await store.get('f/jeroen.md');
   assert.deepEqual(state?.status === 'posted' ? state.replies : null, { count: 0, ids: [] });
 });
@@ -56,7 +56,7 @@ test('a post marked as posted by hand, an unposted one and another platform are 
   await assert.rejects(postReplies('f/hand.md', 'jeroen', ['x'], deps), /by hand/);
   await assert.rejects(postReplies('f/none.md', 'jeroen', ['x'], deps), /only a posted post/);
   await store.create('f/ig.md', { status: 'posted', at: 'x', remoteId: '1' });
-  await assert.rejects(postReplies('f/ig.md', 'ig', ['x'], deps), /cannot take comments/);
+  await assert.rejects(postReplies('f/ig.md', 'ig', ['x'], deps), /cannot take replies/);
 });
 
 test('a posted comment can be deleted from LinkedIn and here, or only here', async () => {
