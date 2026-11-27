@@ -197,7 +197,7 @@ const bucketLabel = (day: string): string =>
                               ) : (
                                 <ChannelMark channel={info} size="lg" on="surface" />
                               )}
-                              <span class="flex min-w-0 flex-1 flex-col gap-2">
+                              <span class="flex min-w-0 flex-1 flex-col gap-3">
                                 <span class:list={['line-clamp-2 text-sm break-words', !post.text && 'text-ink-faint']}>{post.text || 'No text.'}</span>
                                 <span class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
                                   <span class="flex min-w-0 items-center"><span class="truncate">{post.type}</span><Icon name="dot" /><span class="shrink-0">{dayLabel(post.day)}</span></span>
