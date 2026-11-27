@@ -40,7 +40,7 @@ import gear from '@phosphor-icons/core/assets/regular/gear.svg?raw';
 import globe from '@phosphor-icons/core/assets/regular/globe.svg?raw';
 import list from '@phosphor-icons/core/assets/regular/list.svg?raw';
 import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?raw';
-import threadsLogo from '@phosphor-icons/core/assets/fill/threads-logo-fill.svg?raw';
+import threadsLogo from '@phosphor-icons/core/assets/bold/threads-logo-bold.svg?raw';
 import downloadSimple from '@phosphor-icons/core/assets/regular/download-simple.svg?raw';
 import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
 import bell from '@phosphor-icons/core/assets/regular/bell.svg?raw';
