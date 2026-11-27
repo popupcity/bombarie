@@ -153,7 +153,7 @@ const statusBy = byWhom(idea.by, label[idea.status]);
           <Button slot="actions" type="submit" name="intent" value="save" variant="outline" data-pending="Saving…">Save</Button>
           <Fragment slot="after">
             {idea.status === 'made' && idea.post && <Button href={`/posts/${encodeURIComponent(idea.post)}`} class="w-full">Open post</Button>}
-            {idea.status !== 'made' && <Button type="button" popovertarget="make-menu" style="anchor-name:--make-menu" class="w-full">Make post<Icon name="caret-down" class={CARET} /></Button>}
+            {idea.status !== 'made' && <Button type="button" popovertarget="make-menu" style="anchor-name:--make-menu" class="w-full"><Icon name="plus" weight="bold" />Make post</Button>}
             {idea.status !== 'made' && <NewPostMenu id="make-menu" pick />}
           </Fragment>
         </ActionPanel>

@@ -21,7 +21,7 @@ interface Props {
 }
 const { id, card, siblings = 1 } = Astro.props;
 const image = thumbUrl(card, 320);
-const { movable, removable } = cardActions(card);
+const { toggles, movable, removable } = cardActions(card);
 const when = `${card.day}T${card.time}`;
 ---
 
@@ -36,10 +36,10 @@ const when = `${card.day}T${card.time}`;
       <span class="flex shrink-0 items-center gap-2"><StatusBadge status={card.status} manual={card.manual} feed={card.feed} /></span>
     </div>
     <div class:list={['grid gap-3', image && 'grid-cols-[minmax(0,1fr)_80px]']}>
-      <div class="flex min-w-0 flex-col gap-2">
+      <a href={card.url ?? postHref(card.id)} target={card.url ? '_blank' : undefined} rel={card.url ? 'noopener' : undefined} class="transition -m-2 flex min-w-0 flex-col gap-2 rounded-lg p-2 hover:bg-(--tone-hover) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
         <Heading variant="card" as="p" class="break-words">{card.campaign}</Heading>
         <Text variant="small" class="line-clamp-3 break-words whitespace-pre-wrap text-ink-soft">{card.text || 'No text.'}</Text>
-      </div>
+      </a>
       {image && (
         <div class="relative size-20">
           <img data-photo src={image} alt="" width="80" height="80" loading="lazy" data-full={`/img/${encodeURIComponent(card.id.split('/')[0] ?? '')}/${encodeURIComponent((card.images[0] ?? '').replace(/\.cover\.jpg$/i, ''))}`} data-full-kind={mediaKind(card.images[0] ?? '')} data-full-set={`peek-${card.id}`} class="transition-opacity size-20 cursor-zoom-in rounded-lg object-cover" />
@@ -70,19 +70,20 @@ const when = `${card.day}T${card.time}`;
         </Text>
       )
     }
-    <div class="flex min-w-0 items-center gap-3">
-      <Button href={card.url ?? postHref(card.id)} target={card.url ? '_blank' : undefined} rel={card.url ? 'noopener' : undefined}>Open</Button>
-      <CardActions card={card} siblings={siblings} part="toggle" />
-      {card.live && (
-        <Button href={card.live} target="_blank" rel="noopener" icon variant="outline" aria-label={`Open on ${PLATFORM_LABEL[card.platform]}`} title={`Open on ${PLATFORM_LABEL[card.platform]}`}>
-          <Icon name="arrow-square-out" />
-        </Button>
-      )}
-      {removable && (
-        <Button icon variant="outline" tone="bad" class="ml-auto" aria-label="Delete" title="Delete" data-delete={card.id} data-title={card.campaign} data-siblings={siblings} data-posted={card.status === 'posted' ? PLATFORM_LABEL[card.platform] : undefined}>
-          <Icon name="trash" />
-        </Button>
-      )}
-    </div>
+    {(toggles || card.live || removable) && (
+      <div class="flex min-w-0 items-center gap-3">
+        <CardActions card={card} siblings={siblings} part="toggle" />
+        {card.live && (
+          <Button href={card.live} target="_blank" rel="noopener" icon variant="outline" aria-label={`Open on ${PLATFORM_LABEL[card.platform]}`} title={`Open on ${PLATFORM_LABEL[card.platform]}`}>
+            <Icon name="arrow-square-out" />
+          </Button>
+        )}
+        {removable && (
+          <Button icon variant="outline" tone="bad" class="ml-auto" aria-label="Delete" title="Delete" data-delete={card.id} data-title={card.campaign} data-siblings={siblings} data-posted={card.status === 'posted' ? PLATFORM_LABEL[card.platform] : undefined}>
+            <Icon name="trash" />
+          </Button>
+        )}
+      </div>
+    )}
   </div>
 </div>

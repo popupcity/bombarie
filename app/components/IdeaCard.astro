@@ -77,7 +77,7 @@ const cover = 'block focus-visible:outline-2 focus-visible:outline-offset-0 focu
     {
       idea.status === 'new' && (
         <>
-          <Button type="submit" name="intent" value="approve">Approve</Button>
+          <Button type="submit" name="intent" value="approve" variant="outline">Approve</Button>
           <Button type="button" variant="outline" tone="bad" icon aria-label="Delete" title="Delete" class="ml-auto" data-open={`delete-${idea.folder}`}><Icon name="trash" /></Button>
         </>
       )
@@ -85,7 +85,7 @@ const cover = 'block focus-visible:outline-2 focus-visible:outline-offset-0 focu
     {
       idea.status === 'approved' && (
         <>
-          <Button href={`${href}#make`}>Make post</Button>
+          <Button href={`${href}#make`} variant="outline"><Icon name="plus" weight="bold" />Make post</Button>
           <Button type="submit" name="intent" value="unapprove" variant="outline">Unapprove</Button>
         </>
       )
