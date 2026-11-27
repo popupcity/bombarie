@@ -102,7 +102,7 @@ pnpm typecheck
 pnpm build
 ```
 
-`src/` is the core without any framework (types, providers, state, planning). `app/` is the Astro UI. `packages/ui` is the design system. Styling is Tailwind classes only. The decisions and their reasons are in `docs/decisions.md`.
+`src/` is the core without any framework (types, providers, state, planning). `app/` is the Astro UI. `packages/ui` is the design system, `@popupcity/ui`. Styling is Tailwind classes only. The decisions and their reasons are in `docs/decisions.md`.
 
 ## Limits
 

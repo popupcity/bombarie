@@ -1,14 +1,14 @@
 ---
-import Alert from 'ui/src/components/Alert.astro';
-import Card from 'ui/src/components/Card.astro';
-import Heading from 'ui/src/components/Heading.astro';
-import Text from 'ui/src/components/Text.astro';
+import Alert from '@popupcity/ui/src/components/Alert.astro';
+import Card from '@popupcity/ui/src/components/Card.astro';
+import Heading from '@popupcity/ui/src/components/Heading.astro';
+import Text from '@popupcity/ui/src/components/Text.astro';
 import { PLATFORM_LABEL } from '../../src/types.ts';
 import type { CardModel } from '../../src/calendar.ts';
 import { sentence } from '../../src/text.ts';
 import { coverLabel, isCover, mediaKind } from '../../src/types.ts';
 import { cardActions, MENU, postHref, QUIET } from '../lib/ui.ts';
-import Icon from 'ui/src/components/Icon.astro';
+import Icon from '@popupcity/ui/src/components/Icon.astro';
 import CardActions from './CardActions.astro';
 import ChannelMark from './ChannelMark.astro';
 import StatusBadge from './StatusBadge.astro';

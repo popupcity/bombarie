@@ -1,4 +1,4 @@
-import { icons } from 'ui/src/components/icons.ts';
+import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { readFields, withBody, withDate, withImages, withManual, withStatus, withTitle } from '../../src/frontmatter.ts';
 import type { Fields } from '../../src/frontmatter.ts';
 import { fromEdit, toEdit } from '../../src/mentions.ts';

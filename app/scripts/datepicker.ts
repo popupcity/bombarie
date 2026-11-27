@@ -1,5 +1,5 @@
 import { OVERLAY, QUIET } from '../lib/ui.ts';
-import { icons } from 'ui/src/components/icons.ts';
+import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addDays, addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
 import { h } from './dom.ts';

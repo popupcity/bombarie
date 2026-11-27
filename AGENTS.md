@@ -14,7 +14,7 @@ Git- and markdown-based social media planner. Astro SSR on Node, one container, 
 
 - `src/` core, framework-free: types, time, text, frontmatter, mentions, providers (linkedin, instagram, facebook, threads), state, run, connect, media. Tests sit next to code as `*.test.ts`.
 - `app/` Astro UI: `pages/`, `components/`, `layouts/`, `lib/`, `scripts/`.
-- UI uses the `ui` library (`packages/ui`, a workspace package copied from `~/Sites/ui`: the components and the `social` theme only): always its components (`Text`, `Heading`, `Card`, `Alert`, `Button`, `Input`, `Icon`), never raw text elements or ad-hoc cards.
+- UI uses the `@popupcity/ui` library (`packages/ui`, a workspace package copied from `~/Sites/ui`: the components and the `social` theme only): always its components (`Text`, `Heading`, `Card`, `Alert`, `Button`, `Input`, `Icon`), never raw text elements or ad-hoc cards.
 - Tests enforce the systems: `src/spacing.test.ts` (vertical rhythm), `src/buttons.test.ts` (icons on buttons), `src/colours.test.ts` (named colours only). Run them after UI changes.
 
 ## Content

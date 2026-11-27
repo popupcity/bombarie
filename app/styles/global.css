@@ -1,5 +1,5 @@
-@import 'ui/src/styles/tokens.css';
-@import 'ui/src/styles/themes/social.css';
+@import '@popupcity/ui/src/styles/tokens.css';
+@import '@popupcity/ui/src/styles/themes/social.css';
 @source '../../packages/ui/src';
 
 @theme {

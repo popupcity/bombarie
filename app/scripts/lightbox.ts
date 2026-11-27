@@ -1,5 +1,5 @@
 import { DIALOG } from '../lib/ui.ts';
-import { icons } from 'ui/src/components/icons.ts';
+import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { h } from './dom.ts';
 
 const button = 'transition absolute grid size-10 cursor-pointer place-items-center rounded-lg bg-surface text-ink hover:bg-page focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-white [&>svg]:size-5';

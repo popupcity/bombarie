@@ -1,6 +1,6 @@
 ---
-import Text from 'ui/src/components/Text.astro';
-import Button from 'ui/src/components/Button.astro';
+import Text from '@popupcity/ui/src/components/Text.astro';
+import Button from '@popupcity/ui/src/components/Button.astro';
 import Chip from '../../components/Chip.astro';
 import { connectProblem } from '../../../src/connect.ts';
 import { channelInfos, channelPosts, loadChannels, removeChannel, renameChannel, setFeed, setHandle } from '../../../src/channels.ts';
@@ -13,7 +13,7 @@ import ActionRow from '../../components/ActionRow.astro';
 import ValueButton from '../../components/ValueButton.astro';
 import ChannelForm from '../../components/ChannelForm.astro';
 import ChannelMark from '../../components/ChannelMark.astro';
-import Heading from 'ui/src/components/Heading.astro';
+import Heading from '@popupcity/ui/src/components/Heading.astro';
 import TitleField from '../../components/TitleField.astro';
 import { appKey, appSaved, channelState, disconnect, callbackUrl, refreshPhoto, saveApp, setOutcome, startConnect, takeOutcome } from '../../lib/connect.ts';
 import { loadConnections, root } from '../../lib/data.ts';

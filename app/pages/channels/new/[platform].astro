@@ -1,14 +1,14 @@
 ---
-import Text from 'ui/src/components/Text.astro';
-import Alert from 'ui/src/components/Alert.astro';
-import Button from 'ui/src/components/Button.astro';
+import Text from '@popupcity/ui/src/components/Text.astro';
+import Alert from '@popupcity/ui/src/components/Alert.astro';
+import Button from '@popupcity/ui/src/components/Button.astro';
 import { addChannel, PLATFORMS, setFeed, setHandle } from '../../../../src/channels.ts';
 import { feedUrlProblem } from '../../../../src/feed.ts';
 import { PLATFORM_LABEL } from '../../../../src/types.ts';
 import { sentence } from '../../../../src/text.ts';
 import { callbackUrl } from '../../../lib/connect.ts';
 import ChannelForm from '../../../components/ChannelForm.astro';
-import Heading from 'ui/src/components/Heading.astro';
+import Heading from '@popupcity/ui/src/components/Heading.astro';
 import PlatformMark from '../../../components/PlatformMark.astro';
 import TitleField from '../../../components/TitleField.astro';
 import { quiet, STATIC_CHIP } from '../../../lib/ui.ts';

@@ -1,4 +1,4 @@
-import { icons } from 'ui/src/components/icons.ts';
+import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { h } from './dom.ts';
 import { suggest, triggerAt } from '../../src/mentions.ts';
 import type { Entities, Entity, Trigger } from '../../src/mentions.ts';

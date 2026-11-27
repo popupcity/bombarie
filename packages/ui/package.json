@@ -1,5 +1,5 @@
 {
-  "name": "ui",
+  "name": "@popupcity/ui",
   "private": true,
   "type": "module",
   "dependencies": {

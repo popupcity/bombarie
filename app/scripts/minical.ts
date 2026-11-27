@@ -1,4 +1,4 @@
-import { icons } from 'ui/src/components/icons.ts';
+import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { CARET, dotClass, dotTones, QUIET, SWAPPED } from '../lib/ui.ts';
 import { h } from './dom.ts';

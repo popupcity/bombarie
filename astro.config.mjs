@@ -10,6 +10,6 @@ export default defineConfig({
   security: { allowedDomains: [{ protocol: 'https' }] },
   vite: {
     plugins: [tailwindcss()],
-    ssr: { noExternal: ['ui'] }
+    ssr: { noExternal: ['@popupcity/ui'] }
   }
 });
