@@ -28,7 +28,7 @@ const picture = (name: string) => `/img/${encodeURIComponent(folder)}/${encodeUR
 const feedImages = 'flex flex-col gap-1 overflow-hidden rounded-lg [&_li]:max-h-80 [&_li]:overflow-hidden';
 const squareImages = 'absolute inset-0 [&_li]:size-full [&_li:not(:first-child)]:hidden';
 const feedPicture = 'block h-auto max-h-[125cqw] min-h-[52cqw] w-full object-cover';
-const slideButton = 'absolute top-1/2 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-lg bg-white text-charcoal ring-1 ring-line ring-inset hover:ring-line-strong';
+const slideButton = 'transition absolute top-1/2 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-lg bg-white text-charcoal ring-1 ring-line ring-inset hover:ring-line-strong';
 const action = 'flex items-center gap-2 text-sm text-ink-soft';
 const ACTIONS: Partial<Record<Platform, [IconName, string][]>> = {
   linkedin: [['thumbs-up', 'Like'], ['chat-circle', 'Comment'], ['repeat', 'Repost'], ['paper-plane-tilt', 'Send']],

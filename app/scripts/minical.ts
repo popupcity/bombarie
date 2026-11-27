@@ -4,7 +4,7 @@ import { CARET, SWAPPED } from '../lib/ui.ts';
 import { h } from './dom.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const NAV = 'grid size-8 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-ink';
+const NAV = 'transition grid size-8 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-ink';
 const ORDER = ['bad', 'info', 'warn', 'manual', 'ok', 'feed'];
 
 let listening: AbortController | undefined;
@@ -87,7 +87,7 @@ function start() {
               'aria-label': day.day,
               'aria-current': day.today ? 'date' : undefined,
               class: `relative grid h-8 cursor-pointer place-items-center rounded-lg pb-1 text-sm tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
-                selected ? 'bg-ink text-page' : `hover:bg-track ${day.today ? 'ring-1 ring-ink ring-inset' : ''} ${day.inMonth ? (dots.length > 0 ? 'text-ink' : 'text-ink-soft') : 'text-ink-faint'}`
+                selected ? 'bg-ink text-page' : `transition hover:bg-track ${day.today ? 'ring-1 ring-ink ring-inset' : ''} ${day.inMonth ? (dots.length > 0 ? 'text-ink' : 'text-ink-soft') : 'text-ink-faint'}`
               }`,
               onclick: () => go(day.day)
             },
@@ -111,7 +111,7 @@ function start() {
     panel!.replaceChildren(
       h('h3', { class: 'text-base' }, day === today ? `Today, ${when}` : when),
       h('p', { class: 'text-sm text-ink-soft' }, 'Nothing planned.'),
-      h('button', { type: 'button', popovertarget: 'new-menu', 'data-day': day, class: 'inline-flex h-10 w-fit cursor-pointer items-center gap-2 rounded-lg px-6 text-sm text-ink ring-1 ring-ink ring-inset hover:opacity-(--hover-opacity) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink' }, 'Plan a post', down())
+      h('button', { type: 'button', popovertarget: 'new-menu', 'data-day': day, class: 'transition inline-flex h-10 w-fit cursor-pointer items-center gap-2 rounded-lg px-6 text-sm text-ink ring-1 ring-ink ring-inset hover:opacity-(--hover-opacity) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink' }, 'Plan a post', down())
     );
   }
 

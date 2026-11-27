@@ -2,7 +2,7 @@ import { DIALOG } from '../lib/ui.ts';
 import { icons } from 'ui/src/components/icons.ts';
 import { h } from './dom.ts';
 
-const button = 'absolute grid size-10 cursor-pointer place-items-center rounded-lg bg-surface text-ink hover:bg-page focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-white [&>svg]:size-5';
+const button = 'transition absolute grid size-10 cursor-pointer place-items-center rounded-lg bg-surface text-ink hover:bg-page focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-white [&>svg]:size-5';
 
 const stage = h('div', { class: 'grid size-full grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]' });
 const arrow = (label: string, side: string, rotate: string, step: number) => {

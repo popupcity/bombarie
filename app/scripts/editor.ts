@@ -17,6 +17,7 @@ import { autocomplete } from './autocomplete.ts';
 import { joinThread, splitThread } from '../../src/parts.ts';
 import './datepicker.ts';
 import { h } from './dom.ts';
+import { movable, moving } from './motion.ts';
 import { uploadTile } from './uploads.ts';
 import { toast, toastAfterReload, working } from './toast.ts';
 
@@ -145,9 +146,9 @@ function init(root: HTMLElement) {
 
   function caption(name: string): HTMLElement {
     const stem = name.replace(/\.[^.]+$/, '');
-    const pencil = h('span', { class: 'shrink-0 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 [&>svg]:size-4' });
+    const pencil = h('span', { class: 'transition shrink-0 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 [&>svg]:size-4' });
     pencil.innerHTML = icons.regular['pencil-simple'];
-    const label = h('button', { type: 'button', title: 'Rename', class: 'group flex h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-sm text-left text-sm text-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink' }, h('span', { class: 'truncate' }, name), pencil);
+    const label = h('button', { type: 'button', title: 'Rename', class: 'transition group flex h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-sm text-left text-sm text-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink' }, h('span', { class: 'truncate' }, name), pencil);
     label.addEventListener('click', () => {
       const input = h('input', {
         value: stem,
@@ -677,10 +678,12 @@ function init(root: HTMLElement) {
       const response = await fetch(`/api/replies/${encodeURIComponent(folder)}/${encodeURIComponent(variant)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ index: position, scope }) });
       const data = (await response.json()) as { ok: boolean; text: string };
       if (!data.ok) return toast(data.text, 'bad');
-      replyBox?.children[position]?.remove();
       replyIds.splice(position, 1);
       repliesSent -= 1;
-      commitBody();
+      await moving(() => {
+        replyBox?.children[position]?.remove();
+        commitBody();
+      });
       stop();
       await submit();
       toast(data.text);
@@ -736,13 +739,10 @@ function init(root: HTMLElement) {
     option.addEventListener('click', () => {
       const key = option.dataset.author ?? own;
       replyMenu?.hidePopover();
-      if (!menuFor) {
-        addReplyField('', key).focus();
-      } else {
-        if (key === own) delete menuFor.dataset.by;
-        else menuFor.dataset.by = key;
-        paintAuthor(menuFor);
-      }
+      if (!menuFor) return addComment(key);
+      if (key === own) delete menuFor.dataset.by;
+      else menuFor.dataset.by = key;
+      paintAuthor(menuFor);
       commitBody();
     });
 
@@ -754,12 +754,15 @@ function init(root: HTMLElement) {
     remove.addEventListener('click', () => {
       const position = [...(replyBox?.children ?? [])].indexOf(wrapper);
       if (position < repliesSent) return openReplyDialog(position);
-      wrapper.remove();
-      commitBody();
+      moving(() => {
+        wrapper.remove();
+        commitBody();
+      });
     });
     const name = h('p', { 'data-reply-name': '', class: 'self-center text-sm text-ink-soft md:self-start' });
     const wrapper = h('div', { 'data-reply': '', class: 'grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2' }, replyFace(), name, h('div', { class: 'relative col-span-2 md:col-span-1 md:col-start-2' }, area, remove));
     if (by && by !== own) wrapper.dataset.by = by;
+    movable(wrapper, `reply-${replyCounter}`);
     paintAuthor(wrapper);
     replyBox?.append(wrapper);
     autocomplete(area, 'at', entities, platform);
@@ -778,10 +781,16 @@ function init(root: HTMLElement) {
     lockSentReplies();
   }
   body.addEventListener('input', commitBody);
-  document.getElementById('add-reply')?.addEventListener('click', () => {
-    if (replyMenu) return;
-    addReplyField('').focus();
-    commitBody();
+  function addComment(by?: string) {
+    moving(() => {
+      addReplyField('', by).focus();
+      commitBody();
+    });
+  }
+  const addReply = document.getElementById('add-reply');
+  if (addReply?.parentElement) movable(addReply.parentElement, 'reply-add');
+  addReply?.addEventListener('click', () => {
+    if (!replyMenu) addComment();
   });
   repliesButton?.addEventListener('click', () => {
     void (async () => {

@@ -5,7 +5,7 @@ import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
 import { h } from './dom.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const NAV = 'grid size-8 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-page hover:text-ink';
+const NAV = 'transition grid size-8 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-page hover:text-ink';
 let counter = 0;
 
 const icon = (name: 'caret-right', flip = false): HTMLElement => {
@@ -104,7 +104,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
                   tabindex: day.day === date ? '0' : '-1',
                   'aria-label': day.day,
                   class: `mx-auto grid size-10 cursor-pointer place-items-center rounded-lg tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
-                    day.day === date ? 'bg-ink text-page' : `hover:bg-track ${day.today ? 'ring-1 ring-ink ring-inset' : day.inMonth ? '' : 'text-ink-soft'}`
+                    day.day === date ? 'bg-ink text-page' : `transition hover:bg-track ${day.today ? 'ring-1 ring-ink ring-inset' : day.inMonth ? '' : 'text-ink-soft'}`
                   }`,
                   onclick: () => {
                     date = day.day;
@@ -181,7 +181,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
           'button',
           {
             type: 'button',
-            class: 'h-10 cursor-pointer rounded-lg px-6 text-ink ring-1 ring-ink ring-inset hover:opacity-(--hover-opacity) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink', 'data-tone': 'ink',
+            class: 'transition h-10 cursor-pointer rounded-lg px-6 text-ink ring-1 ring-ink ring-inset hover:opacity-(--hover-opacity) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink', 'data-tone': 'ink',
             onclick: () => {
               const now = new Date();
               date = ymd(now);

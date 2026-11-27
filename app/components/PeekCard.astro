@@ -55,7 +55,7 @@ const when = `${card.day}T${card.time}`;
           <input type="hidden" name="day" value={card.day} />
           <input type="hidden" name="action" value="replan" />
           <div class="relative w-fit">
-            <button type="button" data-date-open title="Change date" class="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2 text-ink-soft hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+            <button type="button" data-date-open title="Change date" class="transition flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2 text-ink-soft hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
               <Icon name="clock" />
               <span data-date-label class="tabular-nums">{whenLabel(when)}</span>
               <Icon name="pencil-simple" />

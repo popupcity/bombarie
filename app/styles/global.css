@@ -89,6 +89,28 @@
   navigation: auto;
 }
 
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: var(--duration-pop);
+  animation-timing-function: var(--ease-pop);
+}
+
+::view-transition-new(.item):only-child {
+  animation: var(--duration-pop) var(--ease-pop) both item;
+}
+
+::view-transition-old(.item):only-child {
+  animation: var(--duration-pop) var(--ease-leave) reverse both item;
+}
+
+@keyframes item {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --duration-pop: 0.01ms;

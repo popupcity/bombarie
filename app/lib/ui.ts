@@ -11,7 +11,7 @@ export const DIALOG = `${OVERLAY} backdrop:opacity-0 backdrop:ease-leave open:ba
 
 export const MENU = `${OVERLAY} m-0 rounded-xl bg-surface p-2 text-sm text-ink shadow-float ring-1 ring-line ring-inset`;
 export const MENU_ITEM =
-  'flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-left text-sm hover:bg-page focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+  'transition flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-left text-sm hover:bg-page focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 
 
 export const jsonForScript = (value: unknown): string =>
@@ -84,4 +84,4 @@ export const FADE_BELOW = 'after:pointer-events-none after:absolute after:inset-
 
 export const FADE_ABOVE = 'before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-8 before:bg-linear-to-t before:from-page before:to-transparent';
 
-export const CHIP = 'inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+export const CHIP = 'transition inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';

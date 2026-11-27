@@ -51,10 +51,10 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
       <div class="flex min-h-10 items-center justify-between pl-3">
         <Heading variant="label" as="h2">Channels</Heading>
         <div class="flex items-center gap-1">
-        <a href="/channels/new" title="Add channel" aria-label="Add channel" aria-current={path === '/channels/new' ? 'page' : undefined} class="grid size-8 place-items-center rounded-lg text-base text-ink-soft hover:bg-surface hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+        <a href="/channels/new" title="Add channel" aria-label="Add channel" aria-current={path === '/channels/new' ? 'page' : undefined} class="transition grid size-8 place-items-center rounded-lg text-base text-ink-soft hover:bg-surface hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
           <Icon name="plus" />
         </a>
-        <a href="/channels" title="Manage channels" aria-label="Manage channels" aria-current={path === '/channels' ? 'page' : undefined} class="grid size-8 place-items-center rounded-lg text-base text-ink-soft hover:bg-surface hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+        <a href="/channels" title="Manage channels" aria-label="Manage channels" aria-current={path === '/channels' ? 'page' : undefined} class="transition grid size-8 place-items-center rounded-lg text-base text-ink-soft hover:bg-surface hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
           <Icon name="gear" />
         </a>
         </div>

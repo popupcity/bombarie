@@ -13,3 +13,17 @@ test('one motion: no own duration, and no easing besides ease-pop for arriving a
   );
   assert.deepEqual(own, []);
 });
+
+test('whatever answers the mouse does it with a transition', () => {
+  const HOVER = /(?<![\w-])(?:[a-z@[\]\-/]+:)*(?:group-)?hover(?:\/[a-z]+)?:/;
+  const abrupt = files('app').flatMap((file) =>
+    readFileSync(file, 'utf8')
+      .split('\n')
+      .flatMap((line, index) =>
+        line.includes('<Button') || line.startsWith('const reveal = ')
+          ? []
+          : [...line.matchAll(/"[^"\n]*"|'[^'\n]*'|`[^`\n]*`/g)].map((match) => match[0]).filter((text) => HOVER.test(text) && !/(?<![\w-])transition(?!\w)|transition-/.test(text)).map((text) => `${file}:${index + 1} ${text.slice(0, 60)}`)
+      )
+  );
+  assert.deepEqual(abrupt, []);
+});

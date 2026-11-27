@@ -38,7 +38,7 @@ const cover = 'block focus-visible:outline-2 focus-visible:outline-offset-0 focu
   }
   {
     idea.link && domainOf(idea.link) !== idea.title && (
-      <a href={idea.link} target="_blank" rel="noreferrer noopener" class="inline-flex w-fit items-center gap-2 text-sm text-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+      <a href={idea.link} target="_blank" rel="noreferrer noopener" class="transition inline-flex w-fit items-center gap-2 text-sm text-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
         <Icon name="link-simple" />
         {domainOf(idea.link)}
       </a>
