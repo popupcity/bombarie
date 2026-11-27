@@ -112,7 +112,7 @@ export const byWhom = (name: string | undefined, said: string): By | undefined =
 export const BY_PHOTO = 'size-8 rounded-lg';
 
 export const FIELD = 'rounded-lg bg-surface p-4 md:p-6 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
-export const BOX = 'flex cursor-text flex-col gap-4 rounded-lg bg-surface p-4 md:p-6 ring-1 ring-line ring-inset has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-0 has-[textarea:focus-visible]:outline-ink';
+export const BOX = 'flex cursor-text flex-col gap-8 rounded-lg bg-surface p-4 md:p-6 ring-1 ring-line ring-inset has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-0 has-[textarea:focus-visible]:outline-ink';
 export const BOX_TEXT = 'block w-full resize-none field-sizing-content bg-transparent leading-7 outline-none';
 export const BOX_MEDIA = 'group/media relative grid cursor-text grid-cols-3 items-start gap-3 sm:grid-cols-5 not-has-[li]:flex not-has-[li]:flex-wrap';
 export const ADD_TILE = 'transition flex aspect-square cursor-pointer text-sm [font-family:var(--font-control)] [font-weight:var(--weight-control)] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line-strong p-2 text-center group-not-has-[li]/media:aspect-auto group-not-has-[li]/media:h-10 group-not-has-[li]/media:w-fit group-not-has-[li]/media:flex-row group-not-has-[li]/media:px-4 group-not-has-[li]/media:py-0 text-ink-soft hover:border-ink-soft hover:text-ink';
