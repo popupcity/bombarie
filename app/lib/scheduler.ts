@@ -4,6 +4,7 @@ import { readPosts } from '../../src/posts.ts';
 import { remind } from '../../src/remind.ts';
 import { report } from '../../src/notify.ts';
 import { refreshFeeds } from '../../src/feed.ts';
+import { collectStats } from '../../src/stats.ts';
 import { tokensPath } from '../../src/secrets.ts';
 import { refreshThreadsTokens } from '../../src/threads.ts';
 import { run } from '../../src/run.ts';
@@ -23,6 +24,9 @@ async function tick(): Promise<void> {
   for (const post of posts) await rearm(deps.store, post.id, post);
   const outcomes = await run(posts, deps);
   await refreshFeeds(root, deps.channels, fetch, now);
+  void collectStats(root, deps.channels, deps.credentials, fetch, now).then((problems) => {
+    for (const problem of problems) console.error(`statistics: ${problem}`);
+  });
   await refreshThreadsTokens(tokensPath(), Object.entries(deps.channels).filter(([, channel]) => channel.platform === 'threads').map(([name]) => name), fetch, now);
   const told = await reportingOf(root, deps);
   if (!told) return;
