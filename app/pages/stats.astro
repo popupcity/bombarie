@@ -267,7 +267,7 @@ const split = (point: { date: string; value: number }): string =>
                               <span class="flex min-w-0 flex-1 flex-col gap-3">
                                 <span class:list={['line-clamp-2 text-sm break-words', !post.text && 'text-ink-faint']}>{post.text || 'No text.'}</span>
                                 <span class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
-                                  <span class="flex min-w-0 items-center"><span class="truncate">{post.type}</span><Icon name="dot" /><span class="shrink-0">{dayLabel(post.day)}</span></span>
+                                  <span class="flex min-w-0 items-center"><span class="truncate">{post.type}</span><Icon name="dot" weight="bold" /><span class="shrink-0">{dayLabel(post.day)}</span></span>
                                   <span class="flex shrink-0 items-baseline gap-1 tabular-nums">{standing.has(post.url) && <TopMark views={standing.get(post.url)!} class="self-center text-ink" />}<span class="text-base leading-4 text-ink">{number(post.value)}</span> {post.value === 1 ? ONE[sort] : SORT_LABELS[sort].toLowerCase()}</span>
                                 </span>
                               </span>

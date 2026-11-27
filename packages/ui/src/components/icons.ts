@@ -42,6 +42,7 @@ import list from '@phosphor-icons/core/assets/regular/list.svg?raw';
 import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?raw';
 import threadsLogo from '@phosphor-icons/core/assets/bold/threads-logo-bold.svg?raw';
 import uploadSimple from '@phosphor-icons/core/assets/regular/upload-simple.svg?raw';
+import dotBold from '@phosphor-icons/core/assets/bold/dot-bold.svg?raw';
 import downloadSimple from '@phosphor-icons/core/assets/regular/download-simple.svg?raw';
 import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
 import bell from '@phosphor-icons/core/assets/regular/bell.svg?raw';
@@ -109,7 +110,7 @@ export const icons = {
     trash,
     x
   },
-  bold: { 'arrow-right': arrowRightBold, check: checkBold, 'dots-three': dotsThreeBold, plus: plusBold, rss: rssBold.replace('viewBox="0 0 256 256"', 'viewBox="12 -12 256 256"'), x: xBold },
+  bold: { dot: dotBold.replace('viewBox="0 0 256 256"', 'viewBox="80 80 96 96"'), 'arrow-right': arrowRightBold, check: checkBold, 'dots-three': dotsThreeBold, plus: plusBold, rss: rssBold.replace('viewBox="0 0 256 256"', 'viewBox="12 -12 256 256"'), x: xBold },
   fill: { star: starFill, dot, 'threads-logo': threadsLogo, 'facebook-logo': facebook, 'instagram-logo': instagram, 'linkedin-logo': linkedin, 'substack-logo': substack }
 };
 
