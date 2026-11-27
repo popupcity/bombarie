@@ -71,7 +71,7 @@ export const RAIL_COOKIE = 'bombarie_rail';
 
 export const schemeOf = (value: string | undefined): 'light' | 'dark' | undefined => (value === 'light' || value === 'dark' ? value : undefined);
 
-export const HTML_CLASS = 'scheme-light-dark data-[scheme=light]:scheme-light data-[scheme=dark]:scheme-dark scroll-smooth bg-page text-[106.25%]';
+export const HTML_CLASS = 'scheme-light-dark data-[scheme=light]:scheme-light data-[scheme=dark]:scheme-dark scroll-smooth bg-page';
 
 export const plannedText = (manual: boolean, ago = 0): string => {
   if (!manual) return 'Posts by itself at the date.';

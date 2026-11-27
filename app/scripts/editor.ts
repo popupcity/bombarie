@@ -914,6 +914,7 @@ function init(root: HTMLElement) {
   async function postManually(): Promise<void> {
     const text = type === 'story' ? '' : textToPost();
     const shown = () => ($('manual-dialog') as HTMLDialogElement).showModal();
+    if (text) void navigator.clipboard.writeText(text).then(() => toast('Text copied.'), () => toast('The text could not be copied.', 'warn'));
     if (matchMedia('(pointer: coarse)').matches && pictures().length > 0 && navigator.canShare) {
       try {
         const files = await Promise.all(pictures().slice(0, 10).map(pictureFile));
@@ -927,8 +928,7 @@ function init(root: HTMLElement) {
       }
     }
     const url = root.dataset.compose;
-    if (text) void navigator.clipboard.writeText(text).then(() => toast('Text copied.'));
-    else if (pictures().length > 0) void copyFirstImage();
+    if (!text && pictures().length > 0) void copyFirstImage();
     if (url) window.open(url, '_blank', 'noopener');
     shown();
   }

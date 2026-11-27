@@ -3,6 +3,19 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
+test('text sizes come from the scale: 10, 12, 14, 16, 18, 20, 24 and 32 px, and 8 px for initials in a 16 px avatar', () => {
+  const walk = (dir: string): string[] => readdirSync(dir).flatMap((name) => (statSync(join(dir, name)).isDirectory() ? walk(join(dir, name)) : /\.(astro|ts)$/.test(name) ? [join(dir, name)] : []));
+  const found = walk('app')
+    .filter((file) => !file.endsWith('PlatformPreview.astro'))
+    .flatMap((file) => [...readFileSync(file, 'utf8').matchAll(/(?<![\w-])text-(?:[3-9]xl|\[[0-9.]+(?:px|rem|em|%)\])(?![\w-])/g)].map((match) => `${file} ${match[0]}`));
+  assert.deepEqual(found, ['app/components/PostChip.astro text-[8px]']);
+});
+
+test('the root font size is the browser default, so every text size is a whole step of the scale', () => {
+  assert.doesNotMatch(readFileSync('app/lib/ui.ts', 'utf8').match(/export const HTML_CLASS = .*/)![0], /(?<![\w-])text-(?:\[|xs|sm|base|lg|xl)/);
+  assert.doesNotMatch(readFileSync('app/styles/global.css', 'utf8'), /(?:html|:root)\s*\{[^}]*font-size/);
+});
+
 const files = (dir: string): string[] => readdirSync(dir).flatMap((name) => (statSync(join(dir, name)).isDirectory() ? files(join(dir, name)) : /\.(astro|ts)$/.test(name) ? [join(dir, name)] : []));
 const sources = files('app').map((file) => ({ file, lines: readFileSync(file, 'utf8').split('\n') }));
 
