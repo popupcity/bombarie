@@ -22,7 +22,7 @@ if (Astro.request.method === 'POST') {
   try {
     const link = values.link === '' ? undefined : cleanLink(values.link);
     const parts = values.title === '' && link ? titleFrom(link) : { title: values.title, ...(link && { link }), ...(values.text !== '' && { text: values.text }) };
-    const folder = await createIdea(root, content, { ...parts, ...(values.text !== '' && { text: values.text }), ...(link && { link }) });
+    const folder = await createIdea(root, content, { ...parts, ...(values.text !== '' && { text: values.text }), ...(link && { link }), by: Astro.locals.user });
     await attachPreview(root, content, folder);
     saved = folder;
   } catch (err) {

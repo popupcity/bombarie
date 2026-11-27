@@ -566,7 +566,7 @@ function init(root: HTMLElement) {
 
   function paintBy(name: string | undefined, status: PostStatus) {
     if (!statusButton || plan.dataset.recorded !== undefined) return;
-    const by = byWhom(name, status === 'planned' ? 'Planned' : 'Set to draft');
+    const by = byWhom(name, status === 'planned' ? 'Planned' : 'Draft');
     let photo = statusButton.querySelector('img');
     if (!by) return photo?.remove();
     if (!photo) {

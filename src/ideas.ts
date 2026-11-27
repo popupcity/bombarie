@@ -90,13 +90,13 @@ export function titleFrom(input: string): { title: string; text?: string; link?:
   return { title: first, ...body };
 }
 
-export async function createIdea(root: string, store: ContentStore, input: { title?: string; text?: string; link?: string; name?: string }, now = new Date()): Promise<string> {
+export async function createIdea(root: string, store: ContentStore, input: { title?: string; text?: string; link?: string; name?: string; by?: string | undefined }, now = new Date()): Promise<string> {
   const title = (input.title ?? '').trim();
   const slug = slugify(title) || slugify((input.name ?? '').replace(/\.[A-Za-z0-9]+$/, ''));
   if (!slug) throw new Error('give the idea a title with letters or numbers in it, or add an image');
   const link = input.link ? cleanLink(input.link) : undefined;
   const folder = freeFolder(new Set(ideaFolders(root)), `${ymd(now)}-`, slug);
-  const base = setFrontmatter('---\ntitle: x\n---\n\n', { title: title === '' ? undefined : title, ...(link && { link }) });
+  const base = setFrontmatter('---\ntitle: x\n---\n\n', { title: title === '' ? undefined : title, ...(link && { link }), ...(input.by && { statusBy: input.by }) });
   await store.create(`ideas/${folder}/${FILE}`, input.text ? withBody(base, input.text) : base);
   return folder;
 }

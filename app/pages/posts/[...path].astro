@@ -56,7 +56,7 @@ if (Astro.request.method === 'POST') {
   const intent = String(form.get('intent') ?? '');
   const at = (base: string) => `/posts/${encodeURIComponent(campaign.folder)}/${encodeURIComponent(base)}`;
   try {
-    if (intent === 'add') return Astro.redirect(at(await addVariant(root, content, campaign.folder, String(form.get('from') ?? ''), String(form.get('channel') ?? ''))), 303);
+    if (intent === 'add') return Astro.redirect(at(await addVariant(root, content, campaign.folder, String(form.get('from') ?? ''), String(form.get('channel') ?? ''), Astro.locals.user)), 303);
     if (intent === 'delete-file') {
       await removeUnusedFile(content, campaign.folder, String(form.get('file') ?? ''), campaign.variants.flatMap((other) => (other.fields.ok ? other.fields.images : [])));
       setFlash({ text: 'File deleted.', tone: 'ok' });
@@ -129,7 +129,7 @@ const choosing = pickable.length > 1;
 const planned = fields.ok && fields.status === 'planned';
 const statusBy = recorded
   ? byWhom(recorded.status === 'posted' || recorded.status === 'posting' ? recorded.by : undefined, 'Posted')
-  : byWhom(fields.ok ? fields.statusBy : undefined, planned ? 'Planned' : 'Set to draft');
+  : byWhom(fields.ok ? fields.statusBy : undefined, planned ? 'Planned' : 'Draft');
 const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (!planned && Boolean(connections[variant.channel]))));
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
 const videoOk = takesMedia(variant.platform, 'a.mp4');

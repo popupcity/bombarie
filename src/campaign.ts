@@ -231,7 +231,7 @@ export function lastChannel(root: string): string | undefined {
 export async function createPost(
   root: string,
   store: ContentStore,
-  input: { title: string; channels: string[]; day?: string; text?: string; link?: string; images?: { name: string; bytes: Uint8Array }[] },
+  input: { title: string; channels: string[]; day?: string; text?: string; link?: string; images?: { name: string; bytes: Uint8Array }[]; by?: string | undefined },
   now = new Date()
 ): Promise<{ folder: string; base: string }> {
   const channels = loadChannels(root);
@@ -245,7 +245,7 @@ export async function createPost(
   const folder = freeFolder(new Set(postFolders(root)), `${today}-`, slug);
   if (input.day !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(input.day)) throw new Error('that day is not a date');
   const when = input.day !== undefined ? `${input.day}T09:00` : `${ymd(now)}T${clock(now)}`;
-  const base = setFrontmatter(`---\ntitle: x\ndate: ${when}\n---\n\n`, { title: title === '' ? undefined : title, ...(input.link && { link: input.link }) });
+  const base = setFrontmatter(`---\ntitle: x\ndate: ${when}\n---\n\n`, { title: title === '' ? undefined : title, ...(input.link && { link: input.link }), ...(input.by && { statusBy: input.by }) });
   const text = input.text ? withBody(base, input.text) : base;
   const images = input.images ?? [];
   const withPictures = images.length > 0 ? withImages(text, images.map((image) => image.name)) : text;
@@ -271,7 +271,7 @@ function variantProblem(channels: ReturnType<typeof loadChannels>, name: string)
   if (resolved.type !== null && !VARIANT_TYPES[platform]?.includes(resolved.type)) throw new Error(`${PLATFORM_LABEL[platform]} has no ${resolved.type} variant`);
 }
 
-export async function addVariant(root: string, store: ContentStore, folder: string, from: string, name: string): Promise<string> {
+export async function addVariant(root: string, store: ContentStore, folder: string, from: string, name: string, by?: string): Promise<string> {
   const channels = loadChannels(root);
   variantProblem(channels, name);
   const resolved = resolveName(name, channels)!;
@@ -289,6 +289,7 @@ export async function addVariant(root: string, store: ContentStore, folder: stri
     if (images.length !== fields.images.length) text = withImages(text, images);
     if (platform !== 'linkedin' && splitThread(fields.body).some((part) => part.by)) text = withBody(text, joinThread(splitThread(fields.body).map((part) => ({ text: part.text }))));
   }
+  if (by && readFields(text).ok) text = setFrontmatter(text, { statusBy: by });
   await store.create(`posts/${folder}/${name}.md`, text);
   return name;
 }

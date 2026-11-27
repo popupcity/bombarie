@@ -51,7 +51,7 @@ if (Astro.request.method === 'POST') {
       chosen = [String(form.get('make') ?? '')];
       const images = await Promise.all(idea.images.map(async (name) => ({ name, bytes: (await content.readFile(`ideas/${folder}/${name}`)) ?? new Uint8Array() })));
       const link = cleanLink(fields.link);
-      const made = await createPost(root, content, { title: fields.title.trim() || ideaTitle(idea) || folder.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/-/g, ' '), channels: chosen, text: fields.text, ...(link && { link }), images: images.filter((image) => image.bytes.length > 0) });
+      const made = await createPost(root, content, { title: fields.title.trim() || ideaTitle(idea) || folder.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/-/g, ' '), channels: chosen, by: Astro.locals.user, text: fields.text, ...(link && { link }), images: images.filter((image) => image.bytes.length > 0) });
       await setIdeaStatus(root, content, folder, 'made', made.folder, Astro.locals.user);
       return Astro.redirect(postHref(`${made.folder}/${made.base}.md`), 303);
     } else if (intent !== 'save') error = 'Unknown action.';
@@ -66,7 +66,7 @@ const sizes = await photoSizes(readIdea(root, folder)?.images ?? [], root, 'idea
 const field = 'block w-full rounded-lg bg-surface p-4 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const tone = { new: 'warn', approved: 'info', made: 'ok' } as const;
 const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
-const statusBy = byWhom(idea.statusBy, idea.status === 'new' ? 'Reopened' : label[idea.status]);
+const statusBy = byWhom(idea.statusBy, label[idea.status]);
 ---
 
 <Shell title={idea.title || 'Untitled idea'}>

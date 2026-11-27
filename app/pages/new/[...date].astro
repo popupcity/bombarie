@@ -14,6 +14,6 @@ if (parts.length > (chosen ? 1 : 0)) return Astro.redirect('/new', 302);
 const last = lastChannel(root);
 const channel = chosen ?? (last && names.includes(last) ? last : names[0]);
 if (!channel) return Astro.redirect('/channels/new', 302);
-const made = await createPost(root, content, { title: '', channels: [channel], ...(day && { day }) });
+const made = await createPost(root, content, { title: '', channels: [channel], by: Astro.locals.user, ...(day && { day }) });
 return Astro.redirect(postHref(`${made.folder}/${made.base}.md`), 303);
 ---
