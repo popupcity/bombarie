@@ -1,6 +1,6 @@
 import type { Preview } from './preview.ts';
 import { sentence } from './text.ts';
-import { parseDate, whenLabel } from './time.ts';
+import { parseDate, whenLabel, ymd } from './time.ts';
 import type { Post } from './types.ts';
 
 export const LATE_AFTER_MS = 60 * 60_000;
@@ -24,7 +24,7 @@ export const postsNow = (args: { manual: boolean; connected: boolean; date: stri
   !args.manual && args.connected && args.date !== '' && parseDate(args.date).getTime() <= args.now.getTime();
 
 export const dateLabel = (date: string, planned: boolean, now: Date): string =>
-  !planned && parseDate(date).getTime() <= now.getTime() ? 'Now' : whenLabel(date);
+  !planned && date.slice(0, 10) === ymd(now) && parseDate(date).getTime() <= now.getTime() ? 'Now' : whenLabel(date);
 
 export interface Readiness {
   manual: boolean;

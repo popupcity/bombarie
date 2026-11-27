@@ -79,9 +79,10 @@ test('a draft with a date that has come posts now; a future date is planned', ()
   assert.equal(postsNow({ ...base, date: '2026-11-18T10:00', connected: false }), false);
 });
 
-test('a draft that posts now shows Now as its date, a planned one its time', () => {
+test('only a draft dated earlier today shows Now; another day and a planned post show their date', () => {
   const now = new Date('2026-11-20T09:00:00Z');
-  assert.equal(dateLabel('2026-11-18T10:00', false, now), 'Now');
-  assert.notEqual(dateLabel('2026-11-18T10:00', true, now), 'Now');
+  assert.equal(dateLabel('2026-11-20T09:30', false, now), 'Now');
+  assert.equal(dateLabel('2026-11-18T09:00', false, now), 'Wed 18 Nov, 09:00');
+  assert.notEqual(dateLabel('2026-11-20T09:30', true, now), 'Now');
   assert.notEqual(dateLabel('2026-11-25T10:00', false, now), 'Now');
 });
