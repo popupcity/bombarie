@@ -9,7 +9,7 @@ import type { CardModel } from '../../src/calendar.ts';
 import { whenLabel } from '../../src/time.ts';
 import { sentence } from '../../src/text.ts';
 import { coverLabel, isCover, mediaKind, PLATFORM_LABEL } from '../../src/types.ts';
-import { cardActions, OVERLAY, postHref } from '../lib/ui.ts';
+import { cardActions, FLOAT, postHref } from '../lib/ui.ts';
 import CardActions from './CardActions.astro';
 import ChannelMark from './ChannelMark.astro';
 import StatusBadge from './StatusBadge.astro';
@@ -25,7 +25,7 @@ const { movable, removable } = cardActions(card);
 const when = `${card.day}T${card.time}`;
 ---
 
-<div id={id} popover style={`position-anchor:--${id}`} class:list={[OVERLAY, 'm-0 w-96 max-w-[calc(100vw-32px)] rounded-xl bg-surface p-6 text-sm text-ink shadow-float ring-1 ring-line ring-inset [inset:auto] [left:anchor(left)] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]']}>
+<div id={id} popover style={`position-anchor:--${id}`} class:list={[FLOAT, 'w-96 max-w-[calc(100vw-32px)] p-6 [inset:auto] [left:anchor(left)] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]']}>
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-3">
       <Text variant="small" class="flex min-w-0 items-center gap-2 text-ink-soft">

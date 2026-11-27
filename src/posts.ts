@@ -5,7 +5,7 @@ import { resolveName } from './channels.ts';
 import { loadEntities } from './entities.ts';
 import { isRecord, splitFrontmatter } from './frontmatter.ts';
 import { expandWikilinks } from './mentions.ts';
-import { splitThread } from './parts.ts';
+import { allMedia, splitThread } from './parts.ts';
 import type { Entities } from './mentions.ts';
 import { isAutomatic } from './connect.ts';
 import { parseDate } from './time.ts';
@@ -42,11 +42,9 @@ export function parsePost({ id, folder, text, channel, type, platform, entities 
   if (typeof data.date !== 'string') throw new Error('date is required');
   const date = parseDate(data.date);
 
-  const images = data.media ?? [];
-  if (!Array.isArray(images) || images.some((i) => typeof i !== 'string')) {
-    throw new Error('media must be a list of file names');
-  }
-  for (const image of images as string[]) {
+  const [first, ...later] = splitThread(body);
+  const images = first?.images ?? [];
+  for (const image of allMedia(images, body)) {
     if (image.includes('/') || image.includes('\\') || image.startsWith('.')) {
       throw new Error(`image "${image}" must be a file in the post folder`);
     }
@@ -58,7 +56,6 @@ export function parsePost({ id, folder, text, channel, type, platform, entities 
 
   const forbidden = FORBIDDEN_BODY.find((token) => body.includes(token));
   if (forbidden) throw new Error(`the text contains "${forbidden}"; platforms show it literally`);
-  const [first, ...later] = splitThread(body);
   const expanded = expandWikilinks(first?.text ?? '', platform, entities);
   const replies = later.map((part) => expandWikilinks(part.text, platform, entities));
   const replyBy = later.map((part) => (part.by && part.by !== channel ? part.by : ''));
@@ -72,13 +69,14 @@ export function parsePost({ id, folder, text, channel, type, platform, entities 
     status,
     manual,
     date,
-    images: images as string[],
+    images,
     mentions: Object.assign({}, expanded.mentions, ...replies.map((reply) => reply.mentions)),
     ...(data.link !== undefined && { link: data.link }),
     ...(typeof data.title === 'string' && { title: data.title }),
     text: expanded.text,
     ...(replies.length > 0 && { replies: replies.map((reply) => reply.text) }),
-    ...(replyBy.some(Boolean) && { replyBy })
+    ...(replyBy.some(Boolean) && { replyBy }),
+    ...(later.some((part) => part.images) && { replyImages: later.map((part) => part.images ?? []) })
   };
 }
 

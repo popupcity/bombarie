@@ -75,14 +75,19 @@ A post file:
 date: 2026-12-01T09:00
 title: Launch
 status: planned
-media: [01.jpg]
 ---
 Opening today at [[Pop-Up City]].
+
+![](01.jpg)
 
 ---
 
 A reply, posted under the post on Threads.
+
+![](02.jpg)
 ```
+
+Files are standard markdown image lines under the text they belong to: the post or one reply.
 
 `status: planned` makes it due at `date`. Without it the post stays a draft. `manual: true` makes it a reminder only. The `.state.json` file next to a post is written by the app; deleting it makes the app forget that the post was posted.
 

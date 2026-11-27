@@ -1,4 +1,5 @@
 import { isSeq, parse, parseDocument } from 'yaml';
+import { joinFirst, splitFirst } from './parts.ts';
 import type { PostStatus } from './types.ts';
 
 export type Fields =
@@ -30,15 +31,16 @@ export function readFields(raw: string): Fields {
   try {
     const { data, body } = splitFrontmatter(raw);
     if (!isRecord(data)) return { ok: false, error: 'the properties at the top must be name: value lines', body };
+    const first = splitFirst(body);
     return {
       ok: true,
       date: typeof data.date === 'string' && LOCAL_DATE.test(data.date) ? data.date : '',
       manual: data.manual === true,
       status: data.status === 'planned' ? 'planned' : 'draft',
       ...(typeof data.by === 'string' && data.by !== '' && { by: data.by }),
-      images: Array.isArray(data.media) ? data.media.filter((item): item is string => typeof item === 'string') : [],
+      images: first.images,
       title: typeof data.title === 'string' ? data.title : '',
-      body
+      body: first.images.length > 0 ? joinFirst(first.text, [], first.rest) : body
     };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err), body: raw };
@@ -50,7 +52,14 @@ export const statusOfRaw = (raw: string): PostStatus => {
   return fields.ok ? fields.status : 'draft';
 };
 
-export const withBody = (raw: string, body: string): string => `${parts(raw).head}${body.replace(/\r\n/g, '\n').trim()}\n`;
+const written = (head: string, body: string): string => `${head}${body.replace(/\r\n/g, '\n').trim()}\n`;
+
+function compose(raw: string, body: string, images: string[]): string {
+  const next = splitFirst(body.replace(/\r\n/g, '\n'));
+  return written(parts(raw).head, joinFirst(next.text, [...images, ...next.images.filter((name) => !images.includes(name))], next.rest));
+}
+
+export const withBody = (raw: string, body: string): string => compose(raw, body, splitFirst(parts(raw).rest).images);
 
 export function setFrontmatter(raw: string, changes: Record<string, string | boolean | string[] | undefined>): string {
   const { head, rest } = parts(raw);
@@ -70,6 +79,9 @@ export function setFrontmatter(raw: string, changes: Record<string, string | boo
 
 export const withDate = (raw: string, date: string): string => (date === '' ? raw : setFrontmatter(raw, { date }));
 export const withManual = (raw: string, manual: boolean): string => setFrontmatter(raw, { manual: manual ? true : undefined });
-export const withImages = (raw: string, images: string[]): string => setFrontmatter(raw, { media: images });
+export function withImages(raw: string, images: string[]): string {
+  const current = splitFirst(parts(raw).rest);
+  return written(parts(raw).head, joinFirst(current.text, images, current.rest));
+}
 export const withTitle = (raw: string, title: string): string => setFrontmatter(raw, { title: title.trim() === '' ? undefined : title });
 export const withStatus = (raw: string, status: PostStatus): string => setFrontmatter(raw, { status });

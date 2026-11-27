@@ -87,12 +87,12 @@ test('renaming a file keeps its extension and updates every variant that lists i
   const { store, dir } = repo();
   await saveImage(store, folder, 'IMG_1.png', png(1));
   await saveImage(store, folder, 'other.png', png(2));
-  writeFileSync(join(dir, 'a.md'), '---\nmedia: [img-1.png, other.png]\n---\n');
-  writeFileSync(join(dir, 'b.md'), '---\nmedia: [other.png]\n---\n');
+  writeFileSync(join(dir, 'a.md'), '---\ntitle: A\n---\n![](img-1.png)\n![](other.png)\n\n---\n\nReply\n\n![](img-1.png)\n');
+  writeFileSync(join(dir, 'b.md'), '---\ntitle: B\n---\n![](other.png)\n');
   assert.equal(await renameImage(store, folder, 'img-1.png', 'Expo opening'), 'Expo opening.png');
   assert.equal(await renameImage(store, folder, 'Expo opening.png', 'hero'), 'hero.png');
-  assert.match(readFileSync(join(dir, 'a.md'), 'utf8'), /media: \[hero.png, other.png\]/);
-  assert.match(readFileSync(join(dir, 'b.md'), 'utf8'), /media: \[other.png\]/);
+  assert.equal(readFileSync(join(dir, 'a.md'), 'utf8'), '---\ntitle: A\n---\n![](hero.png)\n![](other.png)\n\n---\n\nReply\n\n![](hero.png)\n');
+  assert.equal(readFileSync(join(dir, 'b.md'), 'utf8'), '---\ntitle: B\n---\n![](other.png)\n');
   assert.deepEqual(readdirSync(dir).sort(), ['a.md', 'b.md', 'hero.png', 'other.png']);
   await assert.rejects(renameImage(store, folder, 'hero.png', 'other'), /already exists/);
   await assert.rejects(renameImage(store, folder, 'hero.png', '..'), /not usable/);

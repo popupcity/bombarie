@@ -64,6 +64,9 @@ export const threads: Provider = {
     if (post.type === 'story') issues.push('Threads has no stories');
     const replies = post.replies ?? [];
     if (replies.length > MAX_REPLIES) issues.push(`more than ${MAX_REPLIES} replies`);
+    if (post.replyImages?.some((names) => names.some(isDocument))) issues.push('Threads does not take a PDF in a reply');
+    if (post.replyImages?.some((names) => names.length > 1 && names.some(isVideo))) issues.push('a video in a reply cannot be combined with other files');
+    if (post.replyImages?.some((names) => names.length > MAX_ITEMS)) issues.push(`more than ${MAX_ITEMS} images in a reply`);
     replies.forEach((reply, index) => {
       if (reply === '') issues.push(`reply ${index + 1} is empty`);
       if (reply.length > MAX_CHARS) issues.push(`reply ${index + 1} is over ${MAX_CHARS} characters`);
@@ -79,24 +82,13 @@ export const threads: Provider = {
 
     let creation: string;
     if (clip) {
-      context.progress?.('Sending the video to Threads…');
-      creation = await container(context, user, token, { media_type: 'VIDEO', video_url: await context.publicVideo(clip), ...text }, 'video');
-      context.progress?.('Threads is processing the video…');
-      await ready(context, creation, token, true);
+      creation = await video(context, user, token, clip, text);
     } else if (post.images.length === 0) {
       creation = await container(context, user, token, { media_type: 'TEXT', ...text, ...(post.link ? { link_attachment: post.link } : {}) }, 'post');
       await ready(context, creation, token);
-    } else if (post.images.length === 1) {
-      context.progress?.('Sending the picture to Threads…');
-      creation = await container(context, user, token, { media_type: 'IMAGE', image_url: await context.publicImage(post.images[0] as string), ...text }, 'picture');
-      await ready(context, creation, token);
     } else {
-      context.progress?.('Sending the pictures to Threads…');
-      const children: string[] = [];
-      for (const path of post.images) children.push(await container(context, user, token, { media_type: 'IMAGE', image_url: await context.publicImage(path), is_carousel_item: 'true' }, 'carousel picture'));
-      for (const child of children) await ready(context, child, token);
-      creation = await container(context, user, token, { media_type: 'CAROUSEL', children: children.join(','), ...text }, 'carousel');
-      await ready(context, creation, token);
+      context.progress?.(post.images.length === 1 ? 'Sending the picture to Threads…' : 'Sending the pictures to Threads…');
+      creation = await pictures(context, user, token, post.images, text);
     }
 
     context.progress?.('Posting to Threads…');
@@ -113,24 +105,52 @@ export const threads: Provider = {
       url = undefined;
     }
     const replies = post.replies ?? [];
-    const done = await chain(context, user, token, id, replies, 0);
+    const done = await chain(context, user, token, id, replies, 0, post.replyImages);
     return { id, ...(url !== undefined && { url }), ...(done.warning !== undefined && { warning: `Posted, but ${done.warning}` }), ...(replies.length > 0 && { replies: { count: done.sent, ids: done.ids, ...(done.last !== undefined && { last: done.last }) } }) };
   },
 
   async reply(input, _channel, credentials, fetchImpl): Promise<ReplyResult> {
-    return chain({ fetch: fetchImpl } as SendContext, userOf(credentials), credentials.accessToken, input.last ?? input.remoteId, input.texts, input.offset);
+    const context = { fetch: fetchImpl, publicImage: input.publicImage, publicVideo: input.publicVideo } as SendContext;
+    return chain(context, userOf(credentials), credentials.accessToken, input.last ?? input.remoteId, input.texts, input.offset, input.images);
   }
 };
 
-async function chain(context: SendContext, user: string, token: string, from: string, texts: string[], offset: number): Promise<ReplyResult> {
+async function video(context: SendContext, user: string, token: string, path: string, params: Record<string, string>): Promise<string> {
+  context.progress?.('Sending the video to Threads…');
+  const created = await container(context, user, token, { media_type: 'VIDEO', video_url: await context.publicVideo(path), ...params }, 'video');
+  context.progress?.('Threads is processing the video…');
+  await ready(context, created, token, true);
+  return created;
+}
+
+async function pictures(context: SendContext, user: string, token: string, paths: string[], params: Record<string, string>): Promise<string> {
+  const one = paths.length === 1;
+  const made: string[] = [];
+  for (const path of paths) made.push(await container(context, user, token, { media_type: 'IMAGE', image_url: await context.publicImage(path), ...(one ? params : { is_carousel_item: 'true' }) }, one ? 'picture' : 'carousel picture'));
+  for (const id of made) await ready(context, id, token);
+  if (one) return made[0]!;
+  const carousel = await container(context, user, token, { media_type: 'CAROUSEL', children: made.join(','), ...params }, 'carousel');
+  await ready(context, carousel, token);
+  return carousel;
+}
+
+async function chain(context: SendContext, user: string, token: string, from: string, texts: string[], offset: number, images: string[][] = []): Promise<ReplyResult> {
   let parent = from;
   const ids: string[] = [];
   let sent = 0;
   for (const [index, text] of texts.entries()) {
     const label = `reply ${offset + index + 1}`;
     try {
-      const created = await container(context, user, token, { media_type: 'TEXT', text, reply_to_id: parent }, label);
-      await ready(context, created, token);
+      const attached = images[index] ?? [];
+      const params = { text, reply_to_id: parent };
+      let created: string;
+      const clip = attached.find(isVideo);
+      if (clip) created = await video(context, user, token, clip, params);
+      else if (attached.length > 0) created = await pictures(context, user, token, attached, params);
+      else {
+        created = await container(context, user, token, { media_type: 'TEXT', ...params }, label);
+        await ready(context, created, token);
+      }
       const published = await call(context, `${user}/threads_publish`, token, { creation_id: created }, label, true);
       if (typeof published.id !== 'string') throw new ProviderError(`Threads accepted ${label} but returned no id`, 'unconfirmed');
       parent = published.id;

@@ -246,6 +246,7 @@ export const linkedin: Provider = {
   validate(post: Post, channel: Channel): string[] {
     const replies = post.replies ?? [];
     const commentIssues = [
+      ...(post.replyImages ? ['a LinkedIn comment cannot take images from here'] : []),
       ...(replies.length > MAX_COMMENTS ? [`more than ${MAX_COMMENTS} comments`] : []),
       ...replies.flatMap((reply, index) => [...(reply === '' ? [`comment ${index + 1} is empty`] : []), ...(reply.length > MAX_COMMENT_CHARS ? [`comment ${index + 1} is over ${MAX_COMMENT_CHARS} characters`] : [])])
     ];

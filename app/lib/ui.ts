@@ -9,7 +9,9 @@ export const OVERLAY =
   'origin-top -translate-y-1 scale-98 opacity-0 ease-leave open:ease-pop transition-[opacity,scale,translate,overlay,display] transition-discrete open:translate-y-0 open:scale-100 open:opacity-100 starting:open:-translate-y-1 starting:open:scale-98 starting:open:opacity-0';
 export const DIALOG = `${OVERLAY} backdrop:opacity-0 backdrop:ease-leave open:backdrop:ease-pop backdrop:transition-[opacity,overlay,display] backdrop:transition-discrete open:backdrop:opacity-100 starting:open:backdrop:opacity-0`;
 
-export const MENU = `${OVERLAY} m-0 rounded-xl bg-surface p-2 text-sm text-ink shadow-float ring-1 ring-line ring-inset`;
+export const FLOAT = `${OVERLAY} mx-0 my-1 rounded-xl bg-surface text-sm text-ink shadow-float ring-1 ring-line ring-inset`;
+export const MENU = `${FLOAT} p-2`;
+export const PANEL = `${FLOAT} p-4`;
 const ROW = 'flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 
 export const MENU_ITEM = `${ROW} transition hover:bg-(--tone-hover)`;
@@ -108,6 +110,12 @@ export interface By {
 }
 export const byWhom = (name: string | undefined, said: string): By | undefined => (name ? { name, said: `${said} by ${name}` } : undefined);
 export const BY_PHOTO = 'size-8 rounded-lg';
+
+export const FIELD = 'rounded-lg bg-surface p-4 md:p-6 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+export const BOX = 'flex cursor-text flex-col gap-4 rounded-lg bg-surface p-4 md:p-6 ring-1 ring-line ring-inset has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-0 has-[textarea:focus-visible]:outline-ink';
+export const BOX_TEXT = 'block w-full resize-none field-sizing-content bg-transparent leading-7 outline-none';
+export const BOX_MEDIA = 'group/media relative grid cursor-text grid-cols-3 items-start gap-3 sm:grid-cols-5 not-has-[li]:flex not-has-[li]:flex-wrap';
+export const ADD_TILE = 'transition flex aspect-square cursor-pointer text-sm [font-family:var(--font-control)] [font-weight:var(--weight-control)] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line-strong p-2 text-center group-not-has-[li]/media:aspect-auto group-not-has-[li]/media:h-10 group-not-has-[li]/media:w-fit group-not-has-[li]/media:flex-row group-not-has-[li]/media:px-4 group-not-has-[li]/media:py-0 text-ink-soft hover:border-ink-soft hover:text-ink';
 
 export const WEEK_ROW = 'grid grid-cols-7 gap-1';
 

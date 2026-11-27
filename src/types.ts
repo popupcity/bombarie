@@ -63,6 +63,7 @@ export interface Post {
   text: string;
   replies?: string[];
   replyBy?: string[];
+  replyImages?: string[][];
 }
 
 export interface Credentials {
@@ -127,6 +128,6 @@ export interface Provider {
   send(post: Post, channel: Channel, credentials: Credentials, context: SendContext): Promise<SendResult>;
   remove?(remoteId: string, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<void>;
   removeReply?(input: { remoteId: string; replyId: string }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<void>;
-  reply?(input: { remoteId: string; texts: string[]; mentions?: Record<string, string>; by?: string[]; speaker?: (channel: string) => Promise<Speaker>; offset: number; last?: string }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<ReplyResult>;
+  reply?(input: { remoteId: string; texts: string[]; mentions?: Record<string, string>; by?: string[]; speaker?: (channel: string) => Promise<Speaker>; offset: number; last?: string; images?: string[][]; publicImage?: SendContext['publicImage']; publicVideo?: SendContext['publicVideo'] }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<ReplyResult>;
   refresh?(credentials: Credentials, fetchImpl: typeof fetch): Promise<Credentials>;
 }

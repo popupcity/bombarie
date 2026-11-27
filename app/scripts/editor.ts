@@ -12,9 +12,9 @@ import { coverLabel, isDocument, mediaKind, needsCover } from '../../src/types.t
 import { pdfCover } from './pdfcover.ts';
 import { videoCover } from './videocover.ts';
 import { PLATFORM_LABEL, type Platform, type PostStatus } from '../../src/types.ts';
-import { BY_PHOTO, byWhom, githubAvatar, plannedText, segmentLook } from '../lib/ui.ts';
+import { ADD_TILE, BOX, BOX_TEXT, BY_PHOTO, byWhom, githubAvatar, plannedText, segmentLook } from '../lib/ui.ts';
 import { autocomplete } from './autocomplete.ts';
-import { joinThread, splitThread } from '../../src/parts.ts';
+import { allMedia, joinThread, splitThread } from '../../src/parts.ts';
 import './datepicker.ts';
 import { h } from './dom.ts';
 import { movable, moving } from './motion.ts';
@@ -101,12 +101,7 @@ function init(root: HTMLElement) {
   const own = root.dataset.own ?? '';
   const authors = JSON.parse(root.dataset.authors ?? '[]') as { key: string; name: string; avatar?: string; usable: boolean }[];
   const authorOf = (key: string | undefined) => (key && key !== own ? authors.find((author) => author.key === key) : undefined);
-  const commentAuthors = (): (string | undefined)[] => {
-    const fields = readFields(raw);
-    return splitThread(fields.body)
-      .slice(1)
-      .map((part) => part.by);
-  };
+  const replyParts = () => splitThread(readFields(raw).body).slice(1);
 
   const spans = (segments: Preview['segments']): HTMLElement[] =>
     segments.map((segment) => {
@@ -119,10 +114,13 @@ function init(root: HTMLElement) {
     const comment = document.getElementById('preview-comment') as HTMLTemplateElement | null;
     document.getElementById('preview-replies')?.replaceChildren(
       ...(result.replies ?? []).map((segments, index) => {
-        if (!comment) return h('li', { class: 'flex flex-col gap-1' }, h('span', { class: 'text-xs text-ink-soft' }, `Reply ${index + 1}`), h('p', { class: 'text-sm break-words whitespace-pre-wrap' }, ...spans(segments)));
+        if (!comment) {
+          const pictures = replyParts()[index]?.images ?? [];
+          return h('li', { class: 'flex flex-col gap-1' }, h('span', { class: 'text-xs text-ink-soft' }, `Reply ${index + 1}`), h('p', { class: 'text-sm break-words whitespace-pre-wrap' }, ...spans(segments)), ...(pictures.length > 0 ? [h('div', { class: 'grid grid-cols-2 gap-1' }, ...pictures.map((name) => (needsCover(name) ? pdfPage(name, 'rounded-lg') : h('img', { 'data-photo': true, src: `/img/${encodeURIComponent(folder)}/${encodeURIComponent(name)}?w=640`, alt: '', class: 'block aspect-square w-full rounded-lg object-cover transition-opacity' }))))] : []));
+        }
         const item = comment.content.firstElementChild!.cloneNode(true) as HTMLElement;
         item.querySelector('[data-comment-text]')!.replaceChildren(...spans(segments));
-        const other = authorOf(commentAuthors()[index]);
+        const other = authorOf(replyParts()[index]?.by);
         if (other) {
           item.querySelector('[data-comment-name]')!.textContent = other.name;
           const face = item.querySelector('[data-comment-avatar]')!.firstElementChild!;
@@ -246,8 +244,8 @@ function init(root: HTMLElement) {
     if (!response.ok) {
       input.value = stem;
       const fields = readFields(raw);
-      const taken = fields.ok && unused(fields.images).some((other) => data.error?.startsWith(`${other} `));
-      toast(`${sentence(data.error ?? 'The file could not be renamed')}${taken ? ' See Unused in this post.' : ''}`, 'bad');
+      const taken = fields.ok && unused(allMedia(fields.images, fields.body)).some((other) => data.error?.startsWith(`${other} `));
+      toast(`${sentence(data.error ?? 'The file could not be renamed')}${taken ? ' It is among the unused files.' : ''}`, 'bad');
       return;
     }
     toastAfterReload(sentence(`Renamed to ${data.name}`), 'ok');
@@ -255,22 +253,56 @@ function init(root: HTMLElement) {
     location.reload();
   }
 
-  const unusedSection = document.querySelector<HTMLElement>('[data-unused]');
-  const sizes = JSON.parse(unusedSection?.dataset.sizes ?? '{}') as Record<string, { width?: number; height?: number }>;
-  const library = new Set<string>(JSON.parse(unusedSection?.dataset.files ?? '[]') as string[]);
+  const unusedMenu = document.getElementById('unused-menu');
+  const sizes = JSON.parse(unusedMenu?.dataset.sizes ?? '{}') as Record<string, { width?: number; height?: number }>;
+  const library = new Set<string>(JSON.parse(unusedMenu?.dataset.files ?? '[]') as string[]);
   const unused = (names: string[]): string[] => [...library].filter((name) => !names.includes(name));
 
+  let left: string[] = [];
+  let unusedFor: Element | undefined;
+  const usable = (reply: Element | undefined): string[] => (reply ? left.filter((name) => !isDocument(name)) : left);
+  const thumbSrc = (name: string, width: number) => `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(name) ? `${name}.cover.jpg` : name)}?w=${width}`;
+
   function renderUnused(names: string[] | null) {
-    if (!unusedSection) return;
-    const left = names ? unused(names) : [];
-    unusedSection.hidden = left.length === 0;
+    if (!unusedMenu) return;
+    left = names ? unused(names) : [];
+    const replyMedia = [...(replyBox?.querySelectorAll('[data-box-media] label') ?? [])].map((label) => [label.parentElement!, label.closest('[data-reply]')!] as const);
+    for (const [media, reply] of [[$('images'), undefined], ...replyMedia] as const) {
+      const found = usable(reply);
+      let trigger = media.querySelector<HTMLButtonElement>(':scope > [data-unused-trigger]');
+      if (found.length === 0) {
+        trigger?.remove();
+        continue;
+      }
+      if (!trigger) {
+        trigger = h('button', { type: 'button', 'data-unused-trigger': true, popovertarget: 'unused-menu', title: 'Files of this post that are not used', class: `${ADD_TILE} focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink` }) as HTMLButtonElement;
+        trigger.addEventListener('click', () => openUnused(trigger!, reply));
+        media.append(trigger);
+      }
+      const icon = h('span', { 'aria-hidden': 'true', class: 'inline-block size-5 shrink-0 [&>svg]:size-full' });
+      icon.innerHTML = icons.regular.images;
+      trigger.replaceChildren(icon, h('span', {}, `${found.length} unused`));
+    }
+    if (unusedMenu.matches(':popover-open')) fillUnused();
+  }
+
+  function openUnused(trigger: HTMLElement, reply: Element | undefined) {
+    for (const other of document.querySelectorAll<HTMLElement>('[data-unused-trigger]')) other.style.removeProperty('anchor-name');
+    trigger.style.setProperty('anchor-name', '--unused-menu');
+    unusedFor = reply;
+    fillUnused();
+  }
+
+  function fillUnused() {
+    const found = usable(unusedFor);
+    if (found.length === 0) unusedMenu?.hidePopover();
     const template = $<HTMLTemplateElement>('unused-tile');
     $('unused-list').replaceChildren(
-      ...left.map((name) => {
+      ...found.map((name) => {
         const tile = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
         const thumbnail = tile.querySelector<HTMLImageElement>('[data-unused-thumb]')!;
         if (sizes[name]?.width) Object.assign(thumbnail, sizes[name]);
-        thumbnail.src = `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(name) ? `${name}.cover.jpg` : name)}?w=512`;
+        thumbnail.src = thumbSrc(name, 256);
         const label = tile.querySelector<HTMLElement>('[data-unused-label]')!;
         label.hidden = !needsCover(name);
         if (needsCover(name)) label.textContent = coverLabel(`${name}.cover.jpg`);
@@ -287,30 +319,54 @@ function init(root: HTMLElement) {
     );
   }
 
+  const fileUrl = (name: string) => `/img/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`;
+  const thumbOf = (name: string) =>
+    needsCover(name)
+      ? pdfPage(name, 'cursor-zoom-in rounded-lg ring-1 ring-line', true)
+      : h('img', { 'data-photo': true, ...sizes[name], src: `${fileUrl(name)}?w=512`, alt: '', 'data-full': fileUrl(name), 'data-full-set': 'editor', class: 'block aspect-square w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line transition-opacity' });
+
+  function tileOf(name: string, index: number, count: number, moveTo: (from: number, to: number) => void, removeAt: (index: number) => void): HTMLElement {
+    const tile = $<HTMLTemplateElement>('image-tile').content.firstElementChild!.cloneNode(true) as HTMLElement;
+    tile.querySelector('[data-tile-thumb]')!.replaceWith(thumbOf(name));
+    tile.querySelector('[data-tile-name]')!.replaceWith(caption(name));
+    const previous = tile.querySelector<HTMLButtonElement>('[data-tile-prev]');
+    const following = tile.querySelector<HTMLButtonElement>('[data-tile-next]');
+    if (previous) previous.disabled = index === 0;
+    if (following) following.disabled = index === count - 1;
+    previous?.addEventListener('click', () => moveTo(index, index - 1));
+    following?.addEventListener('click', () => moveTo(index, index + 1));
+    tile.querySelector('[data-tile-remove]')?.addEventListener('click', () => removeAt(index));
+    return tile;
+  }
+
+  const replyImages = new WeakMap<Element, string[]>();
+  const imagesOf = (wrapper: Element): string[] => replyImages.get(wrapper) ?? [];
+
+  function setReplyImages(wrapper: Element, names: string[]) {
+    replyImages.set(wrapper, names);
+    paintReplyMedia(wrapper);
+    commitBody();
+    renderImages(readFields(raw));
+  }
+
+  function paintReplyMedia(wrapper: Element) {
+    const names = imagesOf(wrapper);
+    const reordered = (from: number, to: number) => {
+      const next = [...names];
+      next.splice(to, 0, ...next.splice(from, 1));
+      setReplyImages(wrapper, next);
+    };
+    wrapper.querySelector('[data-list]')?.replaceChildren(...names.map((name, index) => tileOf(name, index, names.length, reordered, (at) => setReplyImages(wrapper, names.filter((_, position) => position !== at)))));
+  }
+
   function renderImages(fields: Fields) {
     const names = fields.ok ? fields.images : [];
-    renderUnused(fields.ok ? names : null);
-    const full = (name: string) => `/img/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`;
-    const thumb = (name: string) =>
-      needsCover(name)
-        ? pdfPage(name, 'cursor-zoom-in rounded-lg ring-1 ring-line', true)
-        : h('img', { 'data-photo': true, ...sizes[name], src: `${full(name)}?w=512`, alt: '', 'data-full': full(name), 'data-full-set': 'editor', class: 'block aspect-square w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line transition-opacity' });
-    const template = $<HTMLTemplateElement>('image-tile');
+    renderUnused(fields.ok ? allMedia(names, fields.body) : null);
     $('image-list').replaceChildren(
       ...names.map((name, index) => {
-        const tile = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
-        const thumbNode = tile.querySelector('[data-tile-thumb]')!;
-        thumbNode.replaceWith(thumb(name));
-        tile.querySelector('[data-tile-name]')!.replaceWith(caption(name));
-        const previous = tile.querySelector<HTMLButtonElement>('[data-tile-prev]');
-        const following = tile.querySelector<HTMLButtonElement>('[data-tile-next]');
-        if (previous) previous.disabled = index === 0;
-        if (following) following.disabled = index === names.length - 1;
-        previous?.addEventListener('click', () => move(index, index - 1));
-        following?.addEventListener('click', () => move(index, index + 1));
-        tile.querySelector('[data-tile-remove]')?.addEventListener('click', () => {
+        const tile = tileOf(name, index, names.length, move, (at) => {
           const current = readFields(raw);
-          if (current.ok) setImages(current.images.filter((_, position) => position !== index));
+          if (current.ok) setImages(current.images.filter((_, position) => position !== at));
         });
         const handle = tile.querySelector<HTMLElement>('[data-full]')!;
         handle.draggable = true;
@@ -375,10 +431,10 @@ function init(root: HTMLElement) {
     renderImages(readFields(raw));
   };
 
-  async function addImages(files: File[]) {
+  async function addImages(files: File[], reply?: Element) {
     const added: string[] = [];
     const failed: string[] = [];
-    const strip = $('image-list');
+    const strip = reply?.querySelector<HTMLElement>('[data-list]') ?? $('image-list');
     const tiles = files.map((file) => uploadTile(strip, file.name));
     for (const [index, file] of files.entries()) {
       const tile = tiles[index];
@@ -401,7 +457,8 @@ function init(root: HTMLElement) {
       tile?.remove();
     }
     const fields = readFields(raw);
-    if (added.length > 0 && fields.ok) setImages([...fields.images, ...added.filter((name) => !fields.images.includes(name))]);
+    if (added.length > 0 && fields.ok && reply) setReplyImages(reply, [...imagesOf(reply), ...added.filter((name) => !imagesOf(reply).includes(name))]);
+    else if (added.length > 0 && fields.ok) setImages([...fields.images, ...added.filter((name) => !fields.images.includes(name))]);
     else if (added.length > 0) failed.push('Fix the properties first, then add the images again.');
     if (failed.length > 0) toast(failed.join('; '), 'bad');
     if (added.length === 0) update();
@@ -412,7 +469,10 @@ function init(root: HTMLElement) {
     if (!button?.dataset.useImage) return;
     const fields = readFields(raw);
     if (!fields.ok) return toast('Fix the properties first, then add the image again.', 'bad');
-    if (!fields.images.includes(button.dataset.useImage)) setImages([...fields.images, button.dataset.useImage]);
+    const name = button.dataset.useImage;
+    unusedMenu?.hidePopover();
+    if (unusedFor) setReplyImages(unusedFor, [...imagesOf(unusedFor), name]);
+    else if (!fields.images.includes(name)) setImages([...fields.images, name]);
   });
 
   function problems(lines: string[]) {
@@ -511,7 +571,7 @@ function init(root: HTMLElement) {
     const showCopy = byHand(fields) && type !== 'story';
     const copyText = document.getElementById('copy-text');
     if (copyText) copyText.hidden = !showCopy;
-    body.classList.toggle('pr-14', showCopy);
+    body.classList.toggle('pr-8', showCopy);
     const dialogImage = document.getElementById('manual-copy-image');
     if (dialogImage && fields.ok) dialogImage.hidden = fields.images.every(needsCover);
     body.hidden = type === 'story' && fields.ok && !fields.manual;
@@ -656,8 +716,9 @@ function init(root: HTMLElement) {
   const commitBody = () => {
     const first = fromEdit(body.value, entities);
     const later = replyAreas().map((area) => {
-      const by = area.closest<HTMLElement>('[data-reply]')?.dataset.by;
-      return { text: fromEdit(area.value, entities), ...(by && { by }) };
+      const wrapper = area.closest<HTMLElement>('[data-reply]')!;
+      const by = wrapper.dataset.by;
+      return { text: fromEdit(area.value, entities), ...(by && { by }), images: imagesOf(wrapper) };
     });
     edit(withBody(raw, replyBox ? joinThread([{ text: first }, ...later]) : first));
   };
@@ -672,6 +733,8 @@ function init(root: HTMLElement) {
       if (index >= repliesSent) continue;
       wrapper.querySelector('textarea')?.setAttribute('readonly', '');
       wrapper.querySelector<HTMLButtonElement>('[popovertarget]')?.setAttribute('disabled', '');
+      wrapper.querySelector('[data-box-media] label')?.remove();
+      for (const button of wrapper.querySelectorAll<HTMLElement>('[data-tile] button:not([title="Rename"])')) button.hidden = true;
     }
   }
   function refreshRepliesButton() {
@@ -759,9 +822,9 @@ function init(root: HTMLElement) {
       commitBody();
     });
 
-  function addReplyField(text: string, by?: string): HTMLTextAreaElement {
+  function addReplyField(text: string, by?: string, images: string[] = []): HTMLTextAreaElement {
     replyCounter += 1;
-    const area = h('textarea', { id: `reply-${replyCounter}`, rows: '4', placeholder: 'Write the reply. Type @ to mention.', 'aria-label': 'Reply', class: `${body.className.replace(/\bpr-14\b/, '').replace(/\bmin-h-56\b/, 'min-h-32')} pr-14` }) as HTMLTextAreaElement;
+    const area = h('textarea', { id: `reply-${replyCounter}`, rows: '4', placeholder: 'Write the reply. Type @ to mention.', 'aria-label': 'Reply', class: `${BOX_TEXT} min-h-16 pr-8 text-lg` }) as HTMLTextAreaElement;
     area.value = text;
     const remove = ($<HTMLTemplateElement>('reply-remove').content.firstElementChild as HTMLElement).cloneNode(true) as HTMLElement;
     remove.addEventListener('click', () => {
@@ -770,14 +833,25 @@ function init(root: HTMLElement) {
       moving(() => {
         wrapper.remove();
         commitBody();
+        renderImages(readFields(raw));
       });
     });
     const name = h('p', { 'data-reply-name': '', class: 'self-center text-sm text-ink-soft md:self-start' });
-    const wrapper = h('div', { 'data-reply': '', class: 'grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2' }, replyFace(), name, h('div', { class: 'relative col-span-2 md:col-span-1 md:col-start-2' }, area, remove));
+    const media = ($('reply-media') as HTMLTemplateElement | null)?.content.firstElementChild?.cloneNode(true) as HTMLElement | undefined;
+    const box = h('div', { 'data-box': true, class: `${BOX} relative col-span-2 md:col-span-1 md:col-start-2` }, h('div', { class: 'relative' }, area), ...(media ? [media] : []), remove);
+    const wrapper = h('div', { 'data-reply': '', class: 'grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2' }, replyFace(), name, box);
+    const picker = media?.querySelector('input');
+    picker?.addEventListener('change', () => {
+      void addImages([...(picker.files ?? [])], wrapper);
+      picker.value = '';
+    });
+    for (const node of media?.querySelectorAll('[id]') ?? []) node.removeAttribute('id');
+    replyImages.set(wrapper, images);
     if (by && by !== own) wrapper.dataset.by = by;
     movable(wrapper, `reply-${replyCounter}`);
     paintAuthor(wrapper);
     replyBox?.append(wrapper);
+    paintReplyMedia(wrapper);
     autocomplete(area, 'at', entities, platform);
     area.addEventListener('input', commitBody);
     return area;
@@ -790,14 +864,16 @@ function init(root: HTMLElement) {
     const [first, ...later] = splitThread(text);
     body.value = toEdit(first?.text ?? '', entities);
     replyBox.replaceChildren();
-    for (const part of later) addReplyField(toEdit(part.text, entities), part.by);
+    for (const part of later) addReplyField(toEdit(part.text, entities), part.by, part.images);
     lockSentReplies();
   }
   body.addEventListener('input', commitBody);
   function addComment(by?: string) {
     moving(() => {
-      addReplyField('', by).focus();
+      const area = addReplyField('', by);
       commitBody();
+      renderImages(readFields(raw));
+      area.focus();
     });
   }
   const addReply = document.getElementById('add-reply');
@@ -861,6 +937,11 @@ function init(root: HTMLElement) {
   root.addEventListener('dragover', (event) => {
     if (mode === 'edit' && carriesFiles(event)) event.preventDefault();
   });
+  const replyTarget = (from: Element | null): Element | undefined => {
+    const wrapper = from?.closest('[data-reply]');
+    return wrapper?.querySelector('[data-box-media] label') ? wrapper : undefined;
+  };
+  const addTo = (files: File[], reply: Element | undefined) => void addImages(reply ? files.filter((file) => file.type !== 'application/pdf') : files, reply);
   const droppable = (file: File): boolean => file.type.startsWith('image/') || $<HTMLInputElement>('image-input').accept.split(',').includes(file.type);
   root.addEventListener('drop', (event) => {
     depth = 0;
@@ -868,14 +949,14 @@ function init(root: HTMLElement) {
     if (mode !== 'edit') return;
     event.preventDefault();
     const files = [...(event.dataTransfer?.files ?? [])].filter(droppable);
-    if (files.length > 0) void addImages(files);
+    if (files.length > 0) addTo(files, replyTarget(event.target as Element));
   });
   document.addEventListener('paste', (event) => {
     if (mode !== 'edit') return;
     const pasted = [...(event.clipboardData?.files ?? [])].filter(droppable);
     if (pasted.length === 0) return;
     event.preventDefault();
-    void addImages(pasted);
+    addTo(pasted, replyTarget(document.activeElement));
   });
 
   const pictures = (): string[] => {

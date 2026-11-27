@@ -174,3 +174,27 @@ test('a later reply continues the chain from the last reply sent', async () => {
   assert.equal(calls.find((c) => c.url.endsWith('/threads'))?.body.reply_to_id, 'r9');
   assert.ok(typeof result.last === 'string' && result.last !== 'r9');
 });
+
+test('a reply with one image is an IMAGE reply, with more a CAROUSEL under the same parent', async () => {
+  const { calls, context } = setup();
+  await threads.send(post({ replies: ['One.', 'Two.'], replyImages: [['a.jpg'], ['b.jpg', 'c.jpg']] }), channel, credentials, context);
+  const made = calls.filter((c) => c.url.endsWith('/threads')).map((c) => c.body);
+  assert.deepEqual([made[1]?.media_type, made[1]?.text, made[1]?.reply_to_id, made[1]?.image_url], ['IMAGE', 'One.', 'm1', 'https://x.test/public/a.jpg']);
+  assert.deepEqual(made.slice(2, 4).map((body) => [body.is_carousel_item, body.reply_to_id]), [['true', undefined], ['true', undefined]]);
+  assert.deepEqual([made[4]?.media_type, made[4]?.text, made[4]?.reply_to_id, made[4]?.children], ['CAROUSEL', 'Two.', 'm1', 'c3,c4']);
+});
+
+test('a reply takes images or one video, no PDF, and a reply added later gets the files that belong to it', async () => {
+  const issues = (names: string[]) => threads.validate(post({ replies: ['x'], replyImages: [names] }), channel);
+  assert.deepEqual([issues(['a.mp4']), issues(['a.mp4', 'b.jpg']), issues(['a.pdf'])], [[], ['a video in a reply cannot be combined with other files'], ['Threads does not take a PDF in a reply']]);
+  const { calls, context } = setup();
+  await threads.reply!({ remoteId: 'r9', texts: ['Later.'], offset: 1, images: [['late.jpg']], publicImage: context.publicImage }, channel, credentials, context.fetch);
+  assert.equal(calls[0]?.body.image_url, 'https://x.test/public/late.jpg');
+});
+
+test('a reply with a video is a VIDEO reply under its parent', async () => {
+  const { calls, context } = setup();
+  await threads.send(post({ replies: ['Watch.'], replyImages: [['clip.mp4']] }), channel, credentials, context);
+  const made = calls.filter((c) => c.url.endsWith('/threads')).map((c) => c.body);
+  assert.deepEqual([made[1]?.media_type, made[1]?.video_url, made[1]?.reply_to_id, made[1]?.text], ['VIDEO', 'https://x.test/public/clip.mp4', 'm1', 'Watch.']);
+});

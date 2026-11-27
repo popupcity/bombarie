@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fitsSlug, freeFolder, slugify } from './campaign.ts';
 import type { ContentStore } from './content-store.ts';
+import { splitMedia } from './parts.ts';
 import { isRecord, setFrontmatter, splitFrontmatter, withBody, withImages } from './frontmatter.ts';
 import { ymd } from './time.ts';
 
@@ -47,10 +48,10 @@ function parseIdea(folder: string, raw: string): Idea {
   return {
     folder,
     title: typeof fields.title === 'string' ? fields.title.trim() : '',
-    text: body.trim(),
+    text: splitMedia(body).text,
     status,
     ...(typeof fields.by === 'string' && fields.by !== '' && { by: fields.by }),
-    images: Array.isArray(fields.media) ? fields.media.filter((item): item is string => typeof item === 'string') : [],
+    images: splitMedia(body).images,
     ...(typeof fields.link === 'string' && fields.link !== '' && { link: fields.link }),
     ...(typeof fields.linkTitle === 'string' && fields.linkTitle !== '' && { linkTitle: fields.linkTitle }),
     ...(typeof fields.linkSite === 'string' && fields.linkSite !== '' && { linkSite: fields.linkSite }),

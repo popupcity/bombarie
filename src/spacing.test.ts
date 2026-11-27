@@ -28,6 +28,7 @@ const GAP = TOKEN('gap(?:-[xy])?-(\\d+)');
 const GAPS = new Set(['0', '1', '2', '3', '4', '8', '12']);
 
 const MARGINS = new Set([
+  'lib/ui.ts',
   'components/ChoiceMenu.astro',
   'components/DeleteDialog.astro',
   'components/CardActions.astro',

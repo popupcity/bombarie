@@ -287,7 +287,9 @@ export async function addVariant(root: string, store: ContentStore, folder: stri
     const kept = fields.images.filter((image) => takesMedia(platform, image));
     const images = resolved.type === 'story' ? kept.slice(0, 1) : kept;
     if (images.length !== fields.images.length) text = withImages(text, images);
-    if (platform !== 'linkedin' && splitThread(fields.body).some((part) => part.by)) text = withBody(text, joinThread(splitThread(fields.body).map((part) => ({ text: part.text }))));
+    const thread = splitThread(fields.body);
+    if (thread.some((part) => (part.by && platform !== 'linkedin') || (part.images && platform !== 'threads')))
+      text = withBody(text, joinThread(thread.map((part) => ({ text: part.text, ...(platform === 'linkedin' && part.by && { by: part.by }), ...(platform === 'threads' && part.images && { images: part.images }) }))));
   }
   if (by && readFields(text).ok) text = setFrontmatter(text, { by });
   await store.create(`posts/${folder}/${name}.md`, text);

@@ -75,7 +75,7 @@ const save = (root: string, base: string, raw: string, now = new Date('2026-11-1
 test('saving writes exactly the text it is given and returns the new revision and the problems', async () => {
   const root = repo();
   const before = variantOf(root, 'jeroen-linkedin');
-  const raw = '---\n# keep\ndate: 2026-11-21T09:15\nmedia: [ a.jpg ]\n---\nNieuw met [[Onbekend]]';
+  const raw = '---\n# keep\ndate: 2026-11-21T09:15\n---\nNieuw met [[Onbekend]]\n\n![](a.jpg)';
   const after = await save(root, 'jeroen-linkedin', raw);
   assert.equal(readFileSync(join(root, 'posts', FILE, 'jeroen-linkedin.md'), 'utf8'), raw);
   assert.notEqual(after.revision, before.revision);
@@ -210,4 +210,15 @@ test('a status change remembers who made it, other saves keep the name, and a ne
   assert.doesNotMatch(readFileSync(join(root, 'posts', folder, 'insta.md'), 'utf8'), /status/);
   await save(draft);
   assert.doesNotMatch(file(), /^by:/m);
+});
+
+test('images of a reply go along to a Threads variant and not to LinkedIn', async () => {
+  const root = repo();
+  const folder = '2026-11-20-expo';
+  writeFileSync(join(root, 'channels.yml'), 'pop-threads:\n  platform: threads\njeroen-linkedin:\n  platform: linkedin\n  kind: person\n');
+  writeFileSync(join(root, 'posts', folder, 'pop-threads.md'), '---\ndate: 2026-11-20T10:30\n---\nPost\n\n---\n\nReply\n\n![](r.jpg)\n');
+  rmSync(join(root, 'posts', folder, 'jeroen-linkedin.md'));
+  await addVariant(root, fileContentStore(root), folder, 'pop-threads', 'jeroen-linkedin');
+  assert.equal(readFileSync(join(root, 'posts', folder, 'jeroen-linkedin.md'), 'utf8').includes('r.jpg'), false);
+  assert.match(readFileSync(join(root, 'posts', folder, 'jeroen-linkedin.md'), 'utf8'), /Reply/);
 });

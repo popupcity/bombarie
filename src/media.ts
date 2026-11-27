@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { ContentStore } from './content-store.ts';
-import { readFields, withImages } from './frontmatter.ts';
+import { renameMedia } from './parts.ts';
 
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export const MAX_DOCUMENT_BYTES = 50 * 1024 * 1024;
@@ -83,9 +83,9 @@ export async function renameImage(store: ContentStore, folder: string, from: str
   for (const file of files.filter((name) => name.endsWith('.md'))) {
     const current = await store.read(`posts/${folder}/${file}`);
     if (!current) continue;
-    const fields = readFields(current.text);
-    if (!fields.ok || !fields.images.includes(from)) continue;
-    await store.write(`posts/${folder}/${file}`, withImages(current.text, fields.images.map((name) => (name === from ? to : name))), current.revision);
+    const next = renameMedia(current.text, from, to);
+    if (next === current.text) continue;
+    await store.write(`posts/${folder}/${file}`, next, current.revision);
   }
   return to;
 }

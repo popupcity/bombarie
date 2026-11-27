@@ -1,8 +1,9 @@
+import { joinThread, splitThread } from './parts.ts';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { statusOfRaw, readFields, withBody, withDate, withImages, withManual, withTitle, withStatus } from './frontmatter.ts';
 
-const raw = '---\nstatus: draft\ndate: 2026-11-20T10:30\nmedia: [a.jpg]\n---\nOld text\n';
+const raw = '---\nstatus: draft\ndate: 2026-11-20T10:30\n---\nOld text\n\n![](a.jpg)\n';
 
 test('view reads the fields the editor shows', () => {
   assert.deepEqual(readFields(raw), { ok: true, date: '2026-11-20T10:30', manual: false, status: 'draft', images: ['a.jpg'], title: '', body: 'Old text' });
@@ -28,7 +29,7 @@ test('edits go through the text and keep everything else', () => {
   text = withManual(text, true);
   text = withStatus(text, 'planned');
   text = withBody(text, 'New text');
-  assert.equal(text, '---\nstatus: planned\ndate: 2026-11-21T09:15\nmedia: [a.jpg]\nmanual: true\n---\nNew text\n');
+  assert.equal(text, '---\nstatus: planned\ndate: 2026-11-21T09:15\nmanual: true\n---\nNew text\n\n![](a.jpg)\n');
   assert.equal(withManual(text, false).includes('manual'), false);
   assert.equal(withDate(raw, ''), raw);
 });
@@ -39,12 +40,15 @@ test('statusOfRaw is draft for anything it cannot read', () => {
   assert.equal(statusOfRaw('---\ndate: x\n---\nX'), 'draft');
 });
 
-test('the image list starts as a flow list, keeps a block list and disappears when empty', () => {
-  assert.match(withImages(raw, ['b.jpg', 'a.jpg']), /\nmedia: \[b\.jpg, a\.jpg\]\n/);
-  const block = '---\ndate: 2026-11-20T10:30\nmedia:\n  - a.jpg\n---\nX\n';
-  assert.match(withImages(block, ['a.jpg', 'c.jpg']), /\nmedia:\n {2}- a\.jpg\n {2}- c\.jpg\n/);
-  assert.match(withImages('---\ndate: 2026-11-20T10:30\n---\nX\n', ['a.jpg']), /\nmedia: \[a\.jpg\]\n---/);
-  assert.equal(withImages(raw, []).includes('media'), false);
+test('the files of a post are lines under its text, and the files of a reply stay with the reply', () => {
+  const thread = '---\ndate: 2026-11-20T10:30\n---\nPost\n\n![](a.jpg)\n\n---\n\nReply\n\n![](<b c.jpg>)\n';
+  const read = readFields(thread);
+  assert.deepEqual(read.ok && [read.images, read.body], [['a.jpg'], 'Post\n\n---\n\nReply\n\n![](<b c.jpg>)']);
+  assert.deepEqual(splitThread(read.body).map((part) => [part.text, part.images]), [['Post', undefined], ['Reply', ['b c.jpg']]]);
+  assert.equal(withImages(thread, ['d.png', 'a.jpg']), '---\ndate: 2026-11-20T10:30\n---\nPost\n\n![](d.png)\n![](a.jpg)\n\n---\n\nReply\n\n![](<b c.jpg>)\n');
+  assert.equal(withImages(thread, []).startsWith('---\ndate: 2026-11-20T10:30\n---\nPost\n\n---\n'), true);
+  assert.equal(withBody(thread, joinThread([{ text: 'New' }, { text: 'Reply', images: ['b c.jpg'] }])), thread.replace('Post', 'New'));
+  assert.equal(withImages('---\ndate: 2026-11-20T10:30\n---\n', ['a.jpg']), '---\ndate: 2026-11-20T10:30\n---\n![](a.jpg)\n');
 });
 
 test('the title is written in place, trimmed away when empty, and quoted when YAML needs it', () => {
@@ -56,10 +60,10 @@ test('the title is written in place, trimmed away when empty, and quoted when YA
 });
 
 test('withBody keeps the frontmatter byte for byte and only changes the body', () => {
-  const raw = '---\nstatus: draft\ndate: 2026-11-20T10:30\nmedia: [a.jpg]\n---\nOld\n';
+  const raw = '---\nstatus: draft\ndate: 2026-11-20T10:30\n---\nOld\n\n![](a.jpg)\n';
   assert.equal(
     withBody(raw, '  New text\r\nsecond line  '),
-    '---\nstatus: draft\ndate: 2026-11-20T10:30\nmedia: [a.jpg]\n---\nNew text\nsecond line\n'
+    '---\nstatus: draft\ndate: 2026-11-20T10:30\n---\nNew text\nsecond line\n\n![](a.jpg)\n'
   );
   assert.throws(() => withBody('no frontmatter', 'x'), /no properties at the top/);
   assert.throws(() => withBody('---\nopen\n', 'x'), /not closed/);

@@ -21,7 +21,7 @@ import ConfirmDialog from '../../components/ConfirmDialog.astro';
 import Field from '../../components/Field.astro';
 import Section from '../../components/Section.astro';
 import { content, root } from '../../lib/data.ts';
-import { postHref, CARET, byWhom } from '../../lib/ui.ts';
+import { postHref, CARET, byWhom, BOX, BOX_MEDIA, BOX_TEXT } from '../../lib/ui.ts';
 import { photoSizes } from '../../lib/photo.ts';
 import TitleField from '../../components/TitleField.astro';
 import Shell from '../../layouts/Shell.astro';
@@ -63,7 +63,6 @@ if (Astro.request.method === 'POST') {
 }
 
 const sizes = await photoSizes(readIdea(root, folder)?.images ?? [], root, 'ideas', folder);
-const field = 'block w-full rounded-lg bg-surface p-4 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const tone = { new: 'warn', approved: 'info', made: 'ok' } as const;
 const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
 const statusBy = byWhom(idea.by, label[idea.status]);
@@ -102,20 +101,20 @@ const statusBy = byWhom(idea.by, label[idea.status]);
               )
             }
             <Field label="Notes" for="text">
-              <textarea id="text" name="text" rows="8" class={field}>{idea.text}</textarea>
+              <div data-box class={BOX}>
+                <textarea id="text" name="text" rows="1" class:list={[BOX_TEXT, 'min-h-32']}>{idea.text}</textarea>
+                <div data-box-media class={BOX_MEDIA}>
+                  <ul id="idea-uploading" class="contents">
+                    {
+                      idea.images.map((name) => (
+                        <ImageTile src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}?w=512`} full={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`} name={name} removeName={name} size={sizes[name]} />
+                      ))
+                    }
+                  </ul>
+                  <Dropzone inputId="idea-image-input" accept="image/jpeg,image/png,image/gif,image/webp" title="Add images" />
+                </div>
+              </div>
             </Field>
-            </div>
-            <div class="flex flex-col gap-4">
-            <div class="grid grid-cols-2 items-start gap-4 sm:grid-cols-4">
-            <ul id="idea-uploading" class="contents">
-              {
-                idea.images.map((name) => (
-                  <ImageTile src={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}?w=512`} full={`/img/ideas/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`} name={name} removeName={name} size={sizes[name]} />
-                ))
-              }
-            </ul>
-            <Dropzone inputId="idea-image-input" accept="image/jpeg,image/png,image/gif,image/webp" title="Add images" />
-            </div>
             </div>
           </div>
         </Section>
@@ -164,6 +163,7 @@ const statusBy = byWhom(idea.by, label[idea.status]);
   <Fragment slot="after">
     <script>
       import '../../scripts/idea-images.ts';
+      import '../../scripts/box.ts';
       import '../../scripts/idea-autosave.ts';
     </script>
   </Fragment>

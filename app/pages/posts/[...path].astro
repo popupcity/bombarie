@@ -4,6 +4,7 @@ import Card from '@popupcity/ui/src/components/Card.astro';
 import Heading from '@popupcity/ui/src/components/Heading.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
 import { removeUnusedFile } from '../../../src/media.ts';
+import { allMedia } from '../../../src/parts.ts';
 import { COMPOSE_URL, PLATFORM_LABEL, isMedia, takesMedia } from '../../../src/types.ts';
 import { dateLabel, postsNow } from '../../../src/plan.ts';
 import { clock, whenLabel, ymd } from '../../../src/time.ts';
@@ -35,7 +36,7 @@ import { telegramOf } from '../../lib/telegram.ts';
 import { content, deleteFromPlatform, loadConnections, markPosted, outcomeWording, postRepliesNow, root, setFlash, startPostNow, states, takeFlash, unmarkPosted } from '../../lib/data.ts';
 import { forgetOutcome, lastOutcome } from '../../../src/progress.ts';
 import { isAutomatic } from '../../../src/connect.ts';
-import { jsonForScript, plannedText, CHIP, MENU, MENU_ITEM, CARET, SEGMENT, SEGMENTS, byWhom } from '../../lib/ui.ts';
+import { jsonForScript, plannedText, CHIP, MENU, MENU_ITEM, CARET, SEGMENT, SEGMENTS, byWhom, PANEL, BOX, BOX_MEDIA, BOX_TEXT, FIELD } from '../../lib/ui.ts';
 import { variantOptions } from '../../lib/variants.ts';
 import ActionPanel from '../../components/ActionPanel.astro';
 import ActionRow from '../../components/ActionRow.astro';
@@ -58,7 +59,7 @@ if (Astro.request.method === 'POST') {
   try {
     if (intent === 'add') return Astro.redirect(at(await addVariant(root, content, campaign.folder, String(form.get('from') ?? ''), String(form.get('channel') ?? ''), Astro.locals.user)), 303);
     if (intent === 'delete-file') {
-      await removeUnusedFile(content, campaign.folder, String(form.get('file') ?? ''), campaign.variants.flatMap((other) => (other.fields.ok ? other.fields.images : [])));
+      await removeUnusedFile(content, campaign.folder, String(form.get('file') ?? ''), campaign.variants.flatMap((other) => (other.fields.ok ? allMedia(other.fields.images, other.fields.body) : [])));
       setFlash({ text: 'File deleted.', tone: 'ok' });
       return Astro.redirect(at(String(form.get('variant') ?? '')), 303);
     }
@@ -131,15 +132,15 @@ const statusBy = recorded
   ? byWhom(recorded.status === 'posted' || recorded.status === 'posting' ? recorded.by : undefined, 'Posted')
   : byWhom(fields.ok ? fields.by : undefined, planned ? 'Planned' : 'Draft');
 const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (!planned && Boolean(connections[variant.channel]))));
+const IMAGES = 'image/jpeg,image/png,image/gif,image/webp';
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
 const videoOk = takesMedia(variant.platform, 'a.mp4');
-const accept = ['image/jpeg,image/png,image/gif,image/webp', pdfOk && 'application/pdf', videoOk && 'video/mp4'].filter(Boolean).join(',');
+const accept = [IMAGES, pdfOk && 'application/pdf', videoOk && 'video/mp4'].filter(Boolean).join(',');
 const threaded = (variant.platform === 'threads' || variant.platform === 'linkedin') && variant.type !== 'story';
 const compose = variant.platform === 'substack' && variant.type === 'note' ? 'https://substack.com/notes' : COMPOSE_URL[variant.platform];
 const forcedManual = !isAutomatic(variant.platform);
 const copyText = manualNow && variant.type !== 'story';
 const shown = toEdit(fields.body, new Map(Object.entries(campaign.entities)));
-const field = 'rounded-lg bg-surface p-4 md:p-6 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const instant = fields.ok && !planned && recorded === null && postsNow({ manual: manualNow, connected: !connections[variant.channel], date: fields.date, now: new Date() });
 const addable = variantOptions(channelInfos(loadChannels(root))).filter((option) => !campaign.variants.some((candidate) => candidate.base === option.base));
 ---
@@ -242,34 +243,32 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
             <div class="flex flex-col gap-8">
               <div class="flex flex-col gap-2">
                 {threaded && <p class="text-sm text-ink-soft">Post</p>}
-              <div class="relative">
-                <textarea id="body" rows="8" hidden={variant.type === 'story' && !(fields.ok && fields.manual)} placeholder="Write your post. Type @ to mention." class:list={['block min-h-56 w-full text-lg', field, copyText && 'pr-14']}>{shown}</textarea>
+              <div data-box class:list={[BOX, 'relative']}>
+                <div class="relative has-[>textarea[hidden]]:hidden">
+                  <textarea id="body" rows="1" hidden={variant.type === 'story' && !(fields.ok && fields.manual)} placeholder="Write your post. Type @ to mention." class:list={[BOX_TEXT, 'min-h-32 text-lg', copyText && 'pr-8']}>{shown}</textarea>
+                </div>
+                <div id="images" data-box-media class={BOX_MEDIA}>
+                  <ul id="image-list" class="contents"></ul>
+                  <template id="image-tile"><ImageTile arrows /></template>
+                  <Dropzone inputId="image-input" accept={accept} title={pdfOk || videoOk ? 'Add media' : 'Add images'} />
+                </div>
                 <Button id="copy-text" type="button" variant="quiet" size="sm" icon aria-label="Copy text" title="Copy text" hidden={!copyText} class="absolute top-3 right-3"><Icon name="copy" /></Button>
               </div>
               </div>
-            <div id="images" class="relative grid grid-cols-2 items-start gap-4 sm:grid-cols-4">
-              <ul id="image-list" class="contents"></ul>
-              <template id="image-tile"><ImageTile arrows /></template>
-              <Dropzone inputId="image-input" accept={accept} title={pdfOk || videoOk ? 'Add media' : 'Add images'} />
-            </div>
-            <div data-unused data-files={JSON.stringify(library)} data-sizes={JSON.stringify(sizes)} hidden class="flex flex-col gap-4">
-              <Heading variant="label" as="h2">Unused in this post</Heading>
-              <ul id="unused-list" class="grid grid-cols-2 items-start gap-4 sm:grid-cols-4"></ul>
-            </div>
-            <template id="unused-tile">
-              <li class="group/tile relative">
-                <img data-photo data-unused-thumb alt="" loading="lazy" class="transition-opacity block aspect-square w-full rounded-lg object-cover ring-1 ring-line" />
-                <span data-unused-label hidden class="absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white"></span>
-                <Button data-use-image="" type="button" variant="quiet" size="sm" icon aria-label="Add" class="absolute right-2 bottom-2"><Icon name="plus" /></Button>
-                <Button type="button" data-open="delete-file" data-value="" variant="quiet" size="sm" icon data-tone="bad" aria-label="Delete" class="absolute top-2 right-2 opacity-0 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 pointer-coarse:opacity-100 hover:text-(--tone-text)"><Icon name="trash" /></Button>
-              </li>
-            </template>
             </div>
               {
                 threaded && (
                   <div class="flex flex-col gap-4">
                     <div id="replies" class="peer flex flex-col gap-8 empty:hidden"></div>
                     <ReplyTemplate />
+                    {variant.platform === 'threads' && (
+                      <template id="reply-media">
+                        <div data-box-media class={BOX_MEDIA}>
+                          <ul data-list class="contents" />
+                          <Dropzone id="reply-dropzone" inputId="reply-input" accept={`${IMAGES},video/mp4`} title="Add media" />
+                        </div>
+                      </template>
+                    )}
                     {commenters.map((author) => (
                       <template data-face={author.key}>
                         <ChannelAvatar channel={{ label: author.name, avatar: author.avatar }} class="size-10 text-xs" />
@@ -306,10 +305,22 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
           </div>
           <div id="source-view" hidden class="flex flex-col gap-2">
             <label for="source" class="sr-only">File source</label>
-            <textarea id="source" rows="18" spellcheck="false" class={`block min-h-72 w-full font-mono text-sm ${field}`}>{variant.raw}</textarea>
+            <textarea id="source" rows="18" spellcheck="false" class={`block min-h-72 w-full font-mono text-sm ${FIELD}`}>{variant.raw}</textarea>
             <Alert variant="plain" id="source-note"></Alert>
           </div>
         </div>
+                <template id="unused-tile">
+                  <li class="group/tile relative w-24">
+                    <button type="button" data-use-image="" class="transition block w-full cursor-pointer rounded-lg hover:opacity-(--hover-opacity) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+                      <img data-photo data-unused-thumb alt="" loading="lazy" class="transition-opacity block aspect-square w-full rounded-lg object-cover ring-1 ring-line" />
+                      <span data-unused-label hidden class="absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white"></span>
+                    </button>
+                    <Button type="button" data-open="delete-file" data-value="" variant="quiet" size="sm" icon data-tone="bad" aria-label="Delete" class="absolute top-1 right-1 opacity-0 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 pointer-coarse:opacity-100 hover:text-(--tone-text)"><Icon name="trash" /></Button>
+                  </li>
+                </template>
+                <div id="unused-menu" popover aria-label="Unused files in this post" data-files={JSON.stringify(library)} data-sizes={JSON.stringify(sizes)} class:list={[PANEL, 'w-max max-w-88 [inset:auto] [position-anchor:--unused-menu] [position-try-fallbacks:flip-block,flip-inline] [left:anchor(left)] [top:anchor(bottom)]']}>
+                  <ul id="unused-list" class="flex max-h-80 flex-wrap gap-3 overflow-y-auto"></ul>
+                </div>
         <script type="application/json" id="entities" set:html={jsonForScript(campaign.entities)} />
         <script type="application/json" id="raw" set:html={jsonForScript(variant.raw)} />
       </section>
@@ -439,6 +450,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
   <Fragment slot="after">
     <script>
       import '../../scripts/editor.ts';
+      import '../../scripts/box.ts';
     </script>
   </Fragment>
 </Shell>

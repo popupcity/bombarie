@@ -51,9 +51,9 @@ test('the same title on the same day gets a number, an unknown channel or empty 
 test('a copied variant keeps text, date and images but is always a draft', async () => {
   const { root, store } = repo();
   const { folder } = await createPost(root, store, { title: 'Expo', channels: ['jeroen-linkedin'] }, NOW);
-  writeFileSync(join(root, 'posts', folder, 'jeroen-linkedin.md'), '---\nstatus: planned\ndate: 2026-11-20T10:00\nmedia: [a.jpg]\n---\nHallo\n');
+  writeFileSync(join(root, 'posts', folder, 'jeroen-linkedin.md'), '---\nstatus: planned\ndate: 2026-11-20T10:00\n---\nHallo\n\n![](a.jpg)\n');
   assert.equal(await addVariant(root, store, folder, 'jeroen-linkedin', 'popupcity-instagram'), 'popupcity-instagram');
-  assert.equal(readFileSync(join(root, 'posts', folder, 'popupcity-instagram.md'), 'utf8'), '---\ndate: 2026-11-20T10:00\nmedia: [a.jpg]\n---\nHallo\n');
+  assert.equal(readFileSync(join(root, 'posts', folder, 'popupcity-instagram.md'), 'utf8'), '---\ndate: 2026-11-20T10:00\n---\nHallo\n\n![](a.jpg)\n');
   assert.match(readFileSync(join(root, 'posts', folder, 'jeroen-linkedin.md'), 'utf8'), /status: planned/);
 });
 
@@ -115,7 +115,7 @@ test('createPost can start with text, a link and images that are copied into the
   const { folder, base } = await createPost(root, store, { title: 'From an idea', channels: ['jeroen-linkedin'], text: 'Notes from the idea.', link: 'https://example.com', images: [{ name: 'a.png', bytes }] }, NOW);
   const raw = readFileSync(join(root, 'posts', folder, `${base}.md`), 'utf8');
   assert.match(raw, /link: https:\/\/example.com/);
-  assert.match(raw, /media: \[a.png\]/);
+  assert.match(raw, /^!\[\]\(a\.png\)$/m);
   assert.match(raw, /Notes from the idea\./);
   assert.deepEqual(readFileSync(join(root, 'posts', folder, 'a.png')), Buffer.from(bytes));
 });
@@ -126,7 +126,8 @@ test('an Instagram channel can get a story variant next to its post, with one im
   const { folder, base } = await createPost(root, store, { title: 'Reel', channels: ['popupcity-instagram'], text: 'Hello', images: [{ name: 'a.png', bytes }, { name: 'b.png', bytes }] }, NOW);
   assert.equal(await addVariant(root, store, folder, base, 'popupcity-instagram-story'), 'popupcity-instagram-story');
   const story = readFileSync(join(root, 'posts', folder, 'popupcity-instagram-story.md'), 'utf8');
-  assert.match(story, /media: \[a.png\]/);
+  assert.match(story, /^!\[\]\(a\.png\)$/m);
+  assert.doesNotMatch(story, /b\.png/);
   assert.doesNotMatch(story, /status:/);
   await assert.rejects(addVariant(root, store, folder, base, 'popupcity-instagram-story'), /already has a story variant/);
   await assert.rejects(addVariant(root, store, folder, base, 'popupcity-instagram-reel'), /has no reel variant/);
@@ -186,7 +187,8 @@ test('a variant for another platform does not take a PDF along, LinkedIn does', 
   const made = await createPost(root, store, { title: 'Deck', channels: ['jeroen-linkedin'], images: [{ name: 'deck.pdf', bytes: new Uint8Array([1]) }, { name: 'a.png', bytes: new Uint8Array([2]) }] }, NOW);
   await addVariant(root, store, made.folder, 'jeroen-linkedin', 'popupcity-instagram');
   const file = (name: string) => readFileSync(join(root, 'posts', made.folder, `${name}.md`), 'utf8');
-  assert.match(file('popupcity-instagram'), /media: \[a\.png\]/);
+  assert.match(file('popupcity-instagram'), /^!\[\]\(a\.png\)$/m);
+  assert.doesNotMatch(file('popupcity-instagram'), /deck\.pdf/);
   assert.match(file('jeroen-linkedin'), /deck\.pdf/);
 });
 

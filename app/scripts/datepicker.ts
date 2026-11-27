@@ -1,4 +1,4 @@
-import { OVERLAY, QUIET, WEEK_ROW } from '../lib/ui.ts';
+import { PANEL, QUIET, WEEK_ROW } from '../lib/ui.ts';
 import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addDays, addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
@@ -32,7 +32,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
     'data-picker': '',
     role: 'dialog',
     'aria-label': 'Pick a date and time',
-    class: `${OVERLAY} m-0 flex w-80 flex-col gap-4 rounded-xl bg-surface p-4 text-sm text-ink shadow-float ring-1 ring-line ring-inset [inset:auto]`
+    class: `${PANEL} flex w-80 flex-col gap-4 [inset:auto]`
   });
   button.after(panel);
 
@@ -58,6 +58,8 @@ function open(button: HTMLElement, input: HTMLInputElement) {
   function place() {
     const anchor = button.getBoundingClientRect();
     const gap = 8;
+    const offset = 4;
+    panel.style.margin = '0';
     const vw = document.documentElement.clientWidth;
     const vh = document.documentElement.clientHeight;
     if (panel.offsetHeight > vh - gap * 2) {
@@ -67,7 +69,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
     const box = { width: panel.offsetWidth, height: panel.offsetHeight };
     const room = { below: vh - anchor.bottom - gap * 2, above: anchor.top - gap * 2 };
     const side = box.height <= room.below ? 'below' : box.height <= room.above ? 'above' : room.below >= room.above ? 'below' : 'above';
-    const wanted = side === 'below' ? anchor.bottom + gap : anchor.top - box.height - gap;
+    const wanted = side === 'below' ? anchor.bottom + offset : anchor.top - box.height - offset;
     panel.style.left = `${Math.min(Math.max(gap, anchor.left), vw - box.width - gap)}px`;
     panel.style.top = `${Math.min(Math.max(gap, wanted), vh - box.height - gap)}px`;
   }

@@ -1,3 +1,4 @@
+import type { SendContext } from './types.ts';
 import { speakers } from './speaker.ts';
 import { MANUAL_ID, withAuthHint } from './unpost.ts';
 import type { UnpostDeps } from './unpost.ts';
@@ -6,7 +7,7 @@ export const canReply = (providers: UnpostDeps['providers'], platform: keyof Unp
 
 export const canRemoveReply = (providers: UnpostDeps['providers'], platform: keyof UnpostDeps['providers']): boolean => typeof providers[platform]?.removeReply === 'function';
 
-export async function postReplies(id: string, channelName: string, texts: string[], deps: UnpostDeps, mentions: Record<string, string> = {}, replyBy: string[] = []): Promise<{ sent: number; warning?: string }> {
+export async function postReplies(id: string, channelName: string, texts: string[], deps: UnpostDeps, mentions: Record<string, string> = {}, replyBy: string[] = [], media: { images?: string[][] | undefined; publicImage?: SendContext['publicImage']; publicVideo?: SendContext['publicVideo'] } = {}): Promise<{ sent: number; warning?: string }> {
   const state = await deps.store.get(id);
   if (state?.status !== 'posted') throw new Error('only a posted post can get a comment from here');
   if (state.remoteId === MANUAL_ID) throw new Error('this post was marked as posted by hand, so add the comment on the platform');
@@ -19,7 +20,7 @@ export async function postReplies(id: string, channelName: string, texts: string
   if (todo.length === 0) return { sent: 0 };
   const credentials = await deps.credentials(channelName);
   if (!credentials) throw new Error('this channel is not connected; connect it first');
-  const result = await withAuthHint(() => provider.reply!({ remoteId: state.remoteId, texts: todo, mentions, by: replyBy.slice(offset), speaker: speakers(deps.channels, deps.credentials), offset, ...(state.replies?.last !== undefined && { last: state.replies.last }) }, channel, credentials, deps.fetch));
+  const result = await withAuthHint(() => provider.reply!({ remoteId: state.remoteId, texts: todo, mentions, by: replyBy.slice(offset), speaker: speakers(deps.channels, deps.credentials), offset, ...(media.images && { images: media.images.slice(offset), publicImage: media.publicImage!, publicVideo: media.publicVideo! }), ...(state.replies?.last !== undefined && { last: state.replies.last }) }, channel, credentials, deps.fetch));
   const known = state.replies?.ids ?? [];
   const ids = [...Array.from({ length: offset }, (_, index) => known[index] ?? ''), ...result.ids];
   const last = result.last ?? state.replies?.last;

@@ -1,3 +1,4 @@
+import images from '@phosphor-icons/core/assets/regular/images.svg?raw';
 import thumbsUp from '@phosphor-icons/core/assets/regular/thumbs-up.svg?raw';
 import chatCircle from '@phosphor-icons/core/assets/regular/chat-circle.svg?raw';
 import repeat from '@phosphor-icons/core/assets/regular/repeat.svg?raw';
@@ -61,6 +62,7 @@ const substack =
 
 export const icons = {
   regular: {
+    images,
     'sidebar-simple': sidebarSimple,
     hand,
     'arrow-right': arrowRight,
