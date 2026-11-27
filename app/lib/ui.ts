@@ -99,4 +99,7 @@ export const dotTones = (tones: string[]): string[] =>
 
 export const dotClass = (tone: string): string => `size-1 rounded-full ${tone === 'feed' ? 'bg-ink-faint' : 'bg-(--tone)'}`;
 
+export const SEGMENTS = 'inline-flex h-10 overflow-hidden rounded-lg border border-ink text-sm';
+export const SEGMENT = 'transition inline-flex h-full cursor-pointer items-center gap-2 px-4 text-ink not-aria-pressed:not-aria-[current=page]:hover:bg-(--tone-soft) aria-pressed:bg-ink aria-pressed:text-page aria-[current=page]:bg-ink aria-[current=page]:text-page';
+
 export const CHIP = 'transition inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';

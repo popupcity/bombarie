@@ -3,7 +3,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { report } from './notify.ts';
+import { announce, report } from './notify.ts';
 import { claim, complete, fileStore } from './state.ts';
 import type { Message } from './telegram.ts';
 import type { Post } from './types.ts';
@@ -38,6 +38,13 @@ test('failures link to the post here, and outcomes that will be tried again say 
   ], deps);
   assert.deepEqual(sent.map((message) => message.text.split(' on ')[0]!.split('\n')[0]), ['Not posted', "It may or may not be posted. Check Jeroen's LinkedIn:"]);
   assert.equal(sent[0]?.view, 'https://x.test/posts/a/jeroen-linkedin');
+});
+
+test('an announcement after Post now says only how that post went', async () => {
+  const { sent, deps } = setup();
+  const posts = [post('a/jeroen-linkedin.md'), post('b/jeroen-linkedin.md', 90)];
+  await announce(posts, [{ id: posts[0]!.id, status: 'failed', message: 'no' }], deps);
+  assert.deepEqual(sent.map((message) => message.text.split(' on ')[0]), ['Not posted']);
 });
 
 test('a late post is told once, again after a new date, and not when it is old', async () => {

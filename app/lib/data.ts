@@ -10,6 +10,9 @@ import { localDeps } from '../../src/local.ts';
 import { clearProgress, forgetOutcome, rememberOutcome } from '../../src/progress.ts';
 import { readPosts } from '../../src/posts.ts';
 import { runNow } from '../../src/run.ts';
+import type { Outcome, RunDeps } from '../../src/run.ts';
+import { announce } from '../../src/notify.ts';
+import { reportingOf } from './telegram.ts';
 import { postReplies, removeReply } from '../../src/reply.ts';
 import { MANUAL_ID, unpost } from '../../src/unpost.ts';
 import { PlanBlocked, deletePost, deleteVariant, loadCampaign, saveVariant } from '../../src/campaign.ts';
@@ -115,6 +118,16 @@ async function onPost(folder: string, base: string, work: (post: Post, id: strin
   }
 }
 
+async function announceNow(outcome: Outcome, deps: RunDeps): Promise<void> {
+  try {
+    const told = await reportingOf(root, deps);
+    if (!told) return;
+    for (const problem of await announce(readPosts(root, loadChannels(root)).posts, [outcome], told)) console.error(`telegram: ${problem}`);
+  } catch (err) {
+    console.error(`telegram: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 export async function startPostNow(folder: string, base: string, by?: string): Promise<Done> {
   const id = `${folder}/${base}.md`;
   const post = findPost(folder, base);
@@ -127,7 +140,9 @@ export async function startPostNow(folder: string, base: string, by?: string): P
   const claimedFirst = new Promise<'claimed'>((resolve) => {
     claimed = () => resolve('claimed');
   });
-  const finished = runNow(post, { ...localDeps(root, new Date()), ...(by && { by }) }, { onClaimed: claimed }).then((outcome) => {
+  const deps = { ...localDeps(root, new Date()), ...(by && { by }) };
+  const finished = runNow(post, deps, { onClaimed: claimed }).then((outcome) => {
+    void announceNow(outcome, deps);
     clearProgress(id);
     if (outcome.status !== 'would-post') rememberOutcome(id, { status: outcome.status, message: outcome.message ?? '', at: new Date().toISOString() });
     return outcome;

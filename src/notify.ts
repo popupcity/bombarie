@@ -50,19 +50,20 @@ async function message(post: Post, posts: Post[], heading: string, detail: strin
   };
 }
 
-export async function report(posts: Post[], outcomes: Outcome[], deps: ReportDeps): Promise<string[]> {
-  const errors: string[] = [];
-  const own = (post: Post): string | undefined => (deps.base ? `${deps.base}${postPath(post)}` : undefined);
-  const tell = async (build: () => Promise<Message>): Promise<boolean> => {
-    try {
-      await deps.notify(await build());
-      return true;
-    } catch (err) {
-      errors.push(err instanceof Error ? err.message : String(err));
-      return false;
-    }
-  };
+const own = (post: Post, deps: ReportDeps): string | undefined => (deps.base ? `${deps.base}${postPath(post)}` : undefined);
 
+async function tell(errors: string[], deps: ReportDeps, build: () => Promise<Message>): Promise<boolean> {
+  try {
+    await deps.notify(await build());
+    return true;
+  } catch (err) {
+    errors.push(err instanceof Error ? err.message : String(err));
+    return false;
+  }
+}
+
+export async function announce(posts: Post[], outcomes: Outcome[], deps: ReportDeps): Promise<string[]> {
+  const errors: string[] = [];
   for (const outcome of outcomes) {
     const post = posts.find((candidate) => candidate.id === outcome.id);
     if (!post) continue;
@@ -70,20 +71,24 @@ export async function report(posts: Post[], outcomes: Outcome[], deps: ReportDep
       const state = await deps.store.get(post.id);
       const live = state?.status === 'posted' ? state.url : undefined;
       const warning = outcome.message === live ? undefined : outcome.message;
-      await tell(() => message(post, posts, 'Posted on', warning, live ?? own(post), deps));
+      await tell(errors, deps, () => message(post, posts, 'Posted on', warning, live ?? own(post, deps), deps));
     } else if (outcome.status === 'failed') {
-      await tell(() => message(post, posts, 'Not posted on', outcome.message, own(post), deps));
+      await tell(errors, deps, () => message(post, posts, 'Not posted on', outcome.message, own(post, deps), deps));
     } else if (outcome.status === 'unconfirmed') {
-      await tell(() => message(post, posts, 'It may or may not be posted. Check', outcome.message, own(post), deps));
+      await tell(errors, deps, () => message(post, posts, 'It may or may not be posted. Check', outcome.message, own(post, deps), deps));
     }
   }
+  return errors;
+}
 
+export async function report(posts: Post[], outcomes: Outcome[], deps: ReportDeps): Promise<string[]> {
+  const errors = await announce(posts, outcomes, deps);
   const known = await told(deps.root);
   const late = (await unstarted(deps.store, due(posts, deps.now).late)).filter((post) => deps.now.getTime() - post.date.getTime() <= LATE_WINDOW_MS);
   for (const post of late) {
     const key = `${post.id}@${post.date.toISOString()}`;
     if (known.includes(key)) continue;
-    if (await tell(() => message(post, posts, 'Skipped, more than an hour late, on', undefined, own(post), deps))) {
+    if (await tell(errors, deps, () => message(post, posts, 'Skipped, more than an hour late, on', undefined, own(post, deps), deps))) {
       known.push(key);
       await remember(deps.root, known);
     }

@@ -3,6 +3,7 @@ import Button from 'ui/src/components/Button.astro';
 import Icon from 'ui/src/components/Icon.astro';
 import type { NoticeModel } from '../../src/calendar.ts';
 import Notices from './Notices.astro';
+import { SEGMENT, SEGMENTS } from '../lib/ui.ts';
 
 interface Props {
   view: 'month' | 'list';
@@ -20,10 +21,10 @@ const tabs = [
     <Notices notices={notices} />
   </div>
   <Button href="#today" variant="outline" class="max-md:hidden">Today</Button>
-  <nav data-control class="max-md:hidden inline-flex h-10 overflow-hidden rounded-lg border border-ink text-sm">
+  <nav data-control data-tone="ink" class:list={[SEGMENTS, 'max-md:hidden']}>
     {
       tabs.map((tab) => (
-        <a href={tab.href} aria-current={tab.id === view ? 'page' : undefined} class="inline-flex h-full items-center gap-2 px-4 text-ink aria-[current=page]:bg-ink aria-[current=page]:text-page">
+        <a href={tab.href} aria-current={tab.id === view ? 'page' : undefined} class={SEGMENT}>
           <Icon name={tab.icon} />
           {tab.label}
         </a>
