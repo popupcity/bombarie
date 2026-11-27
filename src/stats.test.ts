@@ -4,10 +4,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fromCsv, toCsv } from './csv.ts';
-import { collectStats, collectThreads, readStats, statsFile } from './stats.ts';
+import { collectInstagram, collectStats, collectStories, collectThreads, readStats, statsFile } from './stats.ts';
 
 const fresh = () => mkdtempSync(join(tmpdir(), 'social-stats-'));
 const credentials = { accessToken: 'tok', accountId: '178' };
+const credentials99 = { accessToken: 'tok', accountId: '99' };
 
 function threads(followers: number, likes: Record<string, number> = {}) {
   const asked: string[] = [];
@@ -72,4 +73,63 @@ test('collecting happens once a day, and a failure is tried again after an hour'
   const asked = good.asked.length;
   await run(good.fetchImpl, '2026-11-27T20:00:00Z');
   assert.equal(good.asked.length, asked);
+});
+
+function instagram(options: { limitAfter?: number; stories?: boolean } = {}) {
+  const asked: string[] = [];
+  let numbered = 0;
+  const fetchImpl = (async (url: string) => {
+    const { pathname, searchParams } = new URL(url);
+    const path = pathname.replace('/v23.0/', '');
+    const metric = searchParams.get('metric') ?? '';
+    asked.push(`${path} ${metric}`.trim());
+    const answer = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+    if (path === '99') return answer({ followers_count: 6373 });
+    if (path === '99/insights') {
+      if (metric === 'views') return answer({ data: [{ name: 'views', total_value: { value: 19 } }] });
+      return answer({ data: [{ name: metric, values: [{ value: metric === 'reach' ? 156 : 2, end_time: '2026-11-27T08:00:00+0000' }] }] });
+    }
+    if (path === '99/media') return answer({ data: [1, 2, 3].map((n) => ({ id: `m${n}`, timestamp: `2026-11-2${n}T10:00:00+0000`, permalink: `https://i.test/${n}`, media_type: 'VIDEO', media_product_type: n === 3 ? 'REELS' : 'FEED', caption: `Post ${n}\nmore`, like_count: n, comments_count: 0 })) });
+    if (path === '99/stories') return answer({ data: options.stories === false ? [] : [{ id: 's1', timestamp: '2026-11-27T09:00:00+0000', permalink: 'https://i.test/s1', media_type: 'IMAGE' }] });
+    numbered += 1;
+    if (options.limitAfter !== undefined && numbered > options.limitAfter) return answer({ error: { message: 'limit', code: 4 } }, 400);
+    if (path === 'm1/insights') return answer({ error: { message: 'Invalid parameter', code: 100 } }, 400);
+    return answer({ data: [{ name: 'views', values: [{ value: 330 }] }, { name: 'total_interactions', values: [{ value: 10 }] }, { name: 'replies', values: [{ value: 0 }] }] });
+  }) as unknown as typeof fetch;
+  return { asked, fetchImpl };
+}
+
+test('Instagram keeps followers, reach and views per day, and gets post numbers in batches, newest first', async () => {
+  const root = fresh();
+  const now = new Date('2026-11-27T12:00:00Z');
+  const first = instagram();
+  assert.equal(await collectInstagram(root, 'ig', credentials99, first.fetchImpl, now, 2), 1);
+  assert.equal(readFileSync(statsFile(root, 'ig', 'days'), 'utf8'), 'date,followers,new_followers,views,reach\n2026-11-27,6373,2,19,156\n');
+  assert.deepEqual(readStats(root, 'ig', 'posts').map((row) => [row.url, row.type, row.text, row.likes, row.views, row.interactions, row.updated]), [
+    ['https://i.test/1', 'VIDEO', 'Post 1', '1', '', '', ''],
+    ['https://i.test/2', 'VIDEO', 'Post 2', '2', '330', '10', '2026-11-27'],
+    ['https://i.test/3', 'REEL', 'Post 3', '3', '330', '10', '2026-11-27']
+  ]);
+  assert.equal(await collectInstagram(root, 'ig', credentials99, instagram().fetchImpl, now, 2), 0);
+  assert.deepEqual(readStats(root, 'ig', 'posts').map((row) => row.updated), ['2026-11-27', '2026-11-27', '2026-11-27']);
+});
+
+test('a rate limit stops the batch and keeps what already came in', async () => {
+  const root = fresh();
+  await assert.rejects(collectInstagram(root, 'ig', credentials99, instagram({ limitAfter: 1 }).fetchImpl, new Date('2026-11-27T12:00:00Z')), /limit|rate/i);
+  assert.deepEqual(readStats(root, 'ig', 'posts').map((row) => row.updated), ['', '', '2026-11-27']);
+});
+
+test('stories are kept after they leave Instagram', async () => {
+  const root = fresh();
+  await collectStories(root, 'ig', credentials99, instagram().fetchImpl, new Date('2026-11-27T12:00:00Z'));
+  await collectStories(root, 'ig', credentials99, instagram({ stories: false }).fetchImpl, new Date('2026-11-29T12:00:00Z'));
+  assert.deepEqual(readStats(root, 'ig', 'stories').map((row) => [row.url, row.views, row.replies, row.updated]), [['https://i.test/s1', '330', '0', '2026-11-27T12:00:00.000Z']]);
+});
+
+test('a missing permission is a problem, not a row of empty numbers', async () => {
+  const root = fresh();
+  const denied = (async (url: string) => (new URL(url).pathname.endsWith('/insights') ? new Response('{"error":{"message":"(#10) Application does not have permission for this action","code":10}}', { status: 400 }) : instagram().fetchImpl(url))) as unknown as typeof fetch;
+  await assert.rejects(collectInstagram(root, 'ig', credentials99, denied, new Date('2026-11-27T12:00:00Z')), /permission/);
+  assert.equal(readStats(root, 'ig', 'days')[0]?.followers, '6373');
 });

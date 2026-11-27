@@ -4,27 +4,38 @@ import { dirname, join } from 'node:path';
 import type { Channels } from './channels.ts';
 import { fromCsv, toCsv } from './csv.ts';
 import type { Row } from './csv.ts';
-import { THREADS_GRAPH, graph } from './graph.ts';
+import { GRAPH, THREADS_GRAPH, graph } from './graph.ts';
 import { ymd } from './time.ts';
 import { ProviderError } from './types.ts';
-import type { Credentials, SendContext } from './types.ts';
+import type { Credentials, Platform, SendContext } from './types.ts';
 
-export const DAY_COLUMNS = ['date', 'followers', 'views'];
-const NUMBERS = ['views', 'likes', 'replies', 'reposts', 'quotes', 'shares'];
-export const POST_COLUMNS = ['date', 'url', 'type', 'text', ...NUMBERS, 'updated'];
+const THREADS_NUMBERS = ['views', 'likes', 'replies', 'reposts', 'quotes', 'shares'];
+const INSTAGRAM_NUMBERS: Record<string, string> = { views: 'views', reach: 'reach', saved: 'saved', shares: 'shares', total_interactions: 'interactions' };
+const STORY_NUMBERS: Record<string, string> = { views: 'views', reach: 'reach', replies: 'replies', shares: 'shares', total_interactions: 'interactions' };
+
+export const DAY_COLUMNS = { threads: ['date', 'followers', 'views'], instagram: ['date', 'followers', 'new_followers', 'views', 'reach'] };
+export const POST_COLUMNS = {
+  threads: ['date', 'url', 'type', 'text', ...THREADS_NUMBERS, 'updated'],
+  instagram: ['date', 'url', 'type', 'text', 'views', 'reach', 'likes', 'comments', 'saved', 'shares', 'interactions', 'updated']
+};
+export const STORY_COLUMNS = ['date', 'url', 'type', ...Object.values(STORY_NUMBERS), 'updated'];
 
 const DAY_MS = 86_400_000;
 const BACKFILL_DAYS = 90;
+const WINDOW_DAYS = 30;
 const OVERLAP_DAYS = 4;
 const FRESH_DAYS = 30;
-const SLOW_DAYS = 7;
 const MAX_PAGES = 100;
 const RETRY_MS = 60 * 60_000;
+const STORY_MS = 2 * 60 * 60_000;
 const TEXT_LENGTH = 100;
+export const BATCH = 60;
 
-export const statsFile = (root: string, channel: string, name: 'days' | 'posts'): string => join(root, 'channels', channel, `${name}.csv`);
+type Name = 'days' | 'posts' | 'stories';
 
-export const readStats = (root: string, channel: string, name: 'days' | 'posts'): Row[] => {
+export const statsFile = (root: string, channel: string, name: Name): string => join(root, 'channels', channel, `${name}.csv`);
+
+export const readStats = (root: string, channel: string, name: Name): Row[] => {
   const file = statsFile(root, channel, name);
   return existsSync(file) ? fromCsv(readFileSync(file, 'utf8')) : [];
 };
@@ -37,6 +48,8 @@ async function write(file: string, columns: string[], rows: Row[]): Promise<void
   await rename(`${file}.tmp`, file);
 }
 
+const byDate = (a: Row, b: Row): number => a.date!.localeCompare(b.date!) || (a.url ?? '').localeCompare(b.url ?? '');
+
 interface Metric {
   name: string;
   total_value?: { value?: number };
@@ -48,67 +61,191 @@ interface Listed {
   timestamp: string;
   permalink?: string;
   media_type?: string;
+  media_product_type?: string;
   text?: string;
+  caption?: string;
+  like_count?: number;
+  comments_count?: number;
 }
 
 const seconds = (time: number): string => String(Math.floor(time / 1000));
+const stops = (err: unknown): boolean => !(err instanceof ProviderError) || err.code !== 'invalid' || /permission/i.test(err.message);
+const numberOf = (metric: Metric): number | undefined => metric.values?.[0]?.value ?? metric.total_value?.value;
+const firstLine = (text: string | undefined): string => (text ?? '').split('\n')[0]!.slice(0, TEXT_LENGTH);
 
-export async function collectThreads(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date): Promise<void> {
+function client(credentials: Credentials, fetchImpl: typeof fetch, base: string, what: string) {
   const user = credentials.accountId;
-  if (!user) throw new ProviderError('this channel has no Threads user id; use Connect again on the Channels page', 'invalid');
-  const read = (path: string, query: Record<string, string>) => graph({ fetch: fetchImpl } as SendContext, 'Threads statistics', path, credentials.accessToken, { query }, false, THREADS_GRAPH);
+  if (!user) throw new ProviderError('this channel has no account id; use Connect again on the Channels page', 'invalid');
+  const read = (path: string, query: Record<string, string>) => graph({ fetch: fetchImpl } as SendContext, what, path, credentials.accessToken, { query }, false, base);
   const metrics = async (path: string, query: Record<string, string>): Promise<Metric[]> => ((await read(path, query)).data ?? []) as Metric[];
-  const today = ymd(now);
-
-  const days = new Map(readStats(root, channel, 'days').map((row) => [row.date!, row]));
-  const day = (date: string): Row => days.get(date) ?? days.set(date, { date }).get(date)!;
-  const followers = (await metrics(`${user}/threads_insights`, { metric: 'followers_count' }))[0]?.total_value?.value;
-  if (followers !== undefined && !day(today).followers) day(today).followers = String(followers);
-  const back = days.size > 1 ? OVERLAP_DAYS : BACKFILL_DAYS;
-  const views = await metrics(`${user}/threads_insights`, { metric: 'views', since: seconds(now.getTime() - back * DAY_MS), until: seconds(now.getTime()) });
-  for (const entry of views[0]?.values ?? []) if (entry.end_time && entry.value !== undefined) day(entry.end_time.slice(0, 10)).views = String(entry.value);
-  await write(statsFile(root, channel, 'days'), DAY_COLUMNS, [...days.values()].sort((a, b) => a.date!.localeCompare(b.date!)));
-
-  const listed: Listed[] = [];
-  let after: string | undefined;
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const found = await read(`${user}/threads`, { fields: 'id,timestamp,permalink,media_type,text', limit: '100', ...(after && { after }) });
-    listed.push(...((found.data ?? []) as Listed[]));
-    const paging = found.paging as { next?: string; cursors?: { after?: string } } | undefined;
-    after = paging?.next ? paging.cursors?.after : undefined;
-    if (!after) break;
-  }
-
-  const known = new Map(readStats(root, channel, 'posts').map((row) => [row.url!, row]));
-  const rows: Row[] = [];
-  for (const post of listed) {
-    if (!post.permalink || post.media_type === 'REPOST_FACADE') continue;
-    const before = known.get(post.permalink);
-    const row: Row = { ...before, date: post.timestamp, url: post.permalink, type: post.media_type ?? '', text: (post.text ?? '').split('\n')[0]!.slice(0, TEXT_LENGTH) };
-    const young = now.getTime() - Date.parse(post.timestamp) < FRESH_DAYS * DAY_MS;
-    const old = !before?.updated || Date.parse(today) - Date.parse(before.updated) >= SLOW_DAYS * DAY_MS;
-    if (young || old) {
-      try {
-        for (const metric of await metrics(`${post.id}/insights`, { metric: NUMBERS.join(',') })) {
-          const value = metric.values?.[0]?.value ?? metric.total_value?.value;
-          if (value !== undefined) row[metric.name] = String(value);
-        }
-        row.updated = today;
-      } catch (err) {
-        if (err instanceof ProviderError && (err.code === 'auth' || err.code === 'rate')) throw err;
-      }
+  const list = async (path: string, fields: string): Promise<Listed[]> => {
+    const found: Listed[] = [];
+    let after: string | undefined;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const answer = await read(path, { fields, limit: '100', ...(after && { after }) });
+      found.push(...((answer.data ?? []) as Listed[]));
+      const paging = answer.paging as { next?: string; cursors?: { after?: string } } | undefined;
+      after = paging?.next ? paging.cursors?.after : undefined;
+      if (!after) break;
     }
-    rows.push(row);
+    return found;
+  };
+  return { user, read, metrics, list };
+}
+
+function daysOf(root: string, channel: string) {
+  const days = new Map(readStats(root, channel, 'days').map((row) => [row.date!, row]));
+  return {
+    first: days.size === 0,
+    day: (date: string): Row => days.get(date) ?? days.set(date, { date }).get(date)!,
+    save: (columns: string[]) => write(statsFile(root, channel, 'days'), columns, [...days.values()].sort(byDate))
+  };
+}
+
+interface Due {
+  row: Row;
+  id: string;
+}
+
+async function refresh(root: string, channel: string, columns: string[], posts: { listed: Listed; row: Row }[], now: Date, slowDays: number, batch: number, numbers: (id: string, row: Row) => Promise<void>): Promise<number> {
+  const today = ymd(now);
+  const due: Due[] = posts
+    .filter(({ row }) => {
+      if (!row.updated) return true;
+      const young = now.getTime() - Date.parse(row.date!) < FRESH_DAYS * DAY_MS;
+      return young ? row.updated !== today : Date.parse(today) - Date.parse(row.updated) >= slowDays * DAY_MS;
+    })
+    .sort((a, b) => Number(Boolean(a.row.updated)) - Number(Boolean(b.row.updated)) || b.row.date!.localeCompare(a.row.date!))
+    .map(({ listed, row }) => ({ row, id: listed.id }));
+  const rows = posts.map(({ row }) => row).sort(byDate);
+  try {
+    for (const { row, id } of due.slice(0, batch)) {
+      try {
+        await numbers(id, row);
+      } catch (err) {
+        if (stops(err)) throw err;
+      }
+      row.updated = today;
+    }
+  } finally {
+    await write(statsFile(root, channel, 'posts'), columns, rows);
   }
-  await write(statsFile(root, channel, 'posts'), POST_COLUMNS, rows.sort((a, b) => a.date!.localeCompare(b.date!) || a.url!.localeCompare(b.url!)));
+  return Math.max(due.length - batch, 0);
 }
 
-interface Progress {
-  done?: string;
-  tried?: number;
+const kept = (root: string, channel: string): Map<string, Row> => new Map(readStats(root, channel, 'posts').map((row) => [row.url!, row]));
+
+export async function collectThreads(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date): Promise<number> {
+  const { user, metrics, list } = client(credentials, fetchImpl, THREADS_GRAPH, 'Threads statistics');
+  const days = daysOf(root, channel);
+  const today = days.day(ymd(now));
+  const followers = (await metrics(`${user}/threads_insights`, { metric: 'followers_count' }))[0]?.total_value?.value;
+  if (followers !== undefined && !today.followers) today.followers = String(followers);
+  const back = days.first ? BACKFILL_DAYS : OVERLAP_DAYS;
+  const views = await metrics(`${user}/threads_insights`, { metric: 'views', since: seconds(now.getTime() - back * DAY_MS), until: seconds(now.getTime()) });
+  for (const entry of views[0]?.values ?? []) if (entry.end_time && entry.value !== undefined) days.day(entry.end_time.slice(0, 10)).views = String(entry.value);
+  await days.save(DAY_COLUMNS.threads);
+
+  const before = kept(root, channel);
+  const posts = (await list(`${user}/threads`, 'id,timestamp,permalink,media_type,text'))
+    .filter((post) => post.permalink && post.media_type !== 'REPOST_FACADE')
+    .map((listed) => ({ listed, row: { ...before.get(listed.permalink!), date: listed.timestamp, url: listed.permalink!, type: listed.media_type ?? '', text: firstLine(listed.text) } as Row }));
+  return refresh(root, channel, POST_COLUMNS.threads, posts, now, 7, Number.POSITIVE_INFINITY, async (id, row) => {
+    for (const metric of await metrics(`${id}/insights`, { metric: THREADS_NUMBERS.join(',') })) {
+      const value = numberOf(metric);
+      if (value !== undefined) row[metric.name] = String(value);
+    }
+  });
 }
 
-const progress = new Map<string, Progress>();
+export async function collectInstagram(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date, batch = BATCH): Promise<number> {
+  const { user, read, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Instagram statistics');
+  const days = daysOf(root, channel);
+  const today = days.day(ymd(now));
+  const followers = (await read(user, { fields: 'followers_count' })).followers_count;
+  if (typeof followers === 'number' && !today.followers) today.followers = String(followers);
+  await days.save(DAY_COLUMNS.instagram);
+
+  const optional = async (query: Record<string, string>): Promise<Metric[]> => {
+    try {
+      return await metrics(`${user}/insights`, query);
+    } catch (err) {
+      if (stops(err)) throw err;
+      return [];
+    }
+  };
+  const window = (from: number, to: number) => ({ since: seconds(now.getTime() - from * DAY_MS), until: seconds(now.getTime() - to * DAY_MS) });
+  const reached: { value?: number; end_time?: string }[] = [];
+  const spans = days.first ? Array.from({ length: BACKFILL_DAYS / WINDOW_DAYS }, (_, i) => window(BACKFILL_DAYS - i * WINDOW_DAYS, BACKFILL_DAYS - (i + 1) * WINDOW_DAYS)) : [window(OVERLAP_DAYS, 0)];
+  for (const span of spans) reached.push(...((await optional({ metric: 'reach', period: 'day', ...span }))[0]?.values ?? []));
+  const ends = [...new Set(reached.flatMap((entry) => (entry.end_time ? [entry.end_time] : [])))].sort();
+  for (const entry of reached) if (entry.end_time && entry.value !== undefined) days.day(entry.end_time.slice(0, 10)).reach = String(entry.value);
+  const gained = await optional({ metric: 'follower_count', period: 'day', ...window(days.first ? WINDOW_DAYS - 1 : OVERLAP_DAYS, 0) });
+  for (const entry of gained[0]?.values ?? []) if (entry.end_time && entry.value !== undefined) days.day(entry.end_time.slice(0, 10)).new_followers = String(entry.value);
+  for (const [index, end] of ends.entries()) {
+    const row = days.day(end.slice(0, 10));
+    if (index < ends.length - WINDOW_DAYS || (row.views && index < ends.length - OVERLAP_DAYS)) continue;
+    const stamp = Date.parse(end);
+    const value = (await optional({ metric: 'views', metric_type: 'total_value', period: 'day', since: seconds(stamp - DAY_MS), until: seconds(stamp) }))[0]?.total_value?.value;
+    if (value !== undefined) row.views = String(value);
+  }
+  await days.save(DAY_COLUMNS.instagram);
+
+  const before = kept(root, channel);
+  const posts = (await list(`${user}/media`, 'id,timestamp,permalink,media_type,media_product_type,caption,like_count,comments_count'))
+    .filter((post) => post.permalink)
+    .map((listed) => {
+      const row: Row = { ...before.get(listed.permalink!), date: listed.timestamp, url: listed.permalink!, type: listed.media_product_type === 'REELS' ? 'REEL' : (listed.media_type ?? ''), text: firstLine(listed.caption) };
+      if (listed.like_count !== undefined) row.likes = String(listed.like_count);
+      if (listed.comments_count !== undefined) row.comments = String(listed.comments_count);
+      return { listed, row };
+    });
+  return refresh(root, channel, POST_COLUMNS.instagram, posts, now, 28, batch, async (id, row) => {
+    for (const metric of await metrics(`${id}/insights`, { metric: Object.keys(INSTAGRAM_NUMBERS).join(',') })) {
+      const value = numberOf(metric);
+      const column = INSTAGRAM_NUMBERS[metric.name];
+      if (column && value !== undefined) row[column] = String(value);
+    }
+  });
+}
+
+export async function collectStories(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date): Promise<void> {
+  const { user, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Instagram story statistics');
+  const live = await list(`${user}/stories`, 'id,timestamp,permalink,media_type');
+  if (live.length === 0) return;
+  const rows = new Map(readStats(root, channel, 'stories').map((row) => [row.url!, row]));
+  try {
+    for (const story of live) {
+      const url = story.permalink ?? story.id;
+      const row: Row = { ...rows.get(url), date: story.timestamp, url, type: story.media_type ?? '' };
+      try {
+        for (const metric of await metrics(`${story.id}/insights`, { metric: Object.keys(STORY_NUMBERS).join(',') })) {
+          const value = numberOf(metric);
+          const column = STORY_NUMBERS[metric.name];
+          if (column && value !== undefined) row[column] = String(value);
+        }
+        row.updated = now.toISOString();
+      } catch (err) {
+        if (stops(err)) throw err;
+      }
+      rows.set(url, row);
+    }
+  } finally {
+    await write(statsFile(root, channel, 'stories'), STORY_COLUMNS, [...rows.values()].sort(byDate));
+  }
+}
+
+interface Job {
+  every: 'day' | number;
+  run: (root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date) => Promise<number | void>;
+}
+
+const JOBS: Partial<Record<Platform, Record<string, Job>>> = {
+  threads: { statistics: { every: 'day', run: collectThreads } },
+  instagram: { statistics: { every: 'day', run: (root, channel, credentials, fetchImpl, now) => collectInstagram(root, channel, credentials, fetchImpl, now) }, stories: { every: STORY_MS, run: collectStories } }
+};
+
+const next = new Map<string, number | string>();
 let busy = false;
 
 export async function collectStats(root: string, channels: Channels, credentials: (channel: string) => Promise<Credentials | null>, fetchImpl: typeof fetch, now: Date): Promise<string[]> {
@@ -117,18 +254,19 @@ export async function collectStats(root: string, channels: Channels, credentials
   const problems: string[] = [];
   try {
     for (const [name, channel] of Object.entries(channels)) {
-      if (channel.platform !== 'threads') continue;
-      const key = `${root}\n${name}`;
-      const last = progress.get(key) ?? {};
-      if (last.done === ymd(now) || (last.tried !== undefined && now.getTime() - last.tried < RETRY_MS)) continue;
-      try {
-        const own = await credentials(name);
-        if (!own) continue;
-        await collectThreads(root, name, own, fetchImpl, now);
-        progress.set(key, { done: ymd(now) });
-      } catch (err) {
-        progress.set(key, { tried: now.getTime() });
-        problems.push(`${name}: ${err instanceof Error ? err.message : String(err)}`);
+      for (const [kind, job] of Object.entries(JOBS[channel.platform] ?? {})) {
+        const key = `${root}\n${name}\n${kind}`;
+        const wait = next.get(key);
+        if (typeof wait === 'string' ? wait === ymd(now) : wait !== undefined && now.getTime() < wait) continue;
+        try {
+          const own = await credentials(name);
+          if (!own) continue;
+          const left = await job.run(root, name, own, fetchImpl, now);
+          next.set(key, job.every !== 'day' ? now.getTime() + job.every : left ? now.getTime() + RETRY_MS : ymd(now));
+        } catch (err) {
+          next.set(key, now.getTime() + RETRY_MS);
+          problems.push(`${name} ${kind}: ${err instanceof Error ? err.message : String(err)}`);
+        }
       }
     }
   } finally {
