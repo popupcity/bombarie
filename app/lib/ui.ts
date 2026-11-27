@@ -71,6 +71,8 @@ export const SCHEME_COOKIE = 'bombarie_scheme';
 
 export const RAIL_COOKIE = 'bombarie_rail';
 
+export const SERIES = ['fill-series-1', 'fill-series-2', 'fill-series-3', 'fill-series-4'];
+
 export const schemeOf = (value: string | undefined): 'light' | 'dark' | undefined => (value === 'light' || value === 'dark' ? value : undefined);
 
 export const HTML_CLASS = 'scheme-light-dark data-[scheme=light]:scheme-light data-[scheme=dark]:scheme-dark scroll-smooth bg-page';

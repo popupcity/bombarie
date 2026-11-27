@@ -21,12 +21,14 @@ import PlatformMark from '../components/PlatformMark.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Shell from '../layouts/Shell.astro';
 import { root, states } from '../lib/data.ts';
-import { SEGMENT, SEGMENTS, postHref } from '../lib/ui.ts';
+import { SEGMENT, SEGMENTS, SERIES, postHref } from '../lib/ui.ts';
 
 const PAGE = 5;
+const RANGE_COOKIE = 'bombarie_stats_range';
 const now = new Date();
 const query = Astro.url.searchParams;
-const range = rangeOf(query.get('range'));
+const range = rangeOf(query.get('range') ?? Astro.cookies.get(RANGE_COOKIE)?.value);
+if (query.has('range')) Astro.cookies.set(RANGE_COOKIE, range, { path: '/', maxAge: 31_536_000, sameSite: 'lax' });
 const sort = sortOf(query.get('sort'));
 const shown = Math.max(Number(query.get('top')) || PAGE, PAGE);
 const from = since(range, now);
@@ -54,7 +56,14 @@ const take = metric === 'followers' ? 'last' : 'sum';
 const daily = metric === 'followers' ? followerLine(accounts, from) : summed(accounts, metric, from);
 const points = grouped(daily, unit, take);
 const own = picked.map((channel, index) => (metric === 'followers' ? followerLine([accounts[index]!], from) : dailyOf(channel.days, metric, from)));
-const rows = picked.map((channel, index) => ({ info: channel.info, ...people[index]!, daily: grouped(own[index]!, unit, take) }));
+const rows = picked.map((channel, index) => ({
+  info: channel.info,
+  fill: SERIES[measured.indexOf(channel) % SERIES.length]!,
+  daily: grouped(own[index]!, unit, take),
+  value: metric === 'followers' ? people[index]!.followers : own[index]!.length > 0 ? own[index]!.reduce((total, point) => total + point.value, 0) : null,
+  change: metric === 'followers' ? people[index]!.change : null
+}));
+const widest = Math.max(...rows.map((row) => row.value ?? 0), 1);
 const first = [daily[0]?.date, ...own.map((line) => line[0]?.date)].filter((date) => date !== undefined).sort()[0] ?? ymd(now);
 const time = timeline(first > from ? first : from, ymd(now), unit);
 const standing = new Map(measured.flatMap((channel) => [...standoutPosts(channel.posts, now)]));
@@ -73,12 +82,12 @@ for (const post of readPosts(root, channels).posts) {
 const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: Sort; top?: number }): string => {
   const next = { range, hide: [...hidden], metric, sort, top: 0, ...change };
   const params = new URLSearchParams();
-  if (next.range !== 'month') params.set('range', next.range);
+  params.set('range', next.range);
   if (next.hide.length > 0) params.set('hide', next.hide.join(','));
   if (next.metric !== 'views') params.set('metric', next.metric);
   if (next.sort !== 'views') params.set('sort', next.sort);
   if (next.top > PAGE) params.set('top', String(next.top));
-  return params.size > 0 ? `/stats?${params}` : '/stats';
+  return `/stats?${params}`;
 };
 
 const RANGE_LABELS: Record<Range, string> = { week: 'Week', month: 'Month', quarter: 'Quarter', year: 'Year', all: 'All time' };
@@ -90,6 +99,16 @@ const signed = (value: number): string => (value > 0 ? `+${number(value)}` : num
 const dayLabel = (day: string): string => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(day.slice(0, 4) !== ymd(now).slice(0, 4) && { year: 'numeric' }), timeZone: 'UTC' });
 const bucketLabel = (day: string): string =>
   unit === 'month' ? new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : unit === 'week' ? `Week of ${dayLabel(day)}` : dayLabel(day);
+const split = (point: { date: string; value: number }): string =>
+  [
+    `${bucketLabel(point.date)}: ${number(point.value)}`,
+    ...(metric === 'followers'
+      ? []
+      : rows.flatMap((row) => {
+          const found = row.daily.find((own) => own.date === point.date);
+          return found && found.value > 0 ? [`${row.info.label} on ${PLATFORM_LABEL[row.info.platform]}: ${number(found.value)}`] : [];
+        }))
+  ].join('\n');
 ---
 
 <Shell title="Stats">
@@ -146,7 +165,7 @@ const bucketLabel = (day: string): string =>
                     </div>
                     <Card class="flex flex-col gap-4">
                       {points.length > (metric === 'followers' ? 1 : 0) ? (
-                        <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={points} time={time} grid={scale(points.map((point) => point.value), metric !== 'followers')} number={compact} class="h-64" label={`${METRIC_LABELS[metric]} of the channels shown`} said={(point) => `${bucketLabel(point.date)}: ${number(point.value)}`} />
+                        <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={points} time={time} grid={scale(points.map((point) => point.value), metric !== 'followers')} number={compact} class="h-64" label={`${METRIC_LABELS[metric]} of the channels shown`} said={split} parts={metric === 'followers' ? undefined : rows.map((row) => ({ fill: row.fill, points: row.daily }))} />
                       ) : (
                         <Text variant="body" class="flex h-64 items-center justify-center text-center text-ink-faint">No data yet.</Text>
                       )}
@@ -154,15 +173,19 @@ const bucketLabel = (day: string): string =>
                   </div>
                   <Card as="ul" variant="bare" class="divide-y divide-line">
                     {rows.map((row) => (
-                      <li class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 p-4 md:p-6 sm:grid-cols-[auto_minmax(0,1fr)_96px_minmax(0,1fr)]">
+                      <li class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 p-4 md:p-6">
                         <ChannelMark channel={row.info} size="lg" on="surface" />
-                        <span class="min-w-0 truncate text-sm">{row.info.label}<span class="sr-only"> on {PLATFORM_LABEL[row.info.platform]}</span></span>
-                        <span class="col-start-2 flex items-baseline gap-2 tabular-nums sm:col-start-auto sm:justify-end">
-                          <span>{row.followers === null ? '–' : number(row.followers)}</span>
-                          {row.change !== null && <span class="text-xs text-ink-soft">{signed(row.change)}</span>}
-                        </span>
-                        <span class="col-span-2 min-w-0 sm:col-span-1">
-                          {row.daily.length > 1 && <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={row.daily} time={time} grid={undefined} label={`${METRIC_LABELS[metric]} of ${row.info.label}`} said={(point) => `${bucketLabel(point.date)}: ${number(point.value)}`} />}
+                        <span class="flex min-w-0 flex-col gap-2">
+                          <span class="flex items-baseline justify-between gap-4">
+                            <span class="min-w-0 truncate text-sm">{row.info.label}<span class="sr-only"> on {PLATFORM_LABEL[row.info.platform]}</span></span>
+                            <span class="flex shrink-0 items-baseline gap-2 tabular-nums">
+                              <span>{row.value === null ? '–' : number(row.value)}</span>
+                              {row.change !== null && <span class="text-xs text-ink-soft">{signed(row.change)}</span>}
+                            </span>
+                          </span>
+                          <svg aria-hidden="true" class="block h-3 w-full">
+                            {row.value !== null && row.value > 0 && <rect width={`${(row.value / widest) * 100}%`} height="100%" rx="4" class={row.fill} />}
+                          </svg>
                         </span>
                       </li>
                     ))}

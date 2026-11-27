@@ -7,7 +7,7 @@ const GAP = 8;
 const tip = h('div', {
   popover: 'manual',
   role: 'tooltip',
-  class: `${OVERLAY} pointer-events-none m-0 max-w-64 rounded-lg bg-ink px-3 py-2 text-xs text-page shadow-float [inset:auto]`
+  class: `${OVERLAY} pointer-events-none m-0 max-w-64 whitespace-pre-line rounded-lg bg-ink px-3 py-2 text-xs text-page shadow-float [inset:auto]`
 });
 document.body.append(tip);
 

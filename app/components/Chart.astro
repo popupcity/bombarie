@@ -9,13 +9,23 @@ interface Props {
   time: Axis;
   grid?: Scale | undefined;
   number?: (value: number) => string;
+  parts?: { fill: string; points: Point[] }[] | undefined;
   class?: string;
 }
-const { points, kind, label, said, time, grid, number = String, class: className = 'h-8' } = Astro.props;
+const { points, kind, label, said, time, grid, number = String, parts, class: className = 'h-8' } = Astro.props;
 const low = grid?.low ?? 0;
 const high = grid?.high ?? Math.max(...points.map((point) => point.value), 1);
 const y = (value: number): number => 96 - ((value - low) / (high - low || 1)) * 92;
 const step = 100 / time.days;
+const layers = (point: Point): { fill: string; top: number }[] => {
+  if (!parts) return [{ fill: 'fill-ink-soft', top: point.value }];
+  let top = 0;
+  return parts.flatMap((part) => {
+    const value = part.points.find((found) => found.date === point.date)?.value ?? 0;
+    top += value;
+    return value > 0 ? [{ fill: part.fill, top }] : [];
+  }).reverse();
+};
 const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 8 ? 'start' : at > 92 ? 'end' : 'middle');
 ---
 
@@ -35,7 +45,7 @@ const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 8 ? 'start' : a
     {
       points.map((point) => (
         <g class="group/point">
-          {kind === 'bars' && point.value > low && <rect x={`${time.at(point.date) - step * 0.35}%`} y={`${y(point.value)}%`} width={`${step * 0.7}%`} height={`${y(low) - y(point.value)}%`} rx="2" class="fill-ink-soft" />}
+          {kind === 'bars' && layers(point).map((layer) => layer.top > low && <rect x={`${time.at(point.date) - step * 0.35}%`} y={`${y(layer.top)}%`} width={`${step * 0.7}%`} height={`${y(low) - y(layer.top)}%`} rx="2" class={layer.fill} />)}
           <rect x={`${time.at(point.date) - step / 2}%`} y="0" width={`${step}%`} height="100%" fill="transparent" data-tip={said(point)} />
         </g>
       ))

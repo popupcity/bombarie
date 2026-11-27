@@ -24,6 +24,10 @@
   --color-facebook: #1877f2;
   --color-substack: #ff6719;
   --color-threads: #000000;
+  --color-series-1: var(--puc-purple);
+  --color-series-2: var(--puc-blue);
+  --color-series-3: var(--puc-yellow);
+  --color-series-4: var(--puc-green);
   --container-wide: 96rem;
   --shadow-float: 0 8px 30px rgb(0 0 0 / 0.12);
 }
