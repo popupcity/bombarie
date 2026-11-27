@@ -25,7 +25,7 @@ export function whereOf(post: Post, channels: Channels): string {
 export const postPath = (post: Post): string => `/posts/${post.id.replace(/\.md$/, '').split('/').map(encodeURIComponent).join('/')}`;
 
 export function reminderMessages(post: Post, { channels, title, base }: { channels: Channels; title?: string | undefined; base?: string | undefined }): Message[] {
-  const head: Message = { text: [`Time to post on ${whereOf(post, channels)}:`, ...(title ? ['', title] : [])].join('\n'), ...(title && { bold: title }) };
+  const head: Message = { text: `Time to post on ${whereOf(post, channels)}${title ? `: ${title}` : ''}`, ...(title && { bold: title }) };
   const view = base ? { view: `${base}${postPath(post)}` } : {};
   const copy = [post.text, post.link ?? ''].filter(Boolean).join('\n\n');
   return copy ? [head, { text: copy, ...view }] : [{ ...head, ...view }];

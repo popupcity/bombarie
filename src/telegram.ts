@@ -23,9 +23,10 @@ export function telegram(token: string, chat: string, fetchImpl: typeof fetch = 
 
   return async function send({ text, bold, view, photo }: Message): Promise<void> {
     const button = view?.startsWith('https://') ? view : undefined;
-    const full = view && !button ? `${text}\n\n${view}` : text;
+    const full = view && !button ? `${text}\n${view}` : text;
     const max = photo ? MAX_CAPTION : MAX_TEXT;
-    const body = full.length > max ? `${full.slice(0, max - 1)}…` : full;
+    const cut = full.length > max ? `${full.slice(0, max - 1)}…` : full;
+    const body = photo ? cut.replace(/\r?\n/g, '\r\n') : cut;
     const at = bold ? body.indexOf(bold) : -1;
     const entities = bold && at >= 0 ? [{ type: 'bold', offset: at, length: bold.length }] : undefined;
     const markup = button ? { inline_keyboard: [[{ text: 'View', url: button }]] } : undefined;

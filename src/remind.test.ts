@@ -32,13 +32,13 @@ const channels = { 'popupcity-instagram': { platform: 'instagram' as const, name
 
 test('a reminder is a heading with the title, then only the text to copy with the View link under it', () => {
   const [head, body] = reminderMessages(post('f/a.md'), { channels, title: 'Opening', base: 'https://x.test' });
-  assert.deepEqual(head, { text: "Time to post on Pop-Up City's Instagram (story):\n\nOpening", bold: 'Opening' });
+  assert.deepEqual(head, { text: "Time to post on Pop-Up City's Instagram (story): Opening", bold: 'Opening' });
   assert.deepEqual(body, { text: 'Story met link\n\nhttps://popupcity.net', view: 'https://x.test/posts/f/a' });
 });
 
 test('without text or title there is one message, with the View link', () => {
   assert.deepEqual(reminderMessages(post('f/a.md', { type: null, text: '', link: undefined as never }), { channels, base: 'https://x.test' }), [
-    { text: "Time to post on Pop-Up City's Instagram:", view: 'https://x.test/posts/f/a' }
+    { text: "Time to post on Pop-Up City's Instagram", view: 'https://x.test/posts/f/a' }
   ]);
 });
 
@@ -52,8 +52,21 @@ test('a message gets a bold title and a button, and a link as text when the addr
   await send({ text: 'Local', view: 'http://localhost/a' });
   assert.deepEqual(bodies[0]?.entities, [{ type: 'bold', offset: 6, length: 5 }]);
   assert.deepEqual(bodies[0]?.reply_markup, { inline_keyboard: [[{ text: 'View', url: 'https://x.test/a' }]] });
-  assert.equal(bodies[1]?.text, 'Local\n\nhttp://localhost/a');
+  assert.equal(bodies[1]?.text, 'Local\nhttp://localhost/a');
   assert.equal(bodies[1]?.reply_markup, undefined);
+});
+
+test('with a photo the bold part is counted in the line breaks the form sends', async () => {
+  let form: FormData | undefined;
+  const send = telegram('t', '1', (async (_url, init) => {
+    form = init?.body as FormData;
+    return new Response('{}');
+  }) as typeof fetch);
+  await send({ text: 'Head\nSecond\nTitle', bold: 'Title', photo: new Uint8Array([1]) });
+  const sent = await new Response(form).formData();
+  const caption = String(sent.get('caption'));
+  const [entity] = JSON.parse(String(sent.get('caption_entities')));
+  assert.equal(caption.slice(entity.offset, entity.offset + entity.length), 'Title');
 });
 
 test('a manual post is reminded once', async () => {
@@ -130,7 +143,7 @@ test('a dry run previews the message and changes nothing', async () => {
     notify: async () => void (sent += 1)
   });
   assert.equal(result?.status, 'would-remind');
-  assert.match(result?.message ?? '', /^Time to post on Pop-Up City's Instagram \(story\):/);
+  assert.match(result?.message ?? '', /^Time to post on Pop-Up City's Instagram \(story\)/);
   assert.equal(sent, 0);
   assert.equal(await store.get('f/a.md'), null);
 });

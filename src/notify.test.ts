@@ -24,7 +24,7 @@ test('a posted post links to the platform and carries the warning and the pictur
   await complete(deps.store, 'f/jeroen-linkedin.md', 'r1', 'https://platform.test/p', now);
   const photo = new Uint8Array([1]);
   await report([post('f/jeroen-linkedin.md')], [{ id: 'f/jeroen-linkedin.md', status: 'posted', message: 'Posted, but comment 1 of 1 failed' }], { ...deps, photo: async () => photo });
-  assert.deepEqual(sent, [{ text: "Posted on Jeroen's LinkedIn:\n\nOpening\n\nPosted, but comment 1 of 1 failed", bold: 'Opening', view: 'https://platform.test/p', photo }]);
+  assert.deepEqual(sent, [{ text: "Posted on Jeroen's LinkedIn: Opening\nPosted, but comment 1 of 1 failed", bold: 'Opening', view: 'https://platform.test/p', photo }]);
 });
 
 test('failures link to the post here, and outcomes that will be tried again say nothing', async () => {
@@ -36,7 +36,7 @@ test('failures link to the post here, and outcomes that will be tried again say 
     { id: posts[2]!.id, status: 'retry', message: 'later' },
     { id: posts[3]!.id, status: 'skipped', message: 'already claimed' }
   ], deps);
-  assert.deepEqual(sent.map((message) => message.text.split(' on ')[0]!.split('\n')[0]), ['Not posted', "It may or may not be posted. Check Jeroen's LinkedIn:"]);
+  assert.deepEqual(sent.map((message) => message.text.split(' on ')[0]!.split('\n')[0]), ['Not posted', "It may or may not be posted. Check Jeroen's LinkedIn: Opening"]);
   assert.equal(sent[0]?.view, 'https://x.test/posts/a/jeroen-linkedin');
 });
 
@@ -54,7 +54,7 @@ test('a late post is told once, again after a new date, and not when it is old',
   await report([late, old], [], deps);
   await report([late, old], [], deps);
   assert.equal(sent.length, 1);
-  assert.match(sent[0]!.text, /^Skipped, more than an hour late, on Jeroen's LinkedIn:/);
+  assert.match(sent[0]!.text, /^Skipped, more than an hour late, on Jeroen's LinkedIn: Opening$/);
   await report([{ ...late, date: new Date(now.getTime() - 120 * 60_000) }], [], deps);
   assert.equal(sent.length, 2);
 });

@@ -21,7 +21,7 @@ test('a message from the owner becomes an idea and gets a reply with its address
   const { root, sent, intake } = setup();
   assert.equal(await handleUpdate({ message: { chat: { id: 42 }, text: 'Rent a truck, hang art in it' } }, intake), 'saved');
   assert.equal(listIdeas(root).length, 1);
-  assert.match(sent[0] ?? '', /^Saved to Ideas:\n\nRent a truck/);
+  assert.match(sent[0] ?? '', /^Saved to Ideas: Rent a truck/);
 });
 
 test('a message from anyone else is ignored and nothing is saved', async () => {
@@ -57,6 +57,7 @@ test('/planned lists the next five planned posts, soonest first, without past, d
   add(3, 'draft');
   writeFileSync(join(add(2), 'jeroen-linkedin.state.json'), JSON.stringify({ status: 'posted', at: '2026-12-02T09:00:00Z', remoteId: 'x' }));
   assert.equal(await handleUpdate({ message: { chat: { id: 42 }, text: '/planned@bombarie_bot' } }, { ...intake, now: new Date('2026-12-01T12:00:00Z') }), 'answered');
-  assert.deepEqual(sent.map((text) => text.split('\n')[1]), ['Post 4', 'Post 5', 'Post 6', 'Post 7', 'Post 8']);
+  assert.deepEqual(sent.map((text) => text.split('\n')[0]!.split(': ').pop()), ['Post 4', 'Post 5', 'Post 6', 'Post 7', 'Post 8']);
+  assert.match(sent[0]!, /^Planned for \w{3} 4 Dec at 09:00 on Jeroen's LinkedIn: Post 4/);
   assert.match(sent[0] ?? '', /Jeroen's LinkedIn/);
 });

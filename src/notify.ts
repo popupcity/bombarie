@@ -43,7 +43,7 @@ async function message(post: Post, posts: Post[], heading: string, detail: strin
   const title = titleOf(post, posts);
   const photo = await deps.photo?.(post).catch(() => undefined);
   return {
-    text: [`${heading} ${whereOf(post, deps.channels)}:`, ...(title ? ['', title] : []), ...(detail ? ['', detail] : [])].join('\n'),
+    text: [`${heading} ${whereOf(post, deps.channels)}${title ? `: ${title}` : ''}`, ...(detail ? [detail] : [])].join('\n'),
     ...(title && { bold: title }),
     ...(view && { view }),
     ...(photo && { photo })

@@ -51,7 +51,7 @@ const SHOWN = 5;
 
 export const COMMANDS = [{ command: 'planned', description: 'The next planned posts' }];
 
-const HELP = `Send a text, a link or a photo and it is saved as an idea.\n\n${COMMANDS.map(({ command, description }) => `/${command}: ${description.toLowerCase()}`).join('\n')}`;
+const HELP = `Send a text, a link or a photo and it is saved as an idea.\n${COMMANDS.map(({ command, description }) => `/${command}: ${description.toLowerCase()}`).join('\n')}`;
 
 async function planned(intake: Intake): Promise<void> {
   const now = intake.now ?? new Date();
@@ -63,8 +63,10 @@ async function planned(intake: Intake): Promise<void> {
   if (next.length === 0) return send(intake, { text: 'Nothing planned.' });
   for (const post of next) {
     const title = titleOf(post, posts);
-    const when = `${whenLabel(`${ymd(post.date)}T${clock(post.date)}`)} · ${whereOf(post, channels)}${post.manual ? ' · manual' : ''}`;
-    await send(intake, { text: [when, ...(title ? [title] : [])].join('\n'), ...(title && { bold: title }), view: `${intake.origin}${postPath(post)}` });
+    const at = whenLabel(`${ymd(post.date)}T${clock(post.date)}`).replace(', ', ' at ');
+    const where = whereOf(post, channels);
+    const when = post.manual ? `Reminder on ${at} for ${where}` : `Planned for ${at} on ${where}`;
+    await send(intake, { text: title ? `${when}: ${title}` : when, ...(title && { bold: title }), view: `${intake.origin}${postPath(post)}` });
   }
 }
 
@@ -95,7 +97,7 @@ export async function handleUpdate(update: Update, intake: Intake): Promise<'sav
     await attachPreview(intake.root, intake.store, folder);
     const idea = readIdea(intake.root, folder);
     const title = (idea && ideaTitle(idea)) || 'Untitled';
-    await send(intake, { text: `Saved to Ideas:\n\n${title}`, bold: title, view: `${intake.origin}/ideas/${encodeURIComponent(folder)}` });
+    await send(intake, { text: `Saved to Ideas: ${title}`, bold: title, view: `${intake.origin}/ideas/${encodeURIComponent(folder)}` });
     return 'saved';
   } catch (err) {
     await send(intake, { text: `Not saved: ${err instanceof Error ? err.message : String(err)}` });
