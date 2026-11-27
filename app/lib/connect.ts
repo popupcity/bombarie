@@ -122,7 +122,7 @@ export async function refreshPhoto(root: string, name: string): Promise<string> 
 }
 
 export async function disconnect(name: string): Promise<string> {
-  return (await removeToken(tokensPath(), name)) ? 'Disconnected. The token is removed from this computer.' : 'There was no token to remove.';
+  return (await removeToken(tokensPath(), name)) ? 'Disconnected.' : 'There was no token to remove.';
 }
 
 export function channelState(
