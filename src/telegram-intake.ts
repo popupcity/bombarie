@@ -65,7 +65,7 @@ async function planned(intake: Intake): Promise<void> {
     const title = titleOf(post, posts);
     const at = whenLabel(`${ymd(post.date)}T${clock(post.date)}`).replace(', ', ' at ');
     const where = whereOf(post, channels);
-    const when = post.manual ? `Reminder on ${at} for ${where}` : `Planned for ${at} on ${where}`;
+    const when = post.manual ? `Reminder on ${at} to post ${where}` : `Posting ${at} ${where}`;
     await send(intake, { text: title ? `${when}: ${title}` : when, ...(title && { bold: title }), view: `${intake.origin}${postPath(post)}` });
   }
 }

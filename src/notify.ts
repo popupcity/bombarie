@@ -50,11 +50,11 @@ export async function announce(posts: Post[], outcomes: Outcome[], deps: ReportD
       const state = await deps.store.get(post.id);
       const live = state?.status === 'posted' ? state.url : undefined;
       const warning = outcome.message === live ? undefined : outcome.message;
-      await tell(errors, deps, () => message(post, posts, 'Posted on', warning, live ?? own(post, deps), deps));
+      await tell(errors, deps, () => message(post, posts, 'Posted', warning, live ?? own(post, deps), deps));
     } else if (outcome.status === 'failed') {
-      await tell(errors, deps, () => message(post, posts, 'Not posted on', outcome.message, own(post, deps), deps));
+      await tell(errors, deps, () => message(post, posts, 'Not posted', outcome.message, own(post, deps), deps));
     } else if (outcome.status === 'unconfirmed') {
-      await tell(errors, deps, () => message(post, posts, 'It may or may not be posted. Check', outcome.message, own(post, deps), deps));
+      await tell(errors, deps, () => message(post, posts, 'Check whether this was posted', outcome.message, own(post, deps), deps));
     }
   }
   return errors;
@@ -64,7 +64,7 @@ export async function report(posts: Post[], outcomes: Outcome[], deps: ReportDep
   const errors = await announce(posts, outcomes, deps);
   const late = (await unstarted(deps.store, due(posts, deps.now).late)).filter((post) => deps.now.getTime() - post.date.getTime() <= LATE_WINDOW_MS);
   for (const post of late) {
-    if (await tell(errors, deps, () => message(post, posts, 'Skipped, more than an hour late, on', undefined, own(post, deps), deps))) await deps.store.create(post.id, { status: 'skipped', at: deps.now.toISOString() });
+    if (await tell(errors, deps, () => message(post, posts, 'Not posted', 'Skipped, more than an hour late.', own(post, deps), deps))) await deps.store.create(post.id, { status: 'skipped', at: deps.now.toISOString() });
   }
   return errors;
 }

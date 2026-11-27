@@ -26,7 +26,7 @@ const layers = (point: Point): { fill: string; top: number }[] => {
     return value > 0 ? [{ fill: part.fill, top }] : [];
   }).reverse();
 };
-const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 8 ? 'start' : at > 92 ? 'end' : 'middle');
+const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 4 ? 'start' : at > 96 ? 'end' : 'middle');
 ---
 
 <div class:list={['grid min-w-0 gap-x-2 gap-y-1', grid && 'grid-cols-[48px_minmax(0,1fr)]']}>

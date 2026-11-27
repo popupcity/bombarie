@@ -32,13 +32,13 @@ const channels = { 'popupcity-instagram': { platform: 'instagram' as const, name
 
 test('a reminder is a heading with the title, then only the text to copy with the View link under it', () => {
   const [head, body] = reminderMessages(post('f/a.md'), { channels, title: 'Opening', base: 'https://x.test' });
-  assert.deepEqual(head, { text: "Time to post on Pop-Up City's Instagram (story): Opening", bold: 'Opening' });
+  assert.deepEqual(head, { text: 'Time to post as Pop-Up City on Instagram (story): Opening', bold: 'Opening' });
   assert.deepEqual(body, { text: 'Story met link\n\nhttps://popupcity.net', view: 'https://x.test/posts/f/a' });
 });
 
 test('without text or title there is one message, with the View link', () => {
   assert.deepEqual(reminderMessages(post('f/a.md', { type: null, text: '', link: undefined as never }), { channels, base: 'https://x.test' }), [
-    { text: "Time to post on Pop-Up City's Instagram", view: 'https://x.test/posts/f/a' }
+    { text: 'Time to post as Pop-Up City on Instagram', view: 'https://x.test/posts/f/a' }
   ]);
 });
 
@@ -143,7 +143,7 @@ test('a dry run previews the message and changes nothing', async () => {
     notify: async () => void (sent += 1)
   });
   assert.equal(result?.status, 'would-remind');
-  assert.match(result?.message ?? '', /^Time to post on Pop-Up City's Instagram \(story\)/);
+  assert.match(result?.message ?? '', /^Time to post as Pop-Up City on Instagram \(story\)/);
   assert.equal(sent, 0);
   assert.equal(await store.get('f/a.md'), null);
 });

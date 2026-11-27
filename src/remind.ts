@@ -18,14 +18,14 @@ export const titleOf = (post: Post, posts: Post[]): string | undefined => post.t
 
 export function whereOf(post: Post, channels: Channels): string {
   const channel = channels[post.channel];
-  const where = channel ? `${channel.name ?? post.channel}'s ${PLATFORM_LABEL[channel.platform]}` : post.channel;
+  const where = channel ? `as ${channel.name ?? post.channel} on ${PLATFORM_LABEL[channel.platform]}` : `on ${post.channel}`;
   return post.type ? `${where} (${post.type})` : where;
 }
 
 export const postPath = (post: Post): string => `/posts/${post.id.replace(/\.md$/, '').split('/').map(encodeURIComponent).join('/')}`;
 
 export function reminderMessages(post: Post, { channels, title, base }: { channels: Channels; title?: string | undefined; base?: string | undefined }): Message[] {
-  const head: Message = { text: `Time to post on ${whereOf(post, channels)}${title ? `: ${title}` : ''}`, ...(title && { bold: title }) };
+  const head: Message = { text: `Time to post ${whereOf(post, channels)}${title ? `: ${title}` : ''}`, ...(title && { bold: title }) };
   const view = base ? { view: `${base}${postPath(post)}` } : {};
   const copy = [post.text, post.link ?? ''].filter(Boolean).join('\n\n');
   return copy ? [head, { text: copy, ...view }] : [{ ...head, ...view }];
