@@ -8,6 +8,7 @@ export type State =
   | { status: 'failed'; at: string; message: string }
   | { status: 'unconfirmed'; at: string; message: string; remoteId?: string }
   | { status: 'reminded'; at: string }
+  | { status: 'skipped'; at: string }
   | { status: 'deleted'; at: string; remoteId: string; url?: string };
 
 export interface StateStore {
@@ -19,7 +20,7 @@ export interface StateStore {
 
 export interface Attention {
   id: string;
-  status: State['status'];
+  status: Exclude<State['status'], 'skipped'>;
   message: string;
 }
 
@@ -62,9 +63,11 @@ export async function fail(store: StateStore, id: string, message: string, now: 
   );
 }
 
+export const isNotice = (state: State): boolean => state.status === 'reminded' || state.status === 'skipped';
+
 export async function rearm(store: StateStore, id: string, post: { status: string; date: Date }): Promise<boolean> {
   const state = await store.get(id);
-  if (state?.status !== 'reminded' || (post.status === 'planned' && post.date.getTime() <= Date.parse(state.at))) return false;
+  if (!state || !isNotice(state) || (post.status === 'planned' && post.date.getTime() <= Date.parse(state.at))) return false;
   await store.remove(id);
   return true;
 }

@@ -11,7 +11,8 @@ const NOW = new Date('2026-11-18T22:30:00Z');
 
 function repo() {
   const root = mkdtempSync(join(tmpdir(), 'variants-'));
-  writeFileSync(join(root, 'channels.yml'), 'jeroen-linkedin:\n  platform: linkedin\n  kind: person\npopupcity-instagram:\n  platform: instagram\npoppo-instagram:\n  platform: instagram\nstack-substack:\n  platform: substack\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'jeroen-linkedin:\n  platform: linkedin\n  kind: person\npopupcity-instagram:\n  platform: instagram\npoppo-instagram:\n  platform: instagram\nstack-substack:\n  platform: substack\n');
   mkdirSync(join(root, 'posts'));
   return { root, store: fileContentStore(root) };
 }

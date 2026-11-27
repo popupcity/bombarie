@@ -1,7 +1,7 @@
 import { due } from './plan.ts';
 import type { Channels } from './channels.ts';
 import { speakers } from './speaker.ts';
-import { checkpoint, claim, complete, fail, unstarted } from './state.ts';
+import { checkpoint, claim, complete, fail, unstarted, isNotice } from './state.ts';
 import type { StateStore } from './state.ts';
 import { ProviderError } from './types.ts';
 import type { Credentials, Platform, Post, Provider, SendContext } from './types.ts';
@@ -89,6 +89,8 @@ async function sendOne(post: Post, deps: RunDeps, hooks: RunHooks = {}): Promise
 export async function runNow(post: Post, deps: RunDeps, hooks: RunHooks = {}): Promise<Outcome> {
   if (post.manual) return { id: post.id, status: 'skipped', message: 'this post is a reminder only' };
   try {
+    const state = await deps.store.get(post.id);
+    if (state && isNotice(state)) await deps.store.remove(post.id);
     return await sendOne({ ...post, status: 'planned', date: deps.now }, deps, hooks);
   } catch (err) {
     return { id: post.id, status: 'error', message: messageOf(err) };

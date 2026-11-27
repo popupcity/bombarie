@@ -21,7 +21,7 @@ Git- and markdown-based social media planner. Astro SSR on Node, one container, 
 
 All content is in one folder, `data/` (gitignored; `BOMBARIE_ROOT` in Docker is `/data`). It can be its own git repo. Tokens and app secrets are in `config/`, outside it.
 
-- `data/posts/<date>-<slug>/<channel>[-<type>].md`, one file per channel variant; `data/ideas/<date>-<slug>/idea.md`; `data/entities/<slug>.md` with `name:`; `data/channels.yml`; `data/avatars/`.
-- State in `posts/<folder>/<variant>.state.json` (posted, posting, failed, unconfirmed, reminded, deleted), next to the post, never in its markdown. Feed items are in `data/.state/_feeds/`. `manual: true` posts are not posted, only reminded.
+- `data/posts/<date>-<slug>/<channel>[-<type>].md`, one file per channel variant; `data/ideas/<date>-<slug>/idea.md`; `data/entities/<slug>.md` with `name:`; `data/channels/channels.yml`; `data/channels/<channel>/` (what the app keeps per channel: `avatar.jpg`, `feed.json`, statistics).
+- State in `posts/<folder>/<variant>.state.json` (posted, posting, failed, unconfirmed, reminded, deleted), next to the post, never in its markdown. There is no hidden app folder in `data/`. `manual: true` posts are not posted, only reminded.
 - Plain text body; `[[Name]]` is the only link form.
 - A due post over an hour late is skipped (`LATE`), never posted late.

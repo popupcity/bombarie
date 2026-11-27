@@ -13,5 +13,5 @@ export async function telegramOf(): Promise<{ token: string; chat: string } | nu
 export async function reportingOf(root: string, { store, channels, now }: RunDeps): Promise<ReportDeps | null> {
   const bot = await telegramOf();
   if (!bot) return null;
-  return { root, store, channels, now, notify: telegram(bot.token, bot.chat), base: (await readSetting(appsPath(), 'publicUrl')) ?? undefined, photo: (post) => thumbnail(root, post) };
+  return { store, channels, now, notify: telegram(bot.token, bot.chat), base: (await readSetting(appsPath(), 'publicUrl')) ?? undefined, photo: (post) => thumbnail(root, post) };
 }

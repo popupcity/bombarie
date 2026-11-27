@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { rename, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, rename, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { parse, parseDocument, Scalar } from 'yaml';
 import { feedUrlProblem } from './feed.ts';
 import { isRecord } from './frontmatter.ts';
@@ -10,7 +10,13 @@ export const PLATFORMS: Platform[] = ['linkedin', 'instagram', 'facebook', 'thre
 
 export type Channels = Record<string, Channel>;
 
-const fileOf = (root: string): string => join(root, 'channels.yml');
+const fileOf = (root: string): string => join(root, 'channels', 'channels.yml');
+export const isAvatarPath = (path: string): boolean => /^channels\/[A-Za-z0-9][A-Za-z0-9._-]*\/avatar\.(jpe?g|png|webp|gif)$/i.test(path);
+async function save(path: string, text: string): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(`${path}.tmp`, text);
+  await rename(`${path}.tmp`, path);
+}
 const textOf = (root: string): string => (existsSync(fileOf(root)) ? readFileSync(fileOf(root), 'utf8') : '');
 
 export function loadChannels(root: string): Channels {
@@ -55,8 +61,8 @@ export function loadChannels(root: string): Channels {
       channel.feed = value.feed as string;
     }
     if (value.avatar !== undefined) {
-      if (typeof value.avatar !== 'string' || !/^avatars\/[^/\\]+\.(jpe?g|png|webp|gif)$/i.test(value.avatar)) {
-        throw new Error(`${name}: avatar must be an image file in avatars/ (jpg, png, webp or gif)`);
+      if (typeof value.avatar !== 'string' || !isAvatarPath(value.avatar)) {
+        throw new Error(`${name}: avatar must be channels/<name>/avatar.jpg (or png, webp or gif)`);
       }
       channel.avatar = value.avatar;
     }
@@ -74,9 +80,7 @@ export async function setChannelField(root: string, channel: string, key: string
   const path = fileOf(root);
   const doc = parseDocument(textOf(root));
   doc.setIn([channel, key], value);
-  const temp = `${path}.tmp`;
-  await writeFile(temp, doc.toString());
-  await rename(temp, path);
+  await save(path, doc.toString());
 }
 
 const slugOf = (name: string): string =>
@@ -103,9 +107,7 @@ export async function addChannel(root: string, input: { platform: string; name: 
   const label = new Scalar(key);
   label.spaceBefore = true;
   doc.set(label, doc.createNode({ platform, name }));
-  const temp = `${path}.tmp`;
-  await writeFile(temp, doc.toString());
-  await rename(temp, path);
+  await save(path, doc.toString());
   return key;
 }
 
@@ -147,9 +149,7 @@ export async function setFeed(root: string, key: string, address: string): Promi
   const doc = parseDocument(textOf(root));
   if (clean === '') doc.deleteIn([key, 'feed']);
   else doc.setIn([key, 'feed'], clean);
-  const temp = `${path}.tmp`;
-  await writeFile(temp, doc.toString());
-  await rename(temp, path);
+  await save(path, doc.toString());
 }
 
 export async function removeChannel(root: string, key: string): Promise<void> {
@@ -159,9 +159,7 @@ export async function removeChannel(root: string, key: string): Promise<void> {
   const path = fileOf(root);
   const doc = parseDocument(textOf(root));
   doc.delete(key);
-  const temp = `${path}.tmp`;
-  await writeFile(temp, doc.toString());
-  await rename(temp, path);
+  await save(path, doc.toString());
 }
 
 export function channelInfos(channels: Channels): ChannelInfo[] {

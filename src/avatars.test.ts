@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -64,7 +64,7 @@ test('downloadAvatar refuses redirects, non-images and oversized files', async (
 test('saveAvatar writes a 256px square jpeg and refuses unsafe names', async () => {
   const root = mkdtempSync(join(tmpdir(), 'social-avatar-'));
   const relative = await saveAvatar(root, 'jeroen-linkedin', await png(400, 200));
-  assert.equal(relative, 'avatars/jeroen-linkedin.jpg');
+  assert.equal(relative, 'channels/jeroen-linkedin/avatar.jpg');
   const meta = await sharp(join(root, relative)).metadata();
   assert.deepEqual([meta.format, meta.width, meta.height], ['jpeg', 256, 256]);
 
@@ -76,7 +76,8 @@ test('saveAvatar writes a 256px square jpeg and refuses unsafe names', async () 
 
 test('refreshLinkedinAvatar stores the picture and records it in channels.yml', async () => {
   const root = mkdtempSync(join(tmpdir(), 'social-avatar-'));
-  const channelsFile = join(root, 'channels.yml');
+  const channelsFile = join(root, 'channels', 'channels.yml');
+  mkdirSync(join(root, 'channels'), { recursive: true });
   writeFileSync(channelsFile, '# mine\njeroen-linkedin:\n  platform: linkedin\n  kind: person\n');
 
   const fetchImpl = serve({
@@ -86,23 +87,24 @@ test('refreshLinkedinAvatar stores the picture and records it in channels.yml', 
   });
   const saved = await refreshLinkedinAvatar({ root, channel: 'jeroen-linkedin', accessToken: 't', fetchImpl });
 
-  assert.equal(saved, 'avatars/jeroen-linkedin.jpg');
+  assert.equal(saved, 'channels/jeroen-linkedin/avatar.jpg');
   assert.ok(existsSync(join(root, saved)));
   assert.equal(
     readFileSync(channelsFile, 'utf8'),
-    '# mine\njeroen-linkedin:\n  platform: linkedin\n  kind: person\n  avatar: avatars/jeroen-linkedin.jpg\n'
+    '# mine\njeroen-linkedin:\n  platform: linkedin\n  kind: person\n  avatar: channels/jeroen-linkedin/avatar.jpg\n'
   );
-  assert.equal(loadChannels(root)['jeroen-linkedin']?.avatar, 'avatars/jeroen-linkedin.jpg');
+  assert.equal(loadChannels(root)['jeroen-linkedin']?.avatar, 'channels/jeroen-linkedin/avatar.jpg');
 });
 
 test('a profile without a picture changes nothing', async () => {
   const root = mkdtempSync(join(tmpdir(), 'social-avatar-'));
-  const channelsFile = join(root, 'channels.yml');
+  const channelsFile = join(root, 'channels', 'channels.yml');
+  mkdirSync(join(root, 'channels'), { recursive: true });
   const original = 'a-linkedin:\n  platform: linkedin\n';
   writeFileSync(channelsFile, original);
   const fetchImpl = serve({ 'https://api.linkedin.com/v2/userinfo': () => new Response(JSON.stringify({ sub: 'abc' }), { status: 200 }) });
 
   assert.equal(await refreshLinkedinAvatar({ root, channel: 'a-linkedin', accessToken: 't', fetchImpl }), null);
   assert.equal(readFileSync(channelsFile, 'utf8'), original);
-  assert.equal(existsSync(join(root, 'avatars')), false);
+  assert.equal(existsSync(join(root, 'channels', 'jeroen-linkedin')), false);
 });

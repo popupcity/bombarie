@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { announce, report } from './notify.ts';
-import { claim, complete, fileStore } from './state.ts';
+import { claim, complete, fileStore, rearm } from './state.ts';
+import { runNow } from './run.ts';
 import type { Message } from './telegram.ts';
 import type { Post } from './types.ts';
 
@@ -55,7 +56,9 @@ test('a late post is told once, again after a new date, and not when it is old',
   await report([late, old], [], deps);
   assert.equal(sent.length, 1);
   assert.match(sent[0]!.text, /^Skipped, more than an hour late, on Jeroen's LinkedIn: Opening$/);
-  await report([{ ...late, date: new Date(now.getTime() - 120 * 60_000) }], [], deps);
+  const moved = { ...late, date: new Date(now.getTime() + 60_000) };
+  await rearm(deps.store, moved.id, moved);
+  await report([moved], [], { ...deps, now: new Date(moved.date.getTime() + 90 * 60_000) });
   assert.equal(sent.length, 2);
 });
 
@@ -66,4 +69,21 @@ test('a failed message is reported back and a late post is tried again', async (
   const sent: Message[] = [];
   await report([late], [], { ...deps, notify: async (message) => void sent.push(message) });
   assert.equal(sent.length, 1);
+});
+
+test('a late post that was told can still be posted by hand', async () => {
+  const { deps } = setup();
+  const late = post('a/jeroen-linkedin.md', 90);
+  await report([late], [], deps);
+  assert.equal((await deps.store.get(late.id))?.status, 'skipped');
+  let sentOut = 0;
+  const outcome = await runNow(late, {
+    store: deps.store,
+    channels,
+    now,
+    providers: { linkedin: { platform: 'linkedin', validate: () => [], send: async () => ({ id: 'r', url: 'https://platform.test/r', sent: (sentOut += 1) }) } },
+    credentials: async () => ({ accessToken: 't' }),
+    context: () => ({}) as never
+  } as never);
+  assert.deepEqual([outcome.status, sentOut, (await deps.store.get(late.id))?.status], ['posted', 1, 'posted']);
 });

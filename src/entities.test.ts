@@ -94,7 +94,8 @@ test('readPosts resolves entities, rejects embeds and the old mentions field', (
   const root = project({ 'pop-up-city.md': popup });
   const folder = join(root, 'posts', '2026-11-20-x');
   mkdirSync(folder, { recursive: true });
-  writeFileSync(join(root, 'channels.yml'), 'jeroen-linkedin:\n  platform: linkedin\npopupcity-instagram:\n  platform: instagram\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'jeroen-linkedin:\n  platform: linkedin\npopupcity-instagram:\n  platform: instagram\n');
   writeFileSync(join(folder, 'jeroen-linkedin.md'), '---\ndate: 2026-11-20T10:00\n---\nHoi [[Pop-Up City]]\n');
   writeFileSync(join(folder, 'popupcity-instagram.md'), '---\ndate: 2026-11-20T10:00\n---\nHoi [[Pop-Up City]]\n');
   writeFileSync(join(folder, 'jeroen-linkedin-story.md'), '---\ndate: 2026-11-20T10:00\n---\n![[foto.jpg]]\n');

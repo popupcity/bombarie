@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -85,7 +85,8 @@ test('the rules: 500 characters, text or a picture, one video, no PDF, no story,
 
 test('connecting exchanges the code twice, saves the long-lived token and the username, and refuses another account', async () => {
   const root = mkdtempSync(join(tmpdir(), 'threads-'));
-  writeFileSync(join(root, 'channels.yml'), 'pop-threads:\n  platform: threads\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'pop-threads:\n  platform: threads\n');
   const tokens = join(root, 'tokens.json');
   const seen: string[] = [];
   const fetchImpl = (async (url: string) => {
@@ -102,13 +103,14 @@ test('connecting exchanges the code twice, saves the long-lived token and the us
   assert.equal(saved?.accessToken, 'long');
   assert.equal(saved?.accountId, '17841');
   assert.equal(saved?.expiresAt?.toISOString().slice(0, 10), '2027-01-22');
-  assert.match(readFileSync(join(root, 'channels.yml'), 'utf8'), /handle: pop/);
+  assert.match(readFileSync(join(root, 'channels', 'channels.yml'), 'utf8'), /handle: pop/);
   await assert.rejects(finishThreads({ ...args, channel: { platform: 'threads', handle: 'someone' } }), /not @someone|@pop, not @someone/);
 });
 
 test('the user id comes from the profile as text, because the token response carries it as a number too big for JavaScript', async () => {
   const root = mkdtempSync(join(tmpdir(), 'threads-'));
-  writeFileSync(join(root, 'channels.yml'), 'pop-threads:\n  platform: threads\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'pop-threads:\n  platform: threads\n');
   const tokens = join(root, 'tokens.json');
   const fetchImpl = (async (url: string) => {
     if (String(url).endsWith('/oauth/access_token')) return new Response('{"access_token":"short","user_id":40033573892957919}');

@@ -33,9 +33,9 @@ export async function downloadAvatar(value: string, fetchImpl: typeof fetch = fe
 
 export async function saveAvatar(root: string, channel: string, bytes: Uint8Array): Promise<string> {
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(channel)) throw new Error(`unsafe channel name "${channel}"`);
-  const relative = `avatars/${channel}.jpg`;
+  const relative = `channels/${channel}/avatar.jpg`;
   const jpeg = await sharp(bytes).rotate().resize(256, 256, { fit: 'cover' }).jpeg({ quality: 82 }).toBuffer();
-  await mkdir(join(root, 'avatars'), { recursive: true });
+  await mkdir(join(root, 'channels', channel), { recursive: true });
   const file = join(root, relative);
   await writeFile(`${file}.tmp`, jpeg);
   await rename(`${file}.tmp`, file);

@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { readFile } from 'node:fs/promises';
-import { resolve, sep } from 'node:path';
+import { relative, resolve, sep } from 'node:path';
 import sharp from 'sharp';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { isAvatarPath } from '../../../src/channels.ts';
 import { MAX_VIDEO_BYTES, renameImage, saveImage } from '../../../src/media.ts';
 import { content, json, root } from '../../lib/data.ts';
 import { serveBytes } from '../../lib/serve.ts';
@@ -22,9 +23,9 @@ const CACHE = 'private, max-age=300';
 
 export const GET: APIRoute = async ({ params, url, request }) => {
   const path = params.path ?? '';
-  const file = resolve(root, path.startsWith('avatars/') || path.startsWith('ideas/') ? path : `posts/${path}`);
+  const file = resolve(root, path.startsWith('channels/') || path.startsWith('ideas/') ? path : `posts/${path}`);
   const type = TYPES[file.split('.').pop()?.toLowerCase() ?? ''];
-  const allowed = ['posts', 'ideas', 'avatars'].some((dir) => file.startsWith(resolve(root, dir) + sep));
+  const allowed = isAvatarPath(relative(root, file).split(sep).join('/')) || ['posts', 'ideas'].some((dir) => file.startsWith(resolve(root, dir) + sep));
   if (!allowed || !type) return new Response('not found', { status: 404 });
 
   let bytes: Buffer;

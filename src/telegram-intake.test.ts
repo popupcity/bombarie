@@ -46,7 +46,8 @@ test('a command is answered and never saved as an idea', async () => {
 test('/planned lists the next five planned posts, soonest first, without past, draft or already handled ones', async () => {
   const { root, sent, intake } = setup();
   const { mkdirSync, writeFileSync } = await import('node:fs');
-  writeFileSync(join(root, 'channels.yml'), 'jeroen-linkedin:\n  platform: linkedin\n  name: Jeroen\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'jeroen-linkedin:\n  platform: linkedin\n  name: Jeroen\n');
   const add = (day: number, status = 'planned') => {
     const folder = join(root, 'posts', `2026-12-${String(day).padStart(2, '0')}-p${day}`);
     mkdirSync(folder, { recursive: true });

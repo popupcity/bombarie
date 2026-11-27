@@ -10,9 +10,9 @@ function repo(): string {
   const root = mkdtempSync(join(tmpdir(), 'campaign-'));
   mkdirSync(join(root, 'entities'));
   mkdirSync(join(root, 'posts', '2026-11-20-expo'), { recursive: true });
-  writeFileSync(
-    join(root, 'channels.yml'),
-    'jeroen-linkedin:\n  platform: linkedin\n  kind: person\n  urn: urn:li:person:abc\n  avatar: avatars/jeroen-linkedin.jpg\nnourn-linkedin:\n  platform: linkedin\n  kind: person\ninsta:\n  platform: instagram\n'
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'),
+    'jeroen-linkedin:\n  platform: linkedin\n  kind: person\n  urn: urn:li:person:abc\n  avatar: channels/jeroen-linkedin/avatar.jpg\nnourn-linkedin:\n  platform: linkedin\n  kind: person\ninsta:\n  platform: instagram\n'
   );
   writeFileSync(join(root, 'entities', 'pop-up-city.md'), '---\nname: Pop-Up City\nlinkedin: urn:li:organization:1\ninstagram: popupcity\n---\n');
   const folder = join(root, 'posts', '2026-11-20-expo');
@@ -51,14 +51,15 @@ test('variants come back sorted, with the file, the preview and the problems per
     true
   );
   assert.equal(linkedin!.error, null);
-  assert.equal(linkedin!.avatar, 'avatars/jeroen-linkedin.jpg');
+  assert.equal(linkedin!.avatar, 'channels/jeroen-linkedin/avatar.jpg');
   assert.equal(insta!.avatar, undefined);
   assert.deepEqual(nourn!.issues, ['this channel is not linked to a LinkedIn profile yet; use Connect on the Channels page']);
 });
 
 test('a file that cannot be parsed is still listed with its error', () => {
   const root = repo();
-  writeFileSync(join(root, 'channels.yml'), 'broken:\n  platform: linkedin\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'broken:\n  platform: linkedin\n');
   writeFileSync(join(root, 'posts', '2026-11-20-expo', 'broken-x.md'), '---\ndate: nonsense\n---\nText\n');
   const variants = loadCampaign(root, '2026-11-20-expo')?.variants ?? [];
   const bad = variants.find((v) => v.base === 'broken-x');
@@ -215,7 +216,8 @@ test('a status change remembers who made it, other saves keep the name, and a ne
 test('images of a reply go along to a Threads variant and not to LinkedIn', async () => {
   const root = repo();
   const folder = '2026-11-20-expo';
-  writeFileSync(join(root, 'channels.yml'), 'pop-threads:\n  platform: threads\njeroen-linkedin:\n  platform: linkedin\n  kind: person\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'pop-threads:\n  platform: threads\njeroen-linkedin:\n  platform: linkedin\n  kind: person\n');
   writeFileSync(join(root, 'posts', folder, 'pop-threads.md'), '---\ndate: 2026-11-20T10:30\n---\nPost\n\n---\n\nReply\n\n![](r.jpg)\n');
   rmSync(join(root, 'posts', folder, 'jeroen-linkedin.md'));
   await addVariant(root, fileContentStore(root), folder, 'pop-threads', 'jeroen-linkedin');

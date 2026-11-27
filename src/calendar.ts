@@ -58,7 +58,7 @@ export function weekStart(day: string): string {
 }
 
 export function statusOf(post: Post, state: State | null, now: Date): Status {
-  if (state) return state.status;
+  if (state) return state.status === 'skipped' ? 'late' : state.status;
   if (post.status === 'draft') return 'draft';
   if (post.manual) return 'planned';
   return now.getTime() - post.date.getTime() > LATE_AFTER_MS ? 'late' : 'planned';

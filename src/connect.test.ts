@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -56,7 +56,8 @@ test('exchangeCode and fetchProfile fail loudly', async () => {
 
 test('setChannelField adds the urn and keeps comments and other channels', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'social-connect-'));
-  const path = join(dir, 'channels.yml');
+  const path = join(dir, 'channels', 'channels.yml');
+  mkdirSync(join(dir, 'channels'), { recursive: true });
   writeFileSync(
     path,
     '# my channels\njeroen-linkedin:\n  platform: linkedin\n  kind: person\n\npopupcity-instagram:\n  platform: instagram\n'
@@ -78,7 +79,8 @@ test('only a LinkedIn person channel or an Instagram channel can be connected', 
 
 function flowRepo() {
   const root = mkdtempSync(join(tmpdir(), 'flow-'));
-  writeFileSync(join(root, 'channels.yml'), 'me-linkedin:\n  platform: linkedin\n  kind: person\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'me-linkedin:\n  platform: linkedin\n  kind: person\n');
   const tokens = join(root, 'tokens.json');
   return { root, tokens, channel: loadChannels(root)['me-linkedin']! };
 }
@@ -96,7 +98,7 @@ test('finishing a connection saves the token and writes the urn when the channel
   assert.equal(done.urn, 'urn:li:person:abc');
   assert.equal(done.avatar, 'LinkedIn returned no profile picture');
   assert.equal((await readTokens(tokens))['me-linkedin']?.accessToken, 'tok');
-  assert.match(readFileSync(join(root, 'channels.yml'), 'utf8'), /urn: urn:li:person:abc/);
+  assert.match(readFileSync(join(root, 'channels', 'channels.yml'), 'utf8'), /urn: urn:li:person:abc/);
 });
 
 test('a login with another id than channels.yml replaces the urn, because the id differs per LinkedIn app', async () => {
@@ -104,7 +106,7 @@ test('a login with another id than channels.yml replaces the urn, because the id
   const channel = { platform: 'linkedin', kind: 'person', urn: 'urn:li:person:other' } as const;
   const done = await finishLinkedin({ root, name: 'me-linkedin', channel, clientId: 'c', clientSecret: 's', code: 'x', redirectUri: 'r', tokens, now, fetchImpl: linkedinFetch });
   assert.equal(done.urn, 'urn:li:person:abc');
-  assert.match(readFileSync(join(root, 'channels.yml'), 'utf8'), /urn: urn:li:person:abc/);
+  assert.match(readFileSync(join(root, 'channels', 'channels.yml'), 'utf8'), /urn: urn:li:person:abc/);
   assert.equal((await readTokens(tokens))['me-linkedin']?.accessToken, 'tok');
 });
 
@@ -151,7 +153,8 @@ test('metaAuthorizeUrl uses the configuration id and no scope', () => {
 
 test('finishInstagram saves the system-user token without expiry, the account id and the handle', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'social-ig-'));
-  writeFileSync(join(dir, 'channels.yml'), 'pop-instagram:\n  platform: instagram\n  name: Pop\n');
+  mkdirSync(join(dir, 'channels'), { recursive: true });
+  writeFileSync(join(dir, 'channels', 'channels.yml'), 'pop-instagram:\n  platform: instagram\n  name: Pop\n');
   const channel = loadChannels(dir)['pop-instagram']!;
   const done = await finishInstagram({ root: dir, name: 'pop-instagram', channel, clientId: 'a', clientSecret: 's', code: 'abc', redirectUri: 'r', tokens: join(dir, 'tokens.json'), now, fetchImpl: instagramFetch([{ id: '178', username: 'popupcity' }]) });
   assert.equal(done.username, 'popupcity');
@@ -166,7 +169,8 @@ test('finishInstagram saves the system-user token without expiry, the account id
 
 test('finishInstagram picks the account of the handle, and refuses missing scopes, no accounts and a wrong handle', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'social-ig-'));
-  writeFileSync(join(dir, 'channels.yml'), 'pop-instagram:\n  platform: instagram\n  handle: popupcity\n');
+  mkdirSync(join(dir, 'channels'), { recursive: true });
+  writeFileSync(join(dir, 'channels', 'channels.yml'), 'pop-instagram:\n  platform: instagram\n  handle: popupcity\n');
   const channel = loadChannels(dir)['pop-instagram']!;
   const base = { root: dir, name: 'pop-instagram', channel, clientId: 'a', clientSecret: 's', code: 'c', redirectUri: 'r', tokens: join(dir, 'tokens.json'), now };
   const both = [{ id: '1', username: 'other' }, { id: '178', username: 'popupcity' }];
@@ -195,7 +199,8 @@ const pageFetch = (assigned: Record<string, unknown>[], accounts: Record<string,
 
 test('finishFacebook saves the page token and id and writes the page into channels.yml', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'social-fb-'));
-  writeFileSync(join(dir, 'channels.yml'), 'pop-facebook:\n  platform: facebook\n');
+  mkdirSync(join(dir, 'channels'), { recursive: true });
+  writeFileSync(join(dir, 'channels', 'channels.yml'), 'pop-facebook:\n  platform: facebook\n');
   const channel = loadChannels(dir)['pop-facebook']!;
   const done = await finishFacebook({ root: dir, name: 'pop-facebook', channel, clientId: 'a', clientSecret: 's', code: 'c', redirectUri: 'r', tokens: join(dir, 'tokens.json'), now, fetchImpl: pageFetch([{ id: '55', name: 'Pop-Up City', access_token: 'pagetok' }]) });
   assert.equal(done.pageName, 'Pop-Up City');
@@ -207,7 +212,8 @@ test('finishFacebook saves the page token and id and writes the page into channe
 
 test('finishFacebook falls back to /me/accounts, picks by page id or name, and refuses the rest', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'social-fb-'));
-  writeFileSync(join(dir, 'channels.yml'), 'pop-facebook:\n  platform: facebook\n  name: Pop-Up City\n');
+  mkdirSync(join(dir, 'channels'), { recursive: true });
+  writeFileSync(join(dir, 'channels', 'channels.yml'), 'pop-facebook:\n  platform: facebook\n  name: Pop-Up City\n');
   const channel = loadChannels(dir)['pop-facebook']!;
   const base = { root: dir, name: 'pop-facebook', channel, clientId: 'a', clientSecret: 's', code: 'c', redirectUri: 'r', tokens: join(dir, 'tokens.json'), now };
   const pages = [{ id: '1', name: 'Other', access_token: 't1' }, { id: '55', name: 'pop-up city', access_token: 't55' }];

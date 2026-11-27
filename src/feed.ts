@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, rename, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import type { Channels } from './channels.ts';
 
 export interface FeedItem {
@@ -13,8 +13,8 @@ export interface FeedItem {
 
 export interface FeedFile {
   source?: string;
-  fetchedAt: string;
   items: FeedItem[];
+  fetchedAt?: string;
   error?: string;
 }
 
@@ -122,9 +122,17 @@ export async function fetchFeed(address: string, fetchImpl: typeof fetch = fetch
   throw new Error('the feed redirects too often');
 }
 
-const fileOf = (root: string, channel: string): string => join(root, '.state', '_feeds', `${channel}.json`);
+const fileOf = (root: string, channel: string): string => join(root, 'channels', channel, 'feed.json');
 
-export function readFeed(root: string, channel: string): FeedFile | null {
+interface Attempt {
+  source: string;
+  fetchedAt: string;
+  error?: string;
+}
+
+const attempts = new Map<string, Attempt>();
+
+function kept(root: string, channel: string): FeedFile | null {
   const file = fileOf(root, channel);
   if (!existsSync(file)) return null;
   try {
@@ -134,6 +142,13 @@ export function readFeed(root: string, channel: string): FeedFile | null {
   }
 }
 
+export function readFeed(root: string, channel: string): FeedFile | null {
+  const stored = kept(root, channel);
+  const last = attempts.get(fileOf(root, channel));
+  if (!last || (stored && stored.source !== last.source)) return stored;
+  return { items: [], ...stored, ...last };
+}
+
 export function mergeItems(known: FeedItem[], seen: FeedItem[]): FeedItem[] {
   const byGuid = new Map(known.map((item) => [item.guid, item]));
   for (const item of seen) byGuid.set(item.guid, item);
@@ -141,26 +156,32 @@ export function mergeItems(known: FeedItem[], seen: FeedItem[]): FeedItem[] {
 }
 
 export async function refreshFeed(root: string, channel: string, address: string, fetchImpl: typeof fetch, now: Date): Promise<FeedFile> {
-  const stored = readFeed(root, channel);
+  const stored = kept(root, channel);
   const before = stored?.source === address ? stored : null;
-  let next: FeedFile;
+  const attempt: Attempt = { source: address, fetchedAt: now.toISOString() };
+  let items = before?.items ?? [];
   try {
-    next = { source: address, fetchedAt: now.toISOString(), items: mergeItems(before?.items ?? [], await fetchFeed(address, fetchImpl)) };
+    items = mergeItems(items, await fetchFeed(address, fetchImpl));
   } catch (err) {
-    next = { source: address, fetchedAt: now.toISOString(), items: before?.items ?? [], error: err instanceof Error ? err.message : String(err) };
+    attempt.error = err instanceof Error ? err.message : String(err);
   }
   const file = fileOf(root, channel);
-  await mkdir(join(root, '.state', '_feeds'), { recursive: true });
-  await writeFile(`${file}.tmp`, `${JSON.stringify(next, null, 2)}\n`);
-  await rename(`${file}.tmp`, file);
-  return next;
+  const next = { source: address, items };
+  const written = `${JSON.stringify(next, null, 2)}\n`;
+  if (!attempt.error && (!existsSync(file) || readFileSync(file, 'utf8') !== written)) {
+    await mkdir(dirname(file), { recursive: true });
+    await writeFile(`${file}.tmp`, written);
+    await rename(`${file}.tmp`, file);
+  }
+  attempts.set(file, attempt);
+  return { ...next, ...attempt };
 }
 
 export async function refreshFeeds(root: string, channels: Channels, fetchImpl: typeof fetch, now: Date): Promise<void> {
   for (const [name, channel] of Object.entries(channels)) {
     if (!channel.feed) continue;
     const before = readFeed(root, name);
-    if (before?.source === channel.feed && now.getTime() - Date.parse(before.fetchedAt) < REFRESH_AFTER_MS) continue;
+    if (before?.source === channel.feed && before.fetchedAt && now.getTime() - Date.parse(before.fetchedAt) < REFRESH_AFTER_MS) continue;
     await refreshFeed(root, name, channel.feed, fetchImpl, now);
   }
 }

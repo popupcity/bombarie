@@ -5,6 +5,7 @@ import Heading from '@popupcity/ui/src/components/Heading.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
 import { removeUnusedFile } from '../../../src/media.ts';
 import { allMedia } from '../../../src/parts.ts';
+import { isNotice } from '../../../src/state.ts';
 import { COMPOSE_URL, PLATFORM_LABEL, isMedia, takesMedia } from '../../../src/types.ts';
 import { dateLabel, postsNow } from '../../../src/plan.ts';
 import { clock, whenLabel, ymd } from '../../../src/time.ts';
@@ -108,7 +109,7 @@ const library = (await content.list(`posts/${campaign.folder}`)).filter((name) =
 const sizes = await photoSizes(library, root, 'posts', campaign.folder);
 const stored = await states.get(`${campaign.folder}/${variant.base}.md`);
 const remindedAt = stored?.status === 'reminded' ? stored.at : undefined;
-const recorded = remindedAt ? null : stored;
+const recorded = stored && isNotice(stored) ? null : stored;
 const settled = lastOutcome(`${campaign.folder}/${variant.base}.md`);
 const settledToast = settled && Date.now() - new Date(settled.at).getTime() < 120_000 ? { text: outcomeWording(settled.status, settled.message), tone: settled.status === 'posted' ? 'ok' : settled.status === 'unconfirmed' ? 'warn' : 'bad' } : null;
 if (settled) forgetOutcome(`${campaign.folder}/${variant.base}.md`);

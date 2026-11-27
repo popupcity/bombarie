@@ -134,7 +134,7 @@ const feedFile = stored && stored.source === channel.feed ? stored : null;
       {
         hasFeed && (
           <Text slot="rows" variant="small" class="text-ink-soft">
-            {feedFile ? `${feedFile.items.length} ${feedFile.items.length === 1 ? 'post' : 'posts'} kept. Last read ${new Date(feedFile.fetchedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Amsterdam' })}.` : 'Not read yet.'}
+            {feedFile ? `${feedFile.items.length} ${feedFile.items.length === 1 ? 'post' : 'posts'} kept.${feedFile.fetchedAt ? ` Last read ${new Date(feedFile.fetchedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Amsterdam' })}.` : ''}` : 'Not read yet.'}
             {feedFile?.error ? ` ${sentence(feedFile.error)}` : ''}
           </Text>
         )

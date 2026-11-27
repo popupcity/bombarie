@@ -39,7 +39,7 @@ docker compose up -d
 
 Open the address within 15 minutes. Bombarie asks for one thing: an OAuth app at GitHub (the page tells you where to register it and which callback address to give). Then sign in with GitHub: the first account becomes an admin, and admins add everyone else on the Users page. If nobody has set it up after 15 minutes, setup closes; restart the container to open it again.
 
-Then use Add channel. The first channel creates `channels.yml`. There is no `.env` to write; Telegram (reminders and ideas by message) is set on the Settings page.
+Then use Add channel. The first channel creates `channels/channels.yml`. There is no `.env` to write; Telegram (reminders and ideas by message) is set on the Settings page.
 
 Optional environment variables in `docker-compose.yml`:
 
@@ -58,14 +58,15 @@ Two folders hold everything, and both are mounted by `docker-compose.yml`:
 
 ```
 data/
-  channels.yml
+  channels/
+    channels.yml                 your channels
+    jeroen-linkedin/avatar.jpg   what the app keeps per channel: avatar, feed.json, statistics
   posts/2026-12-01-launch/
     jeroen-linkedin.md           one file per channel
     jeroen-linkedin.state.json   what the app did: status, remote id, replies
     01.jpg
   ideas/2026-11-25-an-idea/idea.md
   entities/pop-up-city.md        name: Pop-Up City, linkedin: urn:..., instagram: ...
-  avatars/
 ```
 
 A post file:

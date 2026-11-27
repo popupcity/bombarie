@@ -27,26 +27,28 @@ test('resolveName picks the channel and the type', () => {
 
 test('a channel that prefixes another is refused', () => {
   const dir = mkdtempSync(join(tmpdir(), 'social-'));
-  writeFileSync(join(dir, 'channels.yml'), 'popupcity:\n  platform: linkedin\npopupcity-instagram:\n  platform: instagram\n');
+  mkdirSync(join(dir, 'channels'), { recursive: true });
+  writeFileSync(join(dir, 'channels', 'channels.yml'), 'popupcity:\n  platform: linkedin\npopupcity-instagram:\n  platform: instagram\n');
   assert.throws(() => loadChannels(dir), /prefix/);
 });
 
-test('channels get a display name and an avatar from avatars/, with safe paths only', () => {
+test('channels get a display name and an avatar from its own folder, and only the avatar can be named', () => {
   const dir = mkdtempSync(join(tmpdir(), 'social-channels-'));
   const write = (body: string) => {
-    writeFileSync(join(dir, 'channels.yml'), body);
+    mkdirSync(join(dir, 'channels'), { recursive: true });
+    writeFileSync(join(dir, 'channels', 'channels.yml'), body);
     return dir;
   };
 
   const channels = loadChannels(
-    write('a-linkedin:\n  platform: linkedin\n  name: " Pop-Up City "\n  avatar: avatars/puc.jpg\nb-instagram:\n  platform: instagram\n')
+    write('a-linkedin:\n  platform: linkedin\n  name: " Pop-Up City "\n  avatar: channels/a-linkedin/avatar.jpg\nb-instagram:\n  platform: instagram\n')
   );
   assert.deepEqual(channelInfos(channels), [
     { name: 'b-instagram', platform: 'instagram', label: 'b-instagram' },
-    { name: 'a-linkedin', platform: 'linkedin', label: 'Pop-Up City', avatar: 'avatars/puc.jpg' }
+    { name: 'a-linkedin', platform: 'linkedin', label: 'Pop-Up City', avatar: 'channels/a-linkedin/avatar.jpg' }
   ]);
 
-  for (const bad of ['../secret.jpg', '/etc/passwd', 'posts/x.jpg', 'avatars/../x.jpg', 'avatars/x.svg', 'avatars/a/b.jpg']) {
+  for (const bad of ['../secret.jpg', '/etc/passwd', 'posts/x.jpg', 'avatars/x.jpg', 'channels/../avatar.jpg', 'channels/a/avatar.svg', 'channels/a/b/avatar.jpg', 'channels/a/other.jpg', 'channels/channels.yml', 'channels/a/feed.json', 'channels/a/days.csv']) {
     assert.throws(() => loadChannels(write(`a:\n  platform: linkedin\n  avatar: ${bad}\n`)), /avatar must be/);
   }
   assert.throws(() => loadChannels(write('a:\n  platform: linkedin\n  name: ""\n')), /non-empty/);
@@ -54,11 +56,12 @@ test('channels get a display name and an avatar from avatars/, with safe paths o
 
 test('addChannel writes a new channel and refuses duplicates', async () => {
   const root = mkdtempSync(join(tmpdir(), 'social-'));
-  writeFileSync(join(root, 'channels.yml'), 'jeroen-linkedin:\n  platform: linkedin\n  name: Jeroen\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'jeroen-linkedin:\n  platform: linkedin\n  name: Jeroen\n');
   assert.equal(await addChannel(root, { platform: 'instagram', name: ' Pöppo Studio ' }), 'poppo-studio-instagram');
   const channels = loadChannels(root);
   assert.deepEqual(channels['poppo-studio-instagram'], { platform: 'instagram', name: 'Pöppo Studio' });
-  assert.ok(readFileSync(join(root, 'channels.yml'), 'utf8').includes('\n\npoppo-studio-instagram:'));
+  assert.ok(readFileSync(join(root, 'channels', 'channels.yml'), 'utf8').includes('\n\npoppo-studio-instagram:'));
   await assert.rejects(addChannel(root, { platform: 'instagram', name: 'poppo studio' }), /already/);
   await assert.rejects(addChannel(root, { platform: 'instagram', name: '!!!' }), /at least one letter/);
   await assert.rejects(addChannel(root, { platform: 'tiktok', name: 'x' }), /platform/);
@@ -66,7 +69,8 @@ test('addChannel writes a new channel and refuses duplicates', async () => {
 
 test('a channel can be renamed, and removed only when no post uses it', async () => {
   const root = mkdtempSync(join(tmpdir(), 'social-'));
-  writeFileSync(join(root, 'channels.yml'), 'a-linkedin:\n  platform: linkedin\n  name: A\n\nb-instagram:\n  platform: instagram\n  name: B\n');
+  mkdirSync(join(root, 'channels'), { recursive: true });
+  writeFileSync(join(root, 'channels', 'channels.yml'), 'a-linkedin:\n  platform: linkedin\n  name: A\n\nb-instagram:\n  platform: instagram\n  name: B\n');
   mkdirSync(join(root, 'posts', '2026-11-20-x'), { recursive: true });
   writeFileSync(join(root, 'posts', '2026-11-20-x', 'a-linkedin.md'), '---\ndate: 2026-11-20T09:00\n---\nx');
   await renameChannel(root, 'a-linkedin', '  Alpha  ');
@@ -81,11 +85,11 @@ test('a channel can be renamed, and removed only when no post uses it', async ()
 
 test('a channel without an avatar borrows the one of a channel with the same name', () => {
   const infos = channelInfos({
-    'pop-instagram': { platform: 'instagram', name: 'Pop-Up City', avatar: 'avatars/pop.jpg' },
+    'pop-instagram': { platform: 'instagram', name: 'Pop-Up City', avatar: 'channels/pop-instagram/avatar.jpg' },
     'pop-linkedin': { platform: 'linkedin', name: 'Pop-Up City' },
     'someone': { platform: 'linkedin', name: 'Someone' }
   });
-  assert.equal(infos.find((info) => info.name === 'pop-linkedin')?.avatar, 'avatars/pop.jpg');
+  assert.equal(infos.find((info) => info.name === 'pop-linkedin')?.avatar, 'channels/pop-instagram/avatar.jpg');
   assert.equal(infos.find((info) => info.name === 'someone')?.avatar, undefined);
 });
 
@@ -97,7 +101,7 @@ test('an empty folder has no channels, and the first channel creates channels.ym
   const root = mkdtempSync(join(tmpdir(), 'channels-empty-'));
   assert.deepEqual(loadChannels(root), {});
   assert.equal(await addChannel(root, { platform: 'threads', name: 'Studio' }), 'studio-threads');
-  assert.match(readFileSync(join(root, 'channels.yml'), 'utf8'), /studio-threads:\n {2}platform: threads\n {2}name: Studio/);
+  assert.match(readFileSync(join(root, 'channels', 'channels.yml'), 'utf8'), /studio-threads:\n {2}platform: threads\n {2}name: Studio/);
   assert.deepEqual(Object.keys(loadChannels(root)), ['studio-threads']);
 });
 
