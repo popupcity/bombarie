@@ -2,7 +2,7 @@ import { isSeq, parse, parseDocument } from 'yaml';
 import type { PostStatus } from './types.ts';
 
 export type Fields =
-  | { ok: true; date: string; manual: boolean; status: PostStatus; statusBy?: string; images: string[]; title: string; body: string }
+  | { ok: true; date: string; manual: boolean; status: PostStatus; by?: string; images: string[]; title: string; body: string }
   | { ok: false; error: string; body: string };
 
 const NO_HEAD = 'the file has no properties at the top (a block between two --- lines)';
@@ -35,7 +35,7 @@ export function readFields(raw: string): Fields {
       date: typeof data.date === 'string' && LOCAL_DATE.test(data.date) ? data.date : '',
       manual: data.manual === true,
       status: data.status === 'planned' ? 'planned' : 'draft',
-      ...(typeof data.statusBy === 'string' && data.statusBy !== '' && { statusBy: data.statusBy }),
+      ...(typeof data.by === 'string' && data.by !== '' && { by: data.by }),
       images: Array.isArray(data.media) ? data.media.filter((item): item is string => typeof item === 'string') : [],
       title: typeof data.title === 'string' ? data.title : '',
       body

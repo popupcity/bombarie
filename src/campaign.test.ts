@@ -197,17 +197,17 @@ test('a status change remembers who made it, other saves keep the name, and a ne
   const planned = draft.replace('---\nOpent', 'status: planned\n---\nOpent');
 
   await save(draft.replace('Opent', 'Sluit'), 'anna');
-  assert.doesNotMatch(file(), /statusBy/);
+  assert.doesNotMatch(file(), /^by:/m);
   await save(planned, 'anna');
-  assert.match(file(), /statusBy: anna/);
+  assert.match(file(), /^by: anna$/m);
   await save(planned.replace('Opent', 'Sluit'), 'bob');
-  assert.match(file(), /statusBy: anna/);
+  assert.match(file(), /^by: anna$/m);
   await save(draft, 'bob');
-  assert.match(file(), /statusBy: bob/);
+  assert.match(file(), /^by: bob$/m);
   await save(planned, 'bob');
   rmSync(join(root, 'posts', folder, 'insta.md'));
   await addVariant(root, store, folder, 'jeroen-linkedin', 'insta');
   assert.doesNotMatch(readFileSync(join(root, 'posts', folder, 'insta.md'), 'utf8'), /status/);
   await save(draft);
-  assert.doesNotMatch(file(), /statusBy/);
+  assert.doesNotMatch(file(), /^by:/m);
 });

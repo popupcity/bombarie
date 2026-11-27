@@ -66,7 +66,7 @@ const sizes = await photoSizes(readIdea(root, folder)?.images ?? [], root, 'idea
 const field = 'block w-full rounded-lg bg-surface p-4 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const tone = { new: 'warn', approved: 'info', made: 'ok' } as const;
 const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
-const statusBy = byWhom(idea.statusBy, label[idea.status]);
+const statusBy = byWhom(idea.by, label[idea.status]);
 ---
 
 <Shell title={idea.title || 'Untitled idea'}>

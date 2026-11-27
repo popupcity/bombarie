@@ -592,7 +592,7 @@ function init(root: HTMLElement) {
     let ok = false;
     try {
       const response = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ raw: text, revision, sync: !quiet }) });
-      const data = (await response.json()) as { folder?: string; statusBy?: string | null; rearmed?: boolean; revision?: string | null; error?: string | null; problems?: string[]; due?: string | null };
+      const data = (await response.json()) as { folder?: string; by?: string | null; rearmed?: boolean; revision?: string | null; error?: string | null; problems?: string[]; due?: string | null };
       if (response.status === 409) {
         theirs = data.revision ?? '';
         $('conflict').hidden = false;
@@ -612,7 +612,7 @@ function init(root: HTMLElement) {
         localStorage.removeItem(draftKey);
         autosaveStopped = false;
         if (data.rearmed) document.getElementById('reminder-sent')?.remove();
-        paintBy(data.statusBy ?? undefined, statusOfRaw(text));
+        paintBy(data.by ?? undefined, statusOfRaw(text));
         if (data.folder && data.folder !== folder) {
           sending = false;
           toastAfterReload('Saved.', 'ok');

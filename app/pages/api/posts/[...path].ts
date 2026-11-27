@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       rearmed,
       revision: variant.revision,
       error: variant.error,
-      statusBy: (variant.fields.ok && variant.fields.statusBy) || null,
+      by: (variant.fields.ok && variant.fields.by) || null,
       due: variant.post?.date.toISOString() ?? null
     });
   } catch (err) {

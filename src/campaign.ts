@@ -192,8 +192,8 @@ export async function saveVariant(
   const typed = readFields(raw);
   if (typed.ok) {
     const before = readFields(current.text);
-    const who = statusOfRaw(raw) !== statusOfRaw(current.text) ? input.by : before.ok ? before.statusBy : undefined;
-    if (who !== typed.statusBy) raw = setFrontmatter(raw, { statusBy: who });
+    const who = statusOfRaw(raw) !== statusOfRaw(current.text) ? input.by : before.ok ? before.by : undefined;
+    if (who !== typed.by) raw = setFrontmatter(raw, { by: who });
   }
   await store.write(path, raw, input.revision);
   return loadCampaign(root, folder)!.variants.find((variant) => variant.base === base)!;
@@ -245,7 +245,7 @@ export async function createPost(
   const folder = freeFolder(new Set(postFolders(root)), `${today}-`, slug);
   if (input.day !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(input.day)) throw new Error('that day is not a date');
   const when = input.day !== undefined ? `${input.day}T09:00` : `${ymd(now)}T${clock(now)}`;
-  const base = setFrontmatter(`---\ntitle: x\ndate: ${when}\n---\n\n`, { title: title === '' ? undefined : title, ...(input.link && { link: input.link }), ...(input.by && { statusBy: input.by }) });
+  const base = setFrontmatter(`---\ntitle: x\ndate: ${when}\n---\n\n`, { title: title === '' ? undefined : title, ...(input.link && { link: input.link }), ...(input.by && { by: input.by }) });
   const text = input.text ? withBody(base, input.text) : base;
   const images = input.images ?? [];
   const withPictures = images.length > 0 ? withImages(text, images.map((image) => image.name)) : text;
@@ -256,7 +256,7 @@ export async function createPost(
 
 function withoutStatus(text: string): string {
   try {
-    return setFrontmatter(text, { status: undefined, statusBy: undefined });
+    return setFrontmatter(text, { status: undefined, by: undefined });
   } catch {
     return text;
   }
@@ -289,7 +289,7 @@ export async function addVariant(root: string, store: ContentStore, folder: stri
     if (images.length !== fields.images.length) text = withImages(text, images);
     if (platform !== 'linkedin' && splitThread(fields.body).some((part) => part.by)) text = withBody(text, joinThread(splitThread(fields.body).map((part) => ({ text: part.text }))));
   }
-  if (by && readFields(text).ok) text = setFrontmatter(text, { statusBy: by });
+  if (by && readFields(text).ok) text = setFrontmatter(text, { by });
   await store.create(`posts/${folder}/${name}.md`, text);
   return name;
 }

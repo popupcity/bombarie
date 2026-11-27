@@ -129,7 +129,7 @@ const choosing = pickable.length > 1;
 const planned = fields.ok && fields.status === 'planned';
 const statusBy = recorded
   ? byWhom(recorded.status === 'posted' || recorded.status === 'posting' ? recorded.by : undefined, 'Posted')
-  : byWhom(fields.ok ? fields.statusBy : undefined, planned ? 'Planned' : 'Draft');
+  : byWhom(fields.ok ? fields.by : undefined, planned ? 'Planned' : 'Draft');
 const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (!planned && Boolean(connections[variant.channel]))));
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
 const videoOk = takesMedia(variant.platform, 'a.mp4');

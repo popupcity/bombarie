@@ -17,7 +17,7 @@ export interface Idea {
   linkSite?: string;
   linkImage?: string;
   status: IdeaStatus;
-  statusBy?: string;
+  by?: string;
   images: string[];
   post?: string;
 }
@@ -49,7 +49,7 @@ function parseIdea(folder: string, raw: string): Idea {
     title: typeof fields.title === 'string' ? fields.title.trim() : '',
     text: body.trim(),
     status,
-    ...(typeof fields.statusBy === 'string' && fields.statusBy !== '' && { statusBy: fields.statusBy }),
+    ...(typeof fields.by === 'string' && fields.by !== '' && { by: fields.by }),
     images: Array.isArray(fields.media) ? fields.media.filter((item): item is string => typeof item === 'string') : [],
     ...(typeof fields.link === 'string' && fields.link !== '' && { link: fields.link }),
     ...(typeof fields.linkTitle === 'string' && fields.linkTitle !== '' && { linkTitle: fields.linkTitle }),
@@ -96,7 +96,7 @@ export async function createIdea(root: string, store: ContentStore, input: { tit
   if (!slug) throw new Error('give the idea a title with letters or numbers in it, or add an image');
   const link = input.link ? cleanLink(input.link) : undefined;
   const folder = freeFolder(new Set(ideaFolders(root)), `${ymd(now)}-`, slug);
-  const base = setFrontmatter('---\ntitle: x\n---\n\n', { title: title === '' ? undefined : title, ...(link && { link }), ...(input.by && { statusBy: input.by }) });
+  const base = setFrontmatter('---\ntitle: x\n---\n\n', { title: title === '' ? undefined : title, ...(link && { link }), ...(input.by && { by: input.by }) });
   await store.create(`ideas/${folder}/${FILE}`, input.text ? withBody(base, input.text) : base);
   return folder;
 }
@@ -132,7 +132,7 @@ async function syncIdeaFolder(root: string, store: ContentStore, folder: string,
 
 export const setIdeaStatus = (root: string, store: ContentStore, folder: string, status: IdeaStatus, post?: string, by?: string): Promise<void> => {
   const changed = readIdea(root, folder)?.status !== status;
-  return change(root, store, folder, (raw) => setFrontmatter(raw, { status: status === 'new' ? undefined : status, post, ...(changed && { statusBy: by }) }));
+  return change(root, store, folder, (raw) => setFrontmatter(raw, { status: status === 'new' ? undefined : status, post, ...(changed && { by }) }));
 };
 
 export async function attachPreview(root: string, store: ContentStore, folder: string, deps?: PreviewDeps): Promise<void> {

@@ -119,11 +119,11 @@ test('an idea remembers who changed its status, not who saved it again', async (
   const { root, store } = repo();
   const folder = await createIdea(root, store, { title: 'Idea' }, NOW);
   await setIdeaStatus(root, store, folder, 'approved', undefined, 'anna');
-  assert.equal(readIdea(root, folder)?.statusBy, 'anna');
+  assert.equal(readIdea(root, folder)?.by, 'anna');
   await setIdeaStatus(root, store, folder, 'approved', undefined, 'bob');
-  assert.equal(readIdea(root, folder)?.statusBy, 'anna');
+  assert.equal(readIdea(root, folder)?.by, 'anna');
   await setIdeaStatus(root, store, folder, 'new', undefined, 'bob');
-  assert.equal(readIdea(root, folder)?.statusBy, 'bob');
+  assert.equal(readIdea(root, folder)?.by, 'bob');
   await setIdeaStatus(root, store, folder, 'made', 'p');
-  assert.equal(readIdea(root, folder)?.statusBy, undefined);
+  assert.equal(readIdea(root, folder)?.by, undefined);
 });
