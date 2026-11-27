@@ -16,6 +16,7 @@ import { PLATFORM_LABEL, needsCover } from '../../src/types.ts';
 import ChannelChip from '../components/ChannelChip.astro';
 import Change from '../components/Change.astro';
 import Chart from '../components/Chart.astro';
+import Flag from '../components/Flag.astro';
 import ChoiceMenu from '../components/ChoiceMenu.astro';
 import ChannelMark from '../components/ChannelMark.astro';
 import Spark from '../components/Spark.astro';
@@ -222,7 +223,10 @@ const split = (point: { date: string; value: number }): string =>
                             const change = found.change === null ? null : Math.round(found.change * 10) / 10;
                             return (
                               <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 p-4 md:p-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_128px]" data-tip={`${name}: ${number(found.count)} people`}>
-                                <span class="min-w-0 truncate text-sm">{name}</span>
+                                <span class="flex min-w-0 items-center gap-2 text-sm">
+                                  {where === 'country' && <Flag code={found.place} />}
+                                  <span class="truncate">{name}</span>
+                                </span>
                                 <span class="hidden min-w-0 sm:block">
                                   <Spark points={found.points} fromZero={false} />
                                 </span>

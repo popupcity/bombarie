@@ -21,6 +21,7 @@
     "@astrojs/node": "^11.1.12",
     "@popupcity/ui": "workspace:*",
     "astro": "^7.4.11",
+    "flag-icons": "^7.6.0",
     "pdfjs-dist": "^6.5.438",
     "sharp": "^0.35.5",
     "yaml": "^2.9.1"
