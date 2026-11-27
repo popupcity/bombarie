@@ -1104,6 +1104,29 @@ function init(root: HTMLElement) {
     }
   });
   for (const form of document.querySelectorAll('form[data-leave]')) form.addEventListener('submit', () => (leaving = true));
+
+  async function deleteUnused(form: HTMLFormElement) {
+    const body = new FormData(form);
+    const name = String(body.get('file') ?? '');
+    (form.closest('dialog') as HTMLDialogElement).close();
+    if (dirty()) await submit();
+    if (dirty()) return;
+    try {
+      const response = await fetch(location.pathname, { method: 'POST', body });
+      const shown = new DOMParser().parseFromString(await response.text(), 'text/html').querySelector<HTMLElement>('[data-toast]');
+      if (!response.ok || !response.redirected) return toast(shown?.dataset.toast ?? 'The file could not be deleted.', 'bad');
+      library.delete(name);
+      renderImages(readFields(raw));
+      toast(shown?.dataset.toast ?? 'File deleted.');
+    } catch {
+      toast('No connection to the server.', 'bad');
+    }
+  }
+  document.querySelector<HTMLFormElement>('#delete-file form[data-leave]')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    leaving = false;
+    void deleteUnused(event.target as HTMLFormElement);
+  });
   window.addEventListener('pagehide', (event) => {
     if (!event.persisted) localStorage.removeItem(draftKey);
   });
