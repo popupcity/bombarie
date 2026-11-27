@@ -14,6 +14,7 @@ import { PLATFORM_LABEL, needsCover } from '../../src/types.ts';
 import ChannelChip from '../components/ChannelChip.astro';
 import Change from '../components/Change.astro';
 import Chart from '../components/Chart.astro';
+import ChoiceMenu from '../components/ChoiceMenu.astro';
 import ChannelMark from '../components/ChannelMark.astro';
 import StatTile from '../components/StatTile.astro';
 import TopMark from '../components/TopMark.astro';
@@ -92,7 +93,8 @@ const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: 
 };
 
 const RANGE_LABELS: Record<Range, string> = { week: 'Week', month: 'Month', quarter: 'Quarter', year: 'Year', all: 'All time' };
-const SORT_LABELS: Record<Sort, string> = { views: 'Views', likes: 'Likes', replies: 'Replies' };
+const SORT_LABELS: Record<Sort, string> = { views: 'Views', likes: 'Likes', replies: 'Replies', follows: 'Follows' };
+const ONE: Record<Sort, string> = { views: 'view', likes: 'like', replies: 'reply', follows: 'follow' };
 const METRIC_LABELS: Record<Metric, string> = { views: 'Views', reach: 'Reach', followers: 'Followers' };
 const compact = (value: number): string => value.toLocaleString('en-GB', { notation: 'compact', maximumFractionDigits: 1 });
 const number = (value: number): string => value.toLocaleString('en-GB');
@@ -194,12 +196,8 @@ const split = (point: { date: string; value: number }): string =>
 
                 <section aria-label="Top posts" class="flex min-w-0 flex-col gap-4">
                   <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
-                    <Heading variant="block" as="h2" class="xl:sr-only 2xl:not-sr-only">Top posts</Heading>
-                    <nav aria-label="Sort by" class:list={[SEGMENTS, 'w-fit']}>
-                      {SORTS.map((key) => (
-                        <a href={href({ sort: key })} aria-current={key === sort ? 'page' : undefined} class={SEGMENT}>{SORT_LABELS[key]}</a>
-                      ))}
-                    </nav>
+                    <Heading variant="block" as="h2">Top posts</Heading>
+                    <ChoiceMenu id="sort-menu" said="Sort by " label={SORT_LABELS[sort]} tone="ink" options={SORTS.map((key) => ({ label: SORT_LABELS[key], active: key === sort, attrs: { href: href({ sort: key }) } }))} />
                   </div>
                   {top.length === 0 ? (
                     <Text variant="body" class="text-ink-faint">No posts in this period.</Text>
@@ -224,7 +222,7 @@ const split = (point: { date: string; value: number }): string =>
                                 <span class:list={['line-clamp-2 text-sm break-words', !post.text && 'text-ink-faint']}>{post.text || 'No text.'}</span>
                                 <span class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
                                   <span class="flex min-w-0 items-center"><span class="truncate">{post.type}</span><Icon name="dot" /><span class="shrink-0">{dayLabel(post.day)}</span></span>
-                                  <span class="flex shrink-0 items-center gap-1 tabular-nums">{standing.has(post.url) && <TopMark views={standing.get(post.url)!} class="text-ink" />}<span class="text-base leading-4 text-ink">{number(post.value)}</span> {SORT_LABELS[sort].toLowerCase()}</span>
+                                  <span class="flex shrink-0 items-baseline gap-1 tabular-nums">{standing.has(post.url) && <TopMark views={standing.get(post.url)!} class="self-center text-ink" />}<span class="text-base leading-4 text-ink">{number(post.value)}</span> {post.value === 1 ? ONE[sort] : SORT_LABELS[sort].toLowerCase()}</span>
                                 </span>
                               </span>
                             </a>

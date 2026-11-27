@@ -82,3 +82,12 @@ test('longer periods group the days: a quarter by week from Monday, a year by mo
   assert.deepEqual([months.days, months.ticks.length <= 7], [13, true]);
   assert.deepEqual(axis('2026-11-21', '2026-11-27').ticks.map((tick) => tick.label), ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
 });
+
+test('posts rank by the followers they brought, and a post without that number is left out', () => {
+  const posts = [
+    { url: 'a', date: '2026-11-20T10:00:00Z', follows: '1' },
+    { url: 'b', date: '2026-11-21T10:00:00Z', follows: '26' },
+    { url: 'reel', date: '2026-11-22T10:00:00Z', follows: '' }
+  ];
+  assert.deepEqual(topPosts([{ channel: 'ig', platform: 'instagram', posts }, { channel: 't', platform: 'threads', posts: [{ url: 'c', date: '2026-11-22T10:00:00Z', views: '9' }] }], 'follows', '').map((post) => [post.url, post.value]), [['b', 26], ['a', 1]]);
+});

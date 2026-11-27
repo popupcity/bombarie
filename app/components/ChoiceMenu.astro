@@ -19,24 +19,29 @@ interface Props {
   submit?: boolean;
   triggerId?: string;
   labelId?: string;
+  said?: string;
   disableActive?: boolean;
   by?: By | undefined;
 }
-const { id, label, tone, options, submit = false, triggerId, labelId, disableActive = false, by } = Astro.props;
+const { id, label, tone, options, submit = false, triggerId, labelId, said, disableActive = false, by } = Astro.props;
 ---
 
 <Button id={triggerId} type="button" variant="soft" tone={tone} popovertarget={id} style={`anchor-name:--${id}`} class="pr-3 pl-4 has-[img]:pl-1">
   {by && <ByPhoto by={by} />}
+  {said && <span class="sr-only">{said}</span>}
   <span id={labelId} class="[img+&]:pl-1">{label}</span>
   <Icon name="caret-down" class={CARET} />
 </Button>
 <div id={id} popover style={`position-anchor:--${id}`} class:list={[MENU, 'w-64 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [right:anchor(right)] [top:anchor(bottom)]']}>
   {
-    options.map((option) => (
-      <button type={submit ? 'submit' : 'button'} disabled={disableActive && option.active} aria-pressed={option.active} {...option.attrs} class:list={[MENU_ITEM, 'transition items-start py-2 disabled:cursor-default disabled:text-ink-soft disabled:hover:bg-transparent']}>
-        <Icon name="check" class:list={['mt-1 shrink-0', !option.active && 'invisible']} />
-        <span><span class="block">{option.label}</span>{option.text && <span class="block text-ink-soft" data-option-text>{option.text}</span>}</span>
-      </button>
-    ))
+    options.map((option) => {
+      const Item = option.attrs.href ? 'a' : 'button';
+      return (
+        <Item {...(option.attrs.href ? { 'aria-current': option.active ? 'true' : undefined } : { type: submit ? 'submit' : 'button', disabled: disableActive && option.active, 'aria-pressed': option.active })} {...option.attrs} class:list={[MENU_ITEM, 'transition items-start py-2 disabled:cursor-default disabled:text-ink-soft disabled:hover:bg-transparent']}>
+          <Icon name="check" class:list={['mt-1 shrink-0', !option.active && 'invisible']} />
+          <span><span class="block">{option.label}</span>{option.text && <span class="block text-ink-soft" data-option-text>{option.text}</span>}</span>
+        </Item>
+      );
+    })
   }
 </div>

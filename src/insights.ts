@@ -4,7 +4,7 @@ import type { Platform } from './types.ts';
 
 export const RANGES = { week: 7, month: 30, quarter: 90, year: 365, all: 0 } as const;
 export type Range = keyof typeof RANGES;
-export const SORTS = ['views', 'likes', 'replies'] as const;
+export const SORTS = ['views', 'likes', 'replies', 'follows'] as const;
 export type Sort = (typeof SORTS)[number];
 
 export const rangeOf = (value: string | null | undefined): Range => (value && value in RANGES ? (value as Range) : 'month');
