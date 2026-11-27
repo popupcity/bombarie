@@ -17,7 +17,7 @@ const { day, href, folderCounts = {}, anchor = false } = Astro.props;
   id={anchor ? 'today' : undefined}
   data-cell={day.inMonth ? day.day : `${day.day}-beside`}
   data-drop-day={day.day}
-  class:list={['group/cell relative flex min-h-16 flex-col gap-1 min-w-0 scroll-mt-37 md:scroll-mt-28 rounded-lg bg-surface p-2 md:min-h-36', !day.inMonth ? 'bg-transparent' : day.past && 'bg-page', day.today && day.inMonth ? 'ring-2 ring-inset ring-ink' : 'ring-1 ring-inset ring-line']}
+  class:list={['group/cell relative flex min-h-16 flex-col gap-1 min-w-0 scroll-mt-37 md:scroll-mt-28 rounded-lg bg-surface p-2 md:min-h-36', !day.inMonth ? 'bg-transparent' : day.past && 'bg-page', day.today && day.inMonth ? 'ring-1 ring-inset ring-ink' : 'ring-1 ring-inset ring-line']}
 >
   <div class="flex h-8 items-center justify-between max-md:justify-center">
     <a href={href} class:list={['transition rounded-sm px-1 text-sm hover:bg-(--tone-hover) max-md:after:absolute max-md:after:inset-0 max-md:after:rounded-lg', !day.inMonth && 'text-ink-soft']} aria-label={`Open ${day.day}`}>{day.date}</a>

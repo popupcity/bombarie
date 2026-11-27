@@ -1,4 +1,4 @@
-import { PANEL, QUIET, WEEK_ROW } from '../lib/ui.ts';
+import { OUTLINE, PANEL, QUIET, WEEK_ROW } from '../lib/ui.ts';
 import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addDays, addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
@@ -106,8 +106,8 @@ function open(button: HTMLElement, input: HTMLInputElement) {
                   tabindex: day.day === date ? '0' : '-1',
                   'aria-label': day.day,
                   class: `grid h-10 w-full cursor-pointer place-items-center rounded-lg tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
-                    day.day === date ? 'bg-ink text-page' : `transition hover:bg-(--tone-hover) ${day.today ? 'ring-1 ring-ink ring-inset' : day.inMonth ? '' : 'text-ink-soft'}`
-                  }`,
+                    day.day === date ? 'bg-track text-ink' : `transition hover:bg-(--tone-hover) ${day.inMonth || day.today ? '' : 'text-ink-soft'}`
+                  } ${day.today ? 'ring-1 ring-ink ring-inset' : ''}`,
                   onclick: () => {
                     date = day.day;
                     view = date.slice(0, 7);
@@ -183,7 +183,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
           'button',
           {
             type: 'button',
-            class: 'transition h-10 cursor-pointer rounded-lg px-6 text-ink ring-1 ring-ink ring-inset hover:opacity-(--hover-opacity) focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink', 'data-tone': 'ink',
+            class: OUTLINE, 'data-tone': 'ink',
             onclick: () => {
               const now = new Date();
               date = ymd(now);

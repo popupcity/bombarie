@@ -1,0 +1,10 @@
+---
+interface Props {
+  value: number;
+  class?: string;
+}
+const { value, class: className } = Astro.props;
+const tone = value > 0 ? 'ok' : value < 0 ? 'bad' : undefined;
+---
+
+<span data-tone={tone} class:list={[tone ? 'text-(--tone-text)' : 'text-ink-soft', className]}>{value > 0 && '+'}{value.toLocaleString('en-GB')}</span>

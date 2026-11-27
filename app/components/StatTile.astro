@@ -2,12 +2,13 @@
 import Card from '@popupcity/ui/src/components/Card.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
 import type { Point } from '../../src/insights.ts';
+import Change from './Change.astro';
 import Spark from './Spark.astro';
 
 interface Props {
   label: string;
   value: string;
-  change?: string | undefined;
+  change?: number | undefined;
   note?: string | undefined;
   trend: Point[];
   fromZero?: boolean;
@@ -19,7 +20,7 @@ const { label, value, change, note, trend, fromZero = true } = Astro.props;
   <Text variant="small" class="text-ink-soft">{label}</Text>
   <p class="flex flex-wrap items-baseline gap-2 tabular-nums">
     <span class="text-title">{value}</span>
-    {change && <span class="text-sm text-ink-soft">{change}</span>}
+    {change !== undefined && <Change value={change} class="text-sm" />}
   </p>
   {note && <Text variant="small" class="text-ink-soft">{note}</Text>}
   <div class="flex min-h-12 flex-1 flex-col justify-end">
