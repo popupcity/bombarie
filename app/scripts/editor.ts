@@ -712,7 +712,7 @@ function init(root: HTMLElement) {
     const image = h('span', { 'data-face-image': '', class: 'flex' });
     const button = (document.getElementById('reply-face') as HTMLTemplateElement | null)?.content.firstElementChild?.cloneNode(true) as HTMLElement | undefined;
     button?.prepend(image);
-    return h('div', { 'data-reply-face': '', class: 'flex self-start' }, button ?? image);
+    return h('div', { 'data-reply-face': '', class: 'flex self-start md:row-span-2' }, button ?? image);
   }
 
   const replyMenu = document.getElementById('reply-menu');
@@ -757,8 +757,8 @@ function init(root: HTMLElement) {
       wrapper.remove();
       commitBody();
     });
-    const name = h('p', { 'data-reply-name': '', class: 'text-sm text-ink-soft' });
-    const wrapper = h('div', { 'data-reply': '', class: 'flex gap-4' }, replyFace(), h('div', { class: 'flex min-w-0 flex-1 flex-col gap-2' }, name, h('div', { class: 'relative' }, area, remove)));
+    const name = h('p', { 'data-reply-name': '', class: 'self-center text-sm text-ink-soft md:self-start' });
+    const wrapper = h('div', { 'data-reply': '', class: 'grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2' }, replyFace(), name, h('div', { class: 'relative col-span-2 md:col-span-1 md:col-start-2' }, area, remove));
     if (by && by !== own) wrapper.dataset.by = by;
     paintAuthor(wrapper);
     replyBox?.append(wrapper);

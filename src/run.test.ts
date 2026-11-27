@@ -284,7 +284,7 @@ test('runNow tells when the post is claimed, before the platform call finishes, 
   const d = deps(provider);
   const events: string[] = [];
   const running = runNow(post('f/a.md'), d, { onClaimed: () => events.push('claimed') });
-  await new Promise((resolve) => setTimeout(resolve, 20));
+  for (let tries = 0; tries < 200 && events.length === 0; tries += 1) await new Promise((resolve) => setTimeout(resolve, 10));
   assert.deepEqual(events, ['claimed']);
   assert.equal((await d.store.get('f/a.md'))?.status, 'posting');
   release();
