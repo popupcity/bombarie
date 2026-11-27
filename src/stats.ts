@@ -3,6 +3,7 @@ import { mkdir, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { Channels } from './channels.ts';
 import { fromCsv, toCsv } from './csv.ts';
+import { postUrl } from './facebook.ts';
 import type { Row } from './csv.ts';
 import { GRAPH, THREADS_GRAPH, graph } from './graph.ts';
 import { ymd } from './time.ts';
@@ -12,12 +13,21 @@ import type { Credentials, Platform, SendContext } from './types.ts';
 const THREADS_NUMBERS = ['views', 'likes', 'replies', 'reposts', 'quotes', 'shares'];
 const INSTAGRAM_NUMBERS: Record<string, string> = { views: 'views', reach: 'reach', saved: 'saved', shares: 'shares', total_interactions: 'interactions' };
 const FOLLOW_NUMBERS = ['follows', 'profile_visits'];
+const FACEBOOK_DAYS: Record<string, string> = { page_follows: 'followers', page_daily_follows_unique: 'new_followers', page_media_view: 'views', page_total_media_view_unique: 'reach' };
+const FACEBOOK_NUMBERS: Record<string, string> = { post_media_view: 'views', post_total_media_view_unique: 'reach', post_clicks: 'clicks' };
+const FACEBOOK_KINDS: Record<string, string> = { photo: 'IMAGE', album: 'CAROUSEL_ALBUM', video: 'VIDEO', link: 'LINK' };
+const FACEBOOK_FIELDS = 'id,created_time,message,shares,reactions.summary(true).limit(0),comments.summary(true).limit(0),attachments{media_type}';
 const STORY_NUMBERS: Record<string, string> = { views: 'views', reach: 'reach', replies: 'replies', shares: 'shares', total_interactions: 'interactions' };
 
-export const DAY_COLUMNS = { threads: ['date', 'followers', 'views'], instagram: ['date', 'followers', 'new_followers', 'views', 'reach'] };
+export const DAY_COLUMNS = {
+  threads: ['date', 'followers', 'views'],
+  instagram: ['date', 'followers', 'new_followers', 'views', 'reach'],
+  facebook: ['date', 'followers', 'new_followers', 'views', 'reach']
+};
 export const POST_COLUMNS = {
   threads: ['date', 'url', 'type', 'text', ...THREADS_NUMBERS, 'updated'],
-  instagram: ['date', 'url', 'type', 'text', 'views', 'reach', 'likes', 'comments', 'saved', 'shares', 'interactions', ...FOLLOW_NUMBERS, 'updated']
+  instagram: ['date', 'url', 'type', 'text', 'views', 'reach', 'likes', 'comments', 'saved', 'shares', 'interactions', ...FOLLOW_NUMBERS, 'updated'],
+  facebook: ['date', 'url', 'type', 'text', 'views', 'reach', 'likes', 'comments', 'shares', 'clicks', 'updated']
 };
 export const STORY_COLUMNS = ['date', 'url', 'type', ...Object.values(STORY_NUMBERS), 'updated'];
 
@@ -54,6 +64,7 @@ const byDate = (a: Row, b: Row): number => a.date!.localeCompare(b.date!) || (a.
 
 interface Metric {
   name: string;
+  period?: string;
   total_value?: { value?: number };
   values?: { value?: number; end_time?: string }[];
 }
@@ -68,6 +79,12 @@ interface Listed {
   caption?: string;
   like_count?: number;
   comments_count?: number;
+  created_time?: string;
+  message?: string;
+  shares?: { count?: number };
+  reactions?: { summary?: { total_count?: number } };
+  comments?: { summary?: { total_count?: number } };
+  attachments?: { data?: { media_type?: string }[] };
 }
 
 const seconds = (time: number): string => String(Math.floor(time / 1000));
@@ -222,6 +239,44 @@ export async function collectInstagram(root: string, channel: string, credential
   });
 }
 
+export async function collectFacebook(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date, batch = BATCH): Promise<number> {
+  const { user, read, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Facebook statistics');
+  const days = daysOf(root, channel);
+  const today = days.day(ymd(now));
+  const followers = (await read(user, { fields: 'followers_count' })).followers_count;
+  if (typeof followers === 'number' && !today.followers) today.followers = String(followers);
+  const window = (from: number, to: number) => ({ since: seconds(now.getTime() - from * DAY_MS), until: seconds(now.getTime() - to * DAY_MS) });
+  const spans = days.first ? Array.from({ length: BACKFILL_DAYS / WINDOW_DAYS }, (_, i) => window(BACKFILL_DAYS - i * WINDOW_DAYS, BACKFILL_DAYS - (i + 1) * WINDOW_DAYS)) : [window(OVERLAP_DAYS, 0)];
+  for (const span of spans) {
+    for (const metric of await metrics(`${user}/insights`, { metric: Object.keys(FACEBOOK_DAYS).join(','), period: 'day', ...span })) {
+      const column = FACEBOOK_DAYS[metric.name];
+      for (const { value, end_time: end } of metric.values ?? []) {
+        if (!column || value === undefined || !end) continue;
+        days.day(new Date(Date.parse(end) - DAY_MS).toISOString().slice(0, 10))[column] = String(value);
+      }
+    }
+  }
+  await days.save(DAY_COLUMNS.facebook);
+
+  const before = kept(root, channel);
+  const posts = (await list(`${user}/published_posts`, FACEBOOK_FIELDS)).map((listed) => {
+    const url = postUrl(listed.id);
+    const attached = listed.attachments?.data?.[0]?.media_type;
+    const row: Row = { ...before.get(url), date: listed.created_time!, url, type: attached ? (FACEBOOK_KINDS[attached] ?? '') : 'TEXT_POST', text: firstLine(listed.message), shares: String(listed.shares?.count ?? 0) };
+    if (listed.reactions?.summary?.total_count !== undefined) row.likes = String(listed.reactions.summary.total_count);
+    if (listed.comments?.summary?.total_count !== undefined) row.comments = String(listed.comments.summary.total_count);
+    return { listed, row };
+  });
+  return refresh(root, channel, POST_COLUMNS.facebook, posts, now, 28, batch, async (id, row) => {
+    for (const metric of await metrics(`${id}/insights`, { metric: Object.keys(FACEBOOK_NUMBERS).join(',') })) {
+      if (metric.period && metric.period !== 'lifetime') continue;
+      const value = numberOf(metric);
+      const column = FACEBOOK_NUMBERS[metric.name];
+      if (column && value !== undefined) row[column] = String(value);
+    }
+  });
+}
+
 export async function collectStories(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date): Promise<void> {
   const { user, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Instagram story statistics');
   const live = await list(`${user}/stories`, 'id,timestamp,permalink,media_type');
@@ -254,6 +309,7 @@ interface Job {
 }
 
 const JOBS: Partial<Record<Platform, Record<string, Job>>> = {
+  facebook: { statistics: { every: 'day', run: (root, channel, credentials, fetchImpl, now) => collectFacebook(root, channel, credentials, fetchImpl, now) } },
   threads: { statistics: { every: 'day', run: collectThreads } },
   instagram: { statistics: { every: 'day', run: (root, channel, credentials, fetchImpl, now) => collectInstagram(root, channel, credentials, fetchImpl, now) }, stories: { every: STORY_MS, run: collectStories } }
 };

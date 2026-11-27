@@ -16,6 +16,7 @@ export interface Point {
   value: number;
 }
 
+const repliesColumn = (platform: Platform): string => (platform === 'threads' ? 'replies' : 'comments');
 const series = (rows: Row[], column: string): Point[] => rows.flatMap((row) => (row[column] === undefined || row[column] === '' ? [] : [{ date: row.date!, value: Number(row[column]) }])).sort((a, b) => a.date.localeCompare(b.date));
 
 export const METRICS = ['views', 'reach', 'followers'] as const;
@@ -73,7 +74,7 @@ export function viewTotal(accounts: Account[], from: string, earlier: string): T
 
 export function engagement(accounts: Account[], from: string, earlier: string): Total & { posts: number } {
   const of = (start: string, end?: string): { value: number; posts: number } => {
-    const rows = accounts.flatMap((account) => account.posts.filter((row) => within(ymd(new Date(row.date!)), start, end)).map((row) => Number(row.likes || 0) + Number((account.platform === 'instagram' ? row.comments : row.replies) || 0)));
+    const rows = accounts.flatMap((account) => account.posts.filter((row) => within(ymd(new Date(row.date!)), start, end)).map((row) => Number(row.likes || 0) + Number(row[repliesColumn(account.platform)] || 0)));
     return { value: rows.reduce((total, value) => total + value, 0), posts: rows.length };
   };
   const now = of(from);
@@ -106,7 +107,7 @@ export interface TopPost {
   value: number;
 }
 
-const columnFor = (sort: Sort, platform: Platform): string => (sort === 'replies' && platform === 'instagram' ? 'comments' : sort);
+const columnFor = (sort: Sort, platform: Platform): string => (sort === 'replies' ? repliesColumn(platform) : sort);
 
 export function topPosts(sources: { channel: string; platform: Platform; posts: Row[] }[], sort: Sort, from: string): TopPost[] {
   const found = sources.flatMap(({ channel, platform, posts }) =>
@@ -121,7 +122,7 @@ export function topPosts(sources: { channel: string; platform: Platform; posts: 
   return found.sort((a, b) => b.value - a.value || b.day.localeCompare(a.day) || a.url.localeCompare(b.url));
 }
 
-const KINDS: Record<string, string> = { TEXT_POST: 'Text', IMAGE: 'Image', VIDEO: 'Video', REEL: 'Reel', CAROUSEL_ALBUM: 'Carousel', AUDIO: 'Audio' };
+const KINDS: Record<string, string> = { TEXT_POST: 'Text', LINK: 'Link', IMAGE: 'Image', VIDEO: 'Video', REEL: 'Reel', CAROUSEL_ALBUM: 'Carousel', AUDIO: 'Audio' };
 export const kindOf = (type: string): string => KINDS[type] ?? 'Post';
 
 const DAY_MS = 86_400_000;
@@ -158,7 +159,7 @@ const ROLLING_DAYS = 7;
 const MOST_POINTS = 180;
 
 export function engagementLine(accounts: Account[], from: string, today: string): Point[] {
-  const posts = accounts.flatMap((account) => account.posts.map((row) => ({ day: dayNumber(ymd(new Date(row.date!))), value: Number(row.likes || 0) + Number((account.platform === 'instagram' ? row.comments : row.replies) || 0) })));
+  const posts = accounts.flatMap((account) => account.posts.map((row) => ({ day: dayNumber(ymd(new Date(row.date!))), value: Number(row.likes || 0) + Number(row[repliesColumn(account.platform)] || 0) })));
   if (posts.length === 0) return [];
   const first = from ? dayNumber(from) : Math.min(...posts.map((post) => post.day));
   const last = dayNumber(today);

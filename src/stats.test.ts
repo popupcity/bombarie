@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fromCsv, toCsv } from './csv.ts';
-import { collectInstagram, collectStats, collectStories, collectThreads, readStats, statsFile } from './stats.ts';
+import { collectFacebook, collectInstagram, collectStats, collectStories, collectThreads, readStats, statsFile } from './stats.ts';
 
 const fresh = () => mkdtempSync(join(tmpdir(), 'social-stats-'));
 const credentials = { accessToken: 'tok', accountId: '178' };
@@ -160,4 +160,23 @@ test('the views of one day are asked with a window that holds only that day', as
   }) as unknown as typeof fetch;
   await collectInstagram(fresh(), 'ig', credentials99, spy, new Date('2026-11-27T12:00:00Z'));
   assert.deepEqual(windows, [23 * 3600]);
+});
+
+test('Facebook counts a value for the day that ends at its end time, and keeps posts under the address Bombarie gives them', async () => {
+  const root = fresh();
+  const fake = (async (url: string) => {
+    const { pathname, searchParams } = new URL(url);
+    const path = pathname.replace('/v23.0/', '');
+    const answer = (body: unknown) => new Response(JSON.stringify(body));
+    if (path === '99') return answer({ followers_count: 52616 });
+    if (path === '99/insights') return answer({ data: [{ name: 'page_follows', values: [{ value: 52620, end_time: '2026-11-26T08:00:00+0000' }] }, { name: 'page_media_view', values: [{ value: 8, end_time: '2026-11-26T08:00:00+0000' }] }] });
+    if (path === '99/published_posts') {
+      assert.match(searchParams.get('fields') ?? '', /reactions\.summary/);
+      return answer({ data: [{ id: '99_1', created_time: '2026-11-20T10:00:00+0000', message: 'Hello\nmore', reactions: { summary: { total_count: 4 } }, comments: { summary: { total_count: 2 } }, attachments: { data: [{ media_type: 'album' }] } }] });
+    }
+    return answer({ data: [{ name: 'post_media_view', values: [{ value: 629 }] }, { name: 'post_total_media_view_unique', period: 'lifetime', values: [{ value: 489 }] }, { name: 'post_clicks', values: [{ value: 2 }] }, { name: 'post_total_media_view_unique', period: 'day', values: [{ value: 0 }] }] });
+  }) as unknown as typeof fetch;
+  assert.equal(await collectFacebook(root, 'fb', credentials99, fake, new Date('2026-11-27T12:00:00Z')), 0);
+  assert.equal(readFileSync(statsFile(root, 'fb', 'days'), 'utf8'), 'date,followers,new_followers,views,reach\n2026-11-25,52620,,8,\n2026-11-27,52616,,,\n');
+  assert.deepEqual(readStats(root, 'fb', 'posts').map((row) => [row.url, row.type, row.text, row.views, row.reach, row.likes, row.comments, row.shares, row.clicks]), [['https://www.facebook.com/99_1', 'CAROUSEL_ALBUM', 'Hello', '629', '489', '4', '2', '0', '2']]);
 });

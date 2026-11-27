@@ -19,7 +19,7 @@ async function upload(context: SendContext, page: string, token: string, path: s
   return call(context, `${page}/photos`, token, { body }, what, final);
 }
 
-const postUrl = (id: string): string => `https://www.facebook.com/${id}`;
+export const postUrl = (id: string): string => `https://www.facebook.com/${id}`;
 
 export const facebook: Provider = {
   platform: 'facebook',
