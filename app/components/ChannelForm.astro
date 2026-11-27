@@ -3,7 +3,7 @@ import { quiet } from '../lib/ui.ts';
 import Button from 'ui/src/components/Button.astro';
 import Icon from 'ui/src/components/Icon.astro';
 import Input from 'ui/src/components/Input.astro';
-import { PLATFORM_LABEL, type Platform } from '../../src/types.ts';
+import type { Platform } from '../../src/types.ts';
 import ActionPanel from './ActionPanel.astro';
 import AppFields from './AppFields.astro';
 import Field from './Field.astro';
@@ -17,8 +17,8 @@ interface Props {
   remove?: { id: string; label: string; blocked?: string };
 }
 const { formId, platform, handle = '', feed = '', setup, remove } = Astro.props;
-const hasFeed = platform === 'substack' || platform === 'website';
-const hint = `The RSS address of this ${platform === 'substack' ? 'publication' : 'website'}. The posts it lists show in the List and the Calendar. Nothing is posted to ${PLATFORM_LABEL[platform]} from here.`;
+const hasFeed = platform === 'substack' || platform === 'feed';
+const hint = `${platform === 'substack' ? 'The RSS address of this publication' : 'The address of an RSS or Atom feed'}. The posts it lists show in the List and the Calendar. Nothing is posted ${platform === 'substack' ? 'to Substack ' : ''}from here.`;
 ---
 
 <div class="grid gap-x-8 gap-y-12 lg:grid-cols-3">

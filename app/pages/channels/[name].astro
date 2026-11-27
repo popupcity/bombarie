@@ -93,7 +93,7 @@ const threads = channel.platform === 'threads';
 const meta = instagram || facebook;
 const savedConfig = meta ? ((await readApp(appsPath(), appKey(channel.platform)).catch(() => null))?.configId ?? '') : '';
 const redirectUri = callbackUrl(Astro.url.origin);
-const hasFeed = channel.platform === 'substack' || channel.platform === 'website';
+const hasFeed = channel.platform === 'substack' || channel.platform === 'feed';
 const connected = Boolean(tokens[key]) && !state.broken;
 const note = connected
   ? facebook

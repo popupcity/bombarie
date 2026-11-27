@@ -1,4 +1,4 @@
-export type Platform = 'linkedin' | 'instagram' | 'facebook' | 'threads' | 'substack' | 'website';
+export type Platform = 'linkedin' | 'instagram' | 'facebook' | 'threads' | 'substack' | 'feed';
 
 export const isDocument = (name: string): boolean => /\.pdf$/i.test(name);
 
@@ -16,7 +16,7 @@ export const needsCover = (name: string): boolean => isDocument(name) || isVideo
 
 export const takesMedia = (platform: Platform, name: string): boolean => (platform === 'linkedin' ? true : platform === 'instagram' || platform === 'threads' || platform === 'substack' ? !isDocument(name) : !needsCover(name));
 
-export const FEED_ONLY: Platform[] = ['website'];
+export const FEED_ONLY: Platform[] = ['feed'];
 
 export const COMPOSE_URL: Partial<Record<Platform, string>> = {
   linkedin: 'https://www.linkedin.com/feed/',
@@ -26,7 +26,7 @@ export const COMPOSE_URL: Partial<Record<Platform, string>> = {
   substack: 'https://substack.com/publish'
 };
 
-export const PLATFORM_LABEL: Record<Platform, string> = { linkedin: 'LinkedIn', instagram: 'Instagram', facebook: 'Facebook', threads: 'Threads', substack: 'Substack', website: 'Website' };
+export const PLATFORM_LABEL: Record<Platform, string> = { linkedin: 'LinkedIn', instagram: 'Instagram', facebook: 'Facebook', threads: 'Threads', substack: 'Substack', feed: 'Feed' };
 
 export interface Channel {
   platform: Platform;

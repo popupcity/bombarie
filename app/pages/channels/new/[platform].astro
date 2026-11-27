@@ -24,7 +24,7 @@ const facebook = platform === 'facebook';
 const meta = instagram || facebook;
 const threads = platform === 'threads';
 const connectable = platform === 'linkedin' || meta || threads;
-const hasFeed = platform === 'substack' || platform === 'website';
+const hasFeed = platform === 'substack' || platform === 'feed';
 const savedApp = connectable ? await appSaved(platform).catch(() => null) : null;
 
 let error = '';

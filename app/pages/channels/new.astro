@@ -21,7 +21,7 @@ import Shell from '../../layouts/Shell.astro';
               <PlatformMark platform={candidate} class="size-14" />
               <div class="flex flex-col gap-2">
                 <Heading variant="card" as="p">{PLATFORM_LABEL[candidate]}</Heading>
-                {!isAutomatic(candidate) && <Text variant="small" class="text-ink-soft">{candidate === 'website' ? 'Shows its posts from an RSS feed.' : candidate === 'substack' ? 'You post by hand and get a reminder. Shows its posts from an RSS feed.' : 'You post by hand and get a reminder.'}</Text>}
+                {!isAutomatic(candidate) && <Text variant="small" class="text-ink-soft">{candidate === 'feed' ? 'Shows its posts from an RSS feed.' : candidate === 'substack' ? 'You post by hand and get a reminder. Shows its posts from an RSS feed.' : 'You post by hand and get a reminder.'}</Text>}
               </div>
             </Card>
           ))

@@ -158,6 +158,6 @@ test('feed items older than a year stay out of the views', () => {
     { id: 'feed/a/1', channel: 'a', title: 'New', url: 'https://x/1', at: '2026-11-01T08:00:00Z', text: '' },
     { id: 'feed/a/2', channel: 'a', title: 'Old', url: 'https://x/2', at: '2013-08-20T00:00:00Z', text: '' }
   ];
-  const data = buildCalendarData({ posts: [], states: new Map(), errors: [], attention: [], channels: [{ name: 'a', platform: 'website', label: 'A' }], feeds, now });
+  const data = buildCalendarData({ posts: [], states: new Map(), errors: [], attention: [], channels: [{ name: 'a', platform: 'feed', label: 'A' }], feeds, now });
   assert.deepEqual(data.cards.map((card) => card.campaign), ['New']);
 });

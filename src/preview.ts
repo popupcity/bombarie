@@ -69,7 +69,7 @@ function previewPart(body: string, platform: Platform, entities: Entities): Prev
       mentions[entity.name] = entity.linkedin;
       chunks.push({ kind: 'text', text: entity.name });
     } else {
-      if (platform !== 'facebook' && platform !== 'substack' && platform !== 'website') notes.push(`${entity.name} has no ${PLATFORM_LABEL[platform === 'threads' ? 'instagram' : platform]} ID and is posted as plain text`);
+      if (platform !== 'facebook' && platform !== 'substack' && platform !== 'feed') notes.push(`${entity.name} has no ${PLATFORM_LABEL[platform === 'threads' ? 'instagram' : platform]} ID and is posted as plain text`);
       chunks.push({ kind: 'plain', text: entity.name });
     }
   }

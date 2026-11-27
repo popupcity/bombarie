@@ -9,6 +9,6 @@ const { month } = Astro.props;
 ---
 
 <section data-month-section class="flex flex-col gap-8">
-  <Heading variant="page" as="h2" class="pointer-events-none sticky top-0 z-20 max-md:top-16 flex h-20 items-center">{monthLabel(month)}</Heading>
+  <Heading variant="page" as="h2" class="pointer-events-none sticky top-0 z-20 max-md:top-16 max-md:bg-page flex h-20 items-center">{monthLabel(month)}</Heading>
   <slot />
 </section>

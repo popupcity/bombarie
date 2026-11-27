@@ -238,7 +238,7 @@ export const isAutomatic = (platform: Platform): boolean => platform in provider
 
 export function sendProblem(channel: Channel, credentials: Credentials | undefined, now: Date): string | null {
   if (channel.platform === 'substack') return 'Substack has no posting API, so you post by hand and get a reminder';
-  if (channel.platform === 'website') return 'a website is not posted to from here; its posts come in through the feed';
+  if (channel.platform === 'feed') return 'a feed is not posted to from here; its posts are only shown';
   if (!(channel.platform in providers)) return `automatic posting to ${PLATFORM_LABEL[channel.platform]} is not built yet`;
   if (channel.platform === 'linkedin' && channel.kind === 'organization') return 'posting as a company page is not supported yet';
   if (!credentials) return 'manual until you connect it; use Connect on the Channels page';

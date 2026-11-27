@@ -19,14 +19,14 @@ const { label, avatar, channels } = Astro.props;
   </button>
   <ul class="flex flex-wrap gap-2 pl-14">
     {
-      channels.map((channel) => (
+      channels.map((channel) => ({ ...channel, said: channel.platform === 'feed' ? 'feed' : PLATFORM_LABEL[channel.platform] })).map((channel) => (
         <li>
           <button
             type="button"
             data-plain
             data-filter={channel.name}
-            data-label={PLATFORM_LABEL[channel.platform]}
-            title={`Hide ${PLATFORM_LABEL[channel.platform]}`}
+            data-label={channel.said}
+            title={`Hide ${channel.said}`}
             aria-pressed="true"
             class:list={['transition grid size-8 cursor-pointer place-items-center rounded-lg border hover:bg-surface aria-[pressed=false]:opacity-(--dim)', channel.problem ? 'border-dashed border-line-strong' : 'border-line']}
           >

@@ -6,7 +6,7 @@ import { feedUrlProblem } from './feed.ts';
 import { isRecord } from './frontmatter.ts';
 import type { Channel, ChannelInfo, Platform } from './types.ts';
 
-export const PLATFORMS: Platform[] = ['linkedin', 'instagram', 'facebook', 'threads', 'substack', 'website'];
+export const PLATFORMS: Platform[] = ['linkedin', 'instagram', 'facebook', 'threads', 'substack', 'feed'];
 
 export type Channels = Record<string, Channel>;
 

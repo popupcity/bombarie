@@ -8,9 +8,9 @@ interface Props {
   class?: string;
 }
 const { platform, class: className } = Astro.props;
-const brand = { linkedin: 'bg-linkedin', instagram: 'bg-instagram', facebook: 'bg-facebook', threads: 'bg-threads', substack: 'bg-substack', website: 'bg-charcoal' }[platform];
+const brand = { linkedin: 'bg-linkedin', instagram: 'bg-instagram', facebook: 'bg-facebook', threads: 'bg-threads', substack: 'bg-substack', feed: 'bg-charcoal' }[platform];
 ---
 
 <span role="img" aria-label={PLATFORM_LABEL[platform]} class:list={['grid place-items-center rounded-sm text-white inset-ring inset-ring-line-strong', brand, className]}>
-  {platform === 'website' ? <Icon name="rss" weight="bold" class="size-[84%]" /> : <Icon name={`${platform}-logo`} weight="fill" class="size-[84%]" />}
+  {platform === 'feed' ? <Icon name="rss" weight="bold" class="size-[84%]" /> : <Icon name={`${platform}-logo`} weight="fill" class="size-[84%]" />}
 </span>

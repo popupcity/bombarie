@@ -82,7 +82,7 @@ test('a new feed address starts from scratch', async () => {
   assert.equal(readFeed(root, 'sub')?.items.length, 2);
   await refreshFeed(root, 'sub', 'https://x.com/en/feed', serve(other), now);
   assert.deepEqual(readFeed(root, 'sub')?.items.map((item) => item.guid), ['e1']);
-  const channels = { sub: { platform: 'website', feed: 'https://x.com/nl/feed' } } as never;
+  const channels = { sub: { platform: 'feed', feed: 'https://x.com/nl/feed' } } as never;
   await refreshFeeds(root, channels, serve(RSS), new Date('2026-11-19T12:10:00Z'));
   assert.equal(readFeed(root, 'sub')?.items.length, 2);
 });
