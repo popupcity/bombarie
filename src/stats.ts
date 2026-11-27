@@ -11,12 +11,13 @@ import type { Credentials, Platform, SendContext } from './types.ts';
 
 const THREADS_NUMBERS = ['views', 'likes', 'replies', 'reposts', 'quotes', 'shares'];
 const INSTAGRAM_NUMBERS: Record<string, string> = { views: 'views', reach: 'reach', saved: 'saved', shares: 'shares', total_interactions: 'interactions' };
+const FOLLOW_NUMBERS = ['follows', 'profile_visits'];
 const STORY_NUMBERS: Record<string, string> = { views: 'views', reach: 'reach', replies: 'replies', shares: 'shares', total_interactions: 'interactions' };
 
 export const DAY_COLUMNS = { threads: ['date', 'followers', 'views'], instagram: ['date', 'followers', 'new_followers', 'views', 'reach'] };
 export const POST_COLUMNS = {
   threads: ['date', 'url', 'type', 'text', ...THREADS_NUMBERS, 'updated'],
-  instagram: ['date', 'url', 'type', 'text', 'views', 'reach', 'likes', 'comments', 'saved', 'shares', 'interactions', 'updated']
+  instagram: ['date', 'url', 'type', 'text', 'views', 'reach', 'likes', 'comments', 'saved', 'shares', 'interactions', ...FOLLOW_NUMBERS, 'updated']
 };
 export const STORY_COLUMNS = ['date', 'url', 'type', ...Object.values(STORY_NUMBERS), 'updated'];
 
@@ -201,10 +202,21 @@ export async function collectInstagram(root: string, channel: string, credential
       if (listed.comments_count !== undefined) row.comments = String(listed.comments_count);
       return { listed, row };
     });
+  const insights = (id: string, names: string[]) => metrics(`${id}/insights`, { metric: names.join(',') });
+  const postInsights = async (id: string, type: string | undefined): Promise<Metric[]> => {
+    const base = Object.keys(INSTAGRAM_NUMBERS);
+    if (type === 'REEL') return insights(id, base);
+    try {
+      return await insights(id, [...base, ...FOLLOW_NUMBERS]);
+    } catch (err) {
+      if (!(err instanceof Error) || !/does not support/i.test(err.message)) throw err;
+      return insights(id, base);
+    }
+  };
   return refresh(root, channel, POST_COLUMNS.instagram, posts, now, 28, batch, async (id, row) => {
-    for (const metric of await metrics(`${id}/insights`, { metric: Object.keys(INSTAGRAM_NUMBERS).join(',') })) {
+    for (const metric of await postInsights(id, row.type)) {
       const value = numberOf(metric);
-      const column = INSTAGRAM_NUMBERS[metric.name];
+      const column = FOLLOW_NUMBERS.includes(metric.name) ? metric.name : INSTAGRAM_NUMBERS[metric.name];
       if (column && value !== undefined) row[column] = String(value);
     }
   });

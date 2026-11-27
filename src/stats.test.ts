@@ -75,7 +75,7 @@ test('collecting happens once a day, and a failure is tried again after an hour'
   assert.equal(good.asked.length, asked);
 });
 
-function instagram(options: { limitAfter?: number; stories?: boolean } = {}) {
+function instagram(options: { limitAfter?: number; stories?: boolean; refuses?: boolean } = {}) {
   const asked: string[] = [];
   let numbered = 0;
   const fetchImpl = (async (url: string) => {
@@ -94,7 +94,9 @@ function instagram(options: { limitAfter?: number; stories?: boolean } = {}) {
     numbered += 1;
     if (options.limitAfter !== undefined && numbered > options.limitAfter) return answer({ error: { message: 'limit', code: 4 } }, 400);
     if (path === 'm1/insights') return answer({ error: { message: 'Invalid parameter', code: 100 } }, 400);
-    return answer({ data: [{ name: 'views', values: [{ value: 330 }] }, { name: 'total_interactions', values: [{ value: 10 }] }, { name: 'replies', values: [{ value: 0 }] }] });
+    if (path === 'm2/insights' && options.refuses && metric.includes('follows')) return answer({ error: { message: '(#100) The Media Insights API does not support the follows, profile_visits metric for this media product type.', code: 100 } }, 400);
+    const followed = metric.includes('follows') ? [{ name: 'follows', values: [{ value: 4 }] }, { name: 'profile_visits', values: [{ value: 25 }] }] : [];
+    return answer({ data: [{ name: 'views', values: [{ value: 330 }] }, { name: 'total_interactions', values: [{ value: 10 }] }, { name: 'replies', values: [{ value: 0 }] }, ...followed] });
   }) as unknown as typeof fetch;
   return { asked, fetchImpl };
 }
@@ -112,6 +114,20 @@ test('Instagram keeps followers, reach and views per day, and gets post numbers 
   ]);
   assert.equal(await collectInstagram(root, 'ig', credentials99, instagram().fetchImpl, now, 2), 0);
   assert.deepEqual(readStats(root, 'ig', 'posts').map((row) => row.updated), ['2026-11-27', '2026-11-27', '2026-11-27']);
+});
+
+test('new followers and profile visits come with a post, not with a reel, and a type that refuses them keeps its other numbers', async () => {
+  const now = new Date('2026-11-27T12:00:00Z');
+  const read = async (refuses: boolean) => {
+    const root = fresh();
+    const fake = instagram({ refuses });
+    await collectInstagram(root, 'ig', credentials99, fake.fetchImpl, now);
+    return { rows: readStats(root, 'ig', 'posts').map((row) => [row.type, row.views, row.follows, row.profile_visits]), asked: fake.asked };
+  };
+  const given = await read(false);
+  assert.deepEqual(given.rows.slice(1), [['VIDEO', '330', '4', '25'], ['REEL', '330', '', '']]);
+  assert.equal(given.asked.some((line) => line.startsWith('m3/insights') && line.includes('follows')), false);
+  assert.deepEqual((await read(true)).rows[1], ['VIDEO', '330', '', '']);
 });
 
 test('a rate limit stops the batch and keeps what already came in', async () => {
