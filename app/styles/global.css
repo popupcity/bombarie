@@ -24,8 +24,7 @@
   --color-facebook: #1877f2;
   --color-substack: #ff6719;
   --color-threads: #000000;
-  --container-wide: 80rem;
-  --container-narrow: calc((2 * min(var(--container-wide), 100%) - 32px) / 3);
+  --container-wide: 96rem;
   --shadow-float: 0 8px 30px rgb(0 0 0 / 0.12);
 }
 

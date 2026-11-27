@@ -17,7 +17,7 @@ const data = await loadCalendar();
 const folderCounts = folderCountsOf(data.cards);
 const hrefOf = (day: string) => {
   const target = nextPostDay(data.cards, day);
-  return target ? `/#d-${target}` : '/';
+  return target ? `/#${target}` : '/';
 };
 ---
 

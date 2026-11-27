@@ -16,3 +16,10 @@ test('every page of its own has the same head, with the manifest and the touch i
   assert.match(head, /rel="apple-touch-icon"/);
   for (const file of ['app/layouts/Shell.astro', 'app/pages/login.astro', 'app/pages/setup.astro', 'app/pages/ideas/add.astro']) assert.match(readFileSync(file, 'utf8'), /<AppHead \/>/);
 });
+
+test('the logo in the app has the same shapes as the icon', () => {
+  const shapes = (file: string) => [...readFileSync(file, 'utf8').matchAll(/ (?:d|cx|cy|r|x|y|width|height|rx|transform)="([^"{]+)"/g)].map((match) => match[1]);
+  const logo = shapes('app/components/Logo.astro');
+  const icon = shapes('public/favicon.svg');
+  for (const value of logo) assert.ok(icon.includes(value), value);
+});

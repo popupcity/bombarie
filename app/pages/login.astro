@@ -6,6 +6,7 @@ import Heading from 'ui/src/components/Heading.astro';
 import Text from 'ui/src/components/Text.astro';
 import { brandName, HTML_CLASS, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
 import Wordmark from '../components/Wordmark.astro';
+import Logo from '../components/Logo.astro';
 import { installed } from '../lib/auth.ts';
 import '../styles/global.css';
 
@@ -23,7 +24,7 @@ const failure = Astro.url.searchParams.get('error');
   <body>
     <main class="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-8 px-4">
       <div class="flex flex-col gap-2">
-        <Heading variant="page" as="h1" aria-label={brandName}><Wordmark /></Heading>
+        <Heading variant="page" as="h1" aria-label={brandName} class="flex items-center gap-3"><Logo class="size-10" /><Wordmark /></Heading>
         <Text variant="body" class="text-ink-soft">All your noise in one place.</Text>
       </div>
       {failure && <Alert variant="plain">{failure}</Alert>}

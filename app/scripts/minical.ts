@@ -17,7 +17,7 @@ function start() {
   if (!root || !grid || !panel) return;
   const today = root.dataset.today ?? '';
   const groups = [...document.querySelectorAll<HTMLElement>('section[data-group]')];
-  const days = groups.map((group) => group.id.slice(2));
+  const days = groups.map((group) => group.id);
   const panels = new Map([...document.querySelectorAll<HTMLElement>('#minical-panels [data-panel]')].map((element) => [element.dataset.panel ?? '', element]));
   const tones = (day: string): string[] => dotTones([...(panels.get(day)?.querySelectorAll<HTMLElement>('[data-tone]') ?? [])].map((row) => row.dataset.tone ?? ''));
   let view = today.slice(0, 7);
@@ -46,7 +46,7 @@ function start() {
     pinned = day;
     pinnedTarget = target(day) ?? '';
     settleUntil = Date.now() + 1500;
-    const element = pinnedTarget ? document.getElementById(`d-${pinnedTarget}`) : null;
+    const element = pinnedTarget ? document.getElementById(pinnedTarget) : null;
     if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     render();
   };
@@ -122,13 +122,13 @@ function start() {
         const box = group.getBoundingClientRect();
         return box.bottom > 100 && box.top < window.innerHeight;
       })
-      .map((group) => group.id.slice(2));
+      .map((group) => group.id);
     let above: HTMLElement | undefined = groups[0];
     for (const group of groups) {
       if (group.getBoundingClientRect().top <= 160) above = group;
       else break;
     }
-    const first = shown[0] ?? (above ? above.id.slice(2) : '');
+    const first = shown[0] ?? (above ? above.id : '');
     if (pinned && Date.now() > settleUntil && first !== pinnedTarget) pinned = '';
     const key = `${first}|${shown.join(',')}|${pinned}`;
     if (key === `${active}|${[...visible].join(',')}|${pinned}` && view === (pinned || first).slice(0, 7)) return;

@@ -9,6 +9,7 @@ import { appsPath, writeApp } from '../../src/secrets.ts';
 import { sentence } from '../../src/text.ts';
 import Field from '../components/Field.astro';
 import Wordmark from '../components/Wordmark.astro';
+import Logo from '../components/Logo.astro';
 import { githubApp, installed, setupOpen } from '../lib/auth.ts';
 import { brandName, HTML_CLASS, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
 import '../styles/global.css';
@@ -38,7 +39,7 @@ const callback = `${Astro.url.origin}/login/github/callback`;
   </head>
   <body>
     <main class="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-8 px-4 py-12">
-      <Heading variant="page" as="h1" aria-label={brandName}><Wordmark /></Heading>
+      <Heading variant="page" as="h1" aria-label={brandName} class="flex items-center gap-3"><Logo class="size-10" /><Wordmark /></Heading>
       {
         !open ? (
           <Alert>Setup is closed. Restart the container to open it for 15 minutes.</Alert>

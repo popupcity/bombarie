@@ -6,9 +6,8 @@ import '../styles/global.css';
 
 interface Props {
   title: string;
-  fluid?: boolean;
 }
-const { title, fluid = false } = Astro.props;
+const { title } = Astro.props;
 ---
 
 <!doctype html>
@@ -21,7 +20,7 @@ const { title, fluid = false } = Astro.props;
     <div class="min-h-screen md:grid md:grid-cols-[240px_minmax(0,1fr)] md:transition-[grid-template-columns] md:in-data-rail:grid-cols-[64px_minmax(0,1fr)]">
       <Sidebar />
       <main class="min-w-0 px-4 pb-8 md:px-12">
-        <div class:list={['mx-auto w-full', !fluid && 'max-w-wide']}>
+        <div class="mx-auto w-full max-w-wide">
           <slot />
         </div>
       </main>

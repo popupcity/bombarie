@@ -41,7 +41,7 @@ const format = (day: string, options: Intl.DateTimeFormatOptions) => new Date(`$
               const date = format(group.day, { day: 'numeric' });
               const isToday = group.day === today;
               return (
-                <section id={`d-${group.day}`} data-group data-drop-day={group.day} class="in-[[data-dragging]]:opacity-(--dim) in-[[data-dragging]]:data-drop-active:opacity-100 relative transition-opacity flex scroll-mt-28 max-md:scroll-mt-44 flex-col gap-4">
+                <section id={group.day} data-group data-drop-day={group.day} class="in-[[data-dragging]]:opacity-(--dim) in-[[data-dragging]]:data-drop-active:opacity-100 relative transition-opacity flex scroll-mt-28 max-md:scroll-mt-44 flex-col gap-4">
                   {group.day === now && <span id="today" aria-hidden="true" class="absolute inset-x-0 top-0 scroll-mt-28 max-md:scroll-mt-44"></span>}
                   <Heading variant="block" as="h3" class="flex h-8 items-center">
                     {isToday && <span class="sr-only">Today, </span>}
