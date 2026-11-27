@@ -13,7 +13,7 @@ interface Props {
 
 const { variant = 'block', as, href, interactive = false, alert = false, class: className, ...rest } = Astro.props;
 const Tag = as ?? (href ? 'a' : 'div');
-const padding = { block: 'p-6', row: 'p-4', bare: '' };
+const padding = { block: 'p-4 md:p-6', row: 'p-4', bare: '' };
 const live = interactive || href !== undefined;
 ---
 

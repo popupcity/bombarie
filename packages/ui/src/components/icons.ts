@@ -6,6 +6,7 @@ import heart from '@phosphor-icons/core/assets/regular/heart.svg?raw';
 import bookmarkSimple from '@phosphor-icons/core/assets/regular/bookmark-simple.svg?raw';
 import shareFat from '@phosphor-icons/core/assets/regular/share-fat.svg?raw';
 import lightbulb from '@phosphor-icons/core/assets/regular/lightbulb.svg?raw';
+import sidebarSimple from '@phosphor-icons/core/assets/regular/sidebar-simple.svg?raw';
 import hand from '@phosphor-icons/core/assets/regular/hand.svg?raw';
 import linkSimple from '@phosphor-icons/core/assets/regular/link-simple.svg?raw';
 import image from '@phosphor-icons/core/assets/regular/image.svg?raw';
@@ -60,6 +61,7 @@ const substack =
 
 export const icons = {
   regular: {
+    'sidebar-simple': sidebarSimple,
     hand,
     'arrow-right': arrowRight,
     'arrow-square-out': arrowSquareOut,

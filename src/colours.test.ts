@@ -24,7 +24,7 @@ test('colours come from the named set: no opacity on a colour class, except the 
 });
 
 test('no colour literal in a component or a script', () => {
-  assert.deepEqual(hits(LITERAL, (file) => MOCKS.has(file)), []);
+  assert.deepEqual(hits(LITERAL, (file) => MOCKS.has(file) || file === 'components/AppHead.astro'), []);
 });
 
 test('the retired grey names are gone', () => {

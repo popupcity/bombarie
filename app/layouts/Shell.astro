@@ -1,6 +1,7 @@
 ---
+import AppHead from '../components/AppHead.astro';
 import Sidebar from '../components/Sidebar.astro';
-import { brandName, HTML_CLASS, SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
+import { brandName, HTML_CLASS, SCHEME_COOKIE, schemeOf, RAIL_COOKIE } from '../lib/ui.ts';
 import '../styles/global.css';
 
 interface Props {
@@ -10,17 +11,15 @@ const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" data-theme="social" data-scheme={schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value)} class={HTML_CLASS}>
+<html lang="en" data-theme="social" data-scheme={schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value)} data-rail={Astro.cookies.get(RAIL_COOKIE)?.value === '1' ? '' : undefined} class={HTML_CLASS}>
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <AppHead />
     <title>{title} — {brandName}</title>
   </head>
   <body>
-    <div class="min-h-screen md:grid md:grid-cols-[240px_minmax(0,1fr)]">
+    <div class="min-h-screen md:grid md:grid-cols-[240px_minmax(0,1fr)] md:transition-[grid-template-columns] md:in-data-rail:grid-cols-[64px_minmax(0,1fr)]">
       <Sidebar />
-      <main class="min-w-0 px-6 pb-8 md:px-12">
+      <main class="min-w-0 px-4 pb-8 md:px-12">
         <slot />
       </main>
     </div>
@@ -33,6 +32,7 @@ const { title } = Astro.props;
       import '../scripts/newpost.ts';
       import '../scripts/pending.ts';
       import '../scripts/popovers.ts';
+      import '../scripts/rail.ts';
       import '../scripts/photos.ts';
       import '../scripts/toast.ts';
       import '../scripts/tooltip.ts';

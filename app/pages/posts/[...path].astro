@@ -137,7 +137,7 @@ const compose = variant.platform === 'substack' && variant.type === 'note' ? 'ht
 const forcedManual = !isAutomatic(variant.platform);
 const copyText = manualNow && variant.type !== 'story';
 const shown = toEdit(fields.body, new Map(Object.entries(campaign.entities)));
-const field = 'rounded-lg bg-surface p-6 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+const field = 'rounded-lg bg-surface p-4 md:p-6 leading-7 ring-1 ring-line ring-inset focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 const instant = fields.ok && !planned && recorded === null && postsNow({ manual: manualNow, connected: !connections[variant.channel], date: fields.date, now: new Date() });
 const addable = variantOptions(channelInfos(loadChannels(root))).filter((option) => !campaign.variants.some((candidate) => candidate.base === option.base));
 const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-pressed:bg-ink aria-pressed:text-page';

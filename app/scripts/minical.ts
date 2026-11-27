@@ -1,11 +1,10 @@
 import { icons } from 'ui/src/components/icons.ts';
 import { addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
-import { CARET, SWAPPED } from '../lib/ui.ts';
+import { CARET, dotClass, dotTones, SWAPPED } from '../lib/ui.ts';
 import { h } from './dom.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const NAV = 'transition grid size-8 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-ink';
-const ORDER = ['bad', 'info', 'warn', 'manual', 'ok', 'feed'];
 
 let listening: AbortController | undefined;
 
@@ -20,12 +19,7 @@ function start() {
   const groups = [...document.querySelectorAll<HTMLElement>('section[data-group]')];
   const days = groups.map((group) => group.id.slice(2));
   const panels = new Map([...document.querySelectorAll<HTMLElement>('#minical-panels [data-panel]')].map((element) => [element.dataset.panel ?? '', element]));
-  const tones = (day: string): string[] =>
-    [...(panels.get(day)?.querySelectorAll<HTMLElement>('[data-tone]') ?? [])]
-      .map((row) => row.dataset.tone ?? '')
-      .filter((tone) => ORDER.includes(tone))
-      .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b))
-      .slice(0, 3);
+  const tones = (day: string): string[] => dotTones([...(panels.get(day)?.querySelectorAll<HTMLElement>('[data-tone]') ?? [])].map((row) => row.dataset.tone ?? ''));
   let view = today.slice(0, 7);
   let active = '';
   let visible = new Set<string>();
@@ -93,7 +87,7 @@ function start() {
             },
             String(day.date),
             dots.length > 0
-              ? h('span', { 'aria-hidden': 'true', class: 'absolute bottom-1 flex gap-1' }, ...dots.map((tone) => h('span', { 'data-tone': tone, class: `size-1 rounded-full ${tone === 'feed' ? 'bg-ink-faint' : 'bg-(--tone)'}` })))
+              ? h('span', { 'aria-hidden': 'true', class: 'absolute bottom-1 flex gap-1' }, ...dots.map((tone) => h('span', { 'data-tone': tone, class: dotClass(tone) })))
               : ''
           );
         })

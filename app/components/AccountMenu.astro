@@ -12,10 +12,12 @@ const schemes = [
 ---
 
 <div class:list={[FADE_ABOVE, 'sticky bottom-0 z-10 shrink-0 bg-page py-4']}>
-  <button type="button" popovertarget="account-menu" style="anchor-name:--account-menu" class:list={[MENU_ITEM, 'w-full']}>
+  <button type="button" popovertarget="account-menu" style="anchor-name:--account-menu" class:list={[MENU_ITEM, 'w-full md:in-data-rail:w-10 md:in-data-rail:justify-center md:in-data-rail:gap-0 md:in-data-rail:px-0']}>
     {user ? <img src={githubAvatar(user)} alt="" class="size-6 rounded-sm" /> : <Icon name="sliders-horizontal" class="text-base text-ink-soft" />}
-    <span class="min-w-0 flex-1 truncate text-left">{user ?? 'Appearance'}</span>
-    <Icon name="caret-down" class={`text-ink-soft ${CARET}`} />
+    <span class="min-w-0 flex-1 truncate text-left md:in-data-rail:sr-only">{user ?? 'Appearance'}</span>
+    <span class="flex md:in-data-rail:hidden">
+      <Icon name="caret-down" class={`text-ink-soft ${CARET}`} />
+    </span>
   </button>
   <div id="account-menu" popover style="position-anchor:--account-menu" class:list={[MENU, 'w-52 [inset:auto] [position-try-fallbacks:flip-block] [bottom:anchor(top)] [left:anchor(left)]']}>
     <div role="group" aria-label="Appearance">

@@ -7,5 +7,9 @@ document.addEventListener('click', (event) => {
   document.cookie = `${SCHEME_COOKIE}=${value}; path=/; max-age=31536000; samesite=lax`;
   if (value === 'auto') delete document.documentElement.dataset.scheme;
   else document.documentElement.dataset.scheme = value;
+  for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+    const scheme = value === 'auto' ? meta.dataset.for : value;
+    meta.content = (scheme === 'dark' ? meta.dataset.dark : meta.dataset.light) ?? meta.content;
+  }
   for (const other of document.querySelectorAll('[data-scheme-choice]')) other.setAttribute('aria-pressed', String(other === chosen));
 });

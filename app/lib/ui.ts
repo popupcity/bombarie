@@ -64,6 +64,8 @@ export const quiet = { 'data-bwignore': true, 'data-1p-ignore': true, 'data-lpig
 
 export const SCHEME_COOKIE = 'bombarie_scheme';
 
+export const RAIL_COOKIE = 'bombarie_rail';
+
 export const schemeOf = (value: string | undefined): 'light' | 'dark' | undefined => (value === 'light' || value === 'dark' ? value : undefined);
 
 export const HTML_CLASS = 'scheme-light-dark data-[scheme=light]:scheme-light data-[scheme=dark]:scheme-dark scroll-smooth bg-page text-[106.25%]';
@@ -83,5 +85,15 @@ export const STATIC_CHIP = 'inline-flex h-(--control-md) items-center gap-3 roun
 export const FADE_BELOW = 'after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-8 after:bg-linear-to-b after:from-page after:to-transparent';
 
 export const FADE_ABOVE = 'before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-8 before:bg-linear-to-t before:from-page before:to-transparent';
+
+const DOT_ORDER = ['bad', 'info', 'warn', 'manual', 'ok', 'feed'];
+
+export const dotTones = (tones: string[]): string[] =>
+  tones
+    .filter((tone) => DOT_ORDER.includes(tone))
+    .sort((a, b) => DOT_ORDER.indexOf(a) - DOT_ORDER.indexOf(b))
+    .slice(0, 3);
+
+export const dotClass = (tone: string): string => `size-1 rounded-full ${tone === 'feed' ? 'bg-ink-faint' : 'bg-(--tone)'}`;
 
 export const CHIP = 'transition inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset hover:ring-line-strong aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';

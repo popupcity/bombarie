@@ -1,5 +1,4 @@
 ---
-import Text from 'ui/src/components/Text.astro';
 import Icon from 'ui/src/components/Icon.astro';
 import type { MonthDay } from '../../src/calendar.ts';
 import PostChip from './PostChip.astro';
@@ -17,10 +16,10 @@ const { day, href, folderCounts = {}, anchor = false } = Astro.props;
   id={anchor ? 'today' : undefined}
   data-cell
   data-drop-day={day.day}
-  class:list={['group/cell flex min-h-16 flex-col gap-1 min-w-0 scroll-mt-37 md:scroll-mt-28 rounded-lg bg-surface p-2 md:min-h-36', !day.inMonth ? 'bg-transparent' : day.past && 'bg-page', day.today ? 'ring-2 ring-inset ring-ink' : 'ring-1 ring-inset ring-line']}
+  class:list={['group/cell relative flex min-h-16 flex-col gap-1 min-w-0 scroll-mt-37 md:scroll-mt-28 rounded-lg bg-surface p-2 md:min-h-36', !day.inMonth ? 'bg-transparent' : day.past && 'bg-page', day.today ? 'ring-2 ring-inset ring-ink' : 'ring-1 ring-inset ring-line']}
 >
-  <div class="flex h-8 items-center justify-between">
-    <a href={href} class:list={['transition rounded-sm px-1 text-sm hover:bg-page', !day.inMonth && 'text-ink-soft']} aria-label={`Open ${day.day}`}>{day.date}</a>
+  <div class="flex h-8 items-center justify-between max-md:justify-center">
+    <a href={href} class:list={['transition rounded-sm px-1 text-sm hover:bg-page max-md:after:absolute max-md:after:inset-0 max-md:after:rounded-lg', !day.inMonth && 'text-ink-soft']} aria-label={`Open ${day.day}`}>{day.date}</a>
     {
       !day.past && (
         <button type="button" popovertarget="new-menu" data-day={day.day} title="New post on this day" aria-label={`New post on ${day.day}`} class="transition hidden size-8 cursor-pointer place-items-center rounded-lg text-ink-soft opacity-0 group-focus-within/cell:opacity-100 group-hover/cell:opacity-100 hover:bg-page hover:text-ink focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink md:grid">
@@ -36,5 +35,5 @@ const { day, href, folderCounts = {}, anchor = false } = Astro.props;
       <span data-more-label></span>
     </button>
   </div>
-  <Text variant="fine" class="text-ink-soft md:hidden" data-count></Text>
+  <span data-dots aria-hidden="true" class="flex h-1 justify-center gap-1 md:hidden"></span>
 </div>

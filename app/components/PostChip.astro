@@ -14,7 +14,7 @@ const movable = cardActions(card).movable;
 const id = `peek-${card.id.replace(/[^a-zA-Z0-9]/g, '-')}`;
 ---
 
-<div data-chip data-channel={card.channel} draggable={movable ? 'true' : undefined} data-drag-id={movable ? card.id : undefined} data-drag-day={card.day} data-drag-time={card.time}>
+<div data-chip data-dot={card.feed ? 'feed' : STATUS_TONE[card.status]} data-channel={card.channel} draggable={movable ? 'true' : undefined} data-drag-id={movable ? card.id : undefined} data-drag-day={card.day} data-drag-time={card.time}>
   <button type="button" data-plain popovertarget={id} style={`anchor-name:--${id}`} data-tone={card.feed ? undefined : STATUS_TONE[card.status]} class:list={['flex w-full cursor-pointer items-center gap-1 rounded-sm px-1 py-1 text-left text-xs', card.feed ? 'bg-track text-ink-soft' : TINTED]}>
     <ChannelAvatar channel={card} class="size-4 text-[7px]" small />
     {card.manual && (

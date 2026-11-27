@@ -1,6 +1,7 @@
 import './datepicker.ts';
 import './inplace.ts';
-import { brand, SWAPPED } from '../lib/ui.ts';
+import { brand, dotClass, dotTones, SWAPPED } from '../lib/ui.ts';
+import { h } from './dom.ts';
 
 const KEY = `${brand}:hidden`;
 const VISIBLE_CHIPS = 3;
@@ -41,8 +42,7 @@ function apply() {
       if (label) label.textContent = open ? 'Show less' : `${shown.length - VISIBLE_CHIPS} more`;
     }
     chips.forEach((chip) => (chip.hidden = !(open ? shown : shown.slice(0, VISIBLE_CHIPS)).includes(chip)));
-    const count = cell.querySelector<HTMLElement>('[data-count]');
-    if (count) count.textContent = shown.length ? String(shown.length) : '';
+    cell.querySelector('[data-dots]')?.replaceChildren(...dotTones(shown.map((chip) => chip.dataset.dot ?? '')).map((tone) => h('span', { 'data-tone': tone, class: dotClass(tone) })));
   }
   for (const group of document.querySelectorAll<HTMLElement>('[data-group]')) {
     group.hidden = !group.querySelector('li[data-channel]:not([hidden])');

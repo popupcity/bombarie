@@ -1,0 +1,13 @@
+---
+import { SCHEME_COOKIE, schemeOf } from '../lib/ui.ts';
+
+const PAGE = { light: '#f9f7f6', dark: '#191919' };
+const chosen = schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value);
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+{(['light', 'dark'] as const).map((scheme) => <meta name="theme-color" media={`(prefers-color-scheme: ${scheme})`} content={PAGE[chosen ?? scheme]} data-light={PAGE.light} data-dark={PAGE.dark} data-for={scheme} />)}
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />

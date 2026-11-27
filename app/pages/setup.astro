@@ -1,4 +1,5 @@
 ---
+import AppHead from '../components/AppHead.astro';
 import Alert from 'ui/src/components/Alert.astro';
 import Button from 'ui/src/components/Button.astro';
 import Heading from 'ui/src/components/Heading.astro';
@@ -31,14 +32,12 @@ const callback = `${Astro.url.origin}/login/github/callback`;
 <!doctype html>
 <html lang="en" data-theme="social" data-scheme={schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value)} class={HTML_CLASS}>
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <AppHead />
     <meta name="robots" content="noindex, nofollow" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>Set up — {brandName}</title>
   </head>
   <body>
-    <main class="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-8 px-6 py-12">
+    <main class="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-8 px-4 py-12">
       <Heading variant="page" as="h1" aria-label={brandName}><Wordmark /></Heading>
       {
         !open ? (
