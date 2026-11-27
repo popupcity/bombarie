@@ -20,7 +20,7 @@
   --radius-field: 8px;
   --control-ring: 1px;
   --hover-opacity: 0.85;
-  --tone-hover: color-mix(in srgb, var(--ink) 8%, transparent);
+  --tone-hover: color-mix(in srgb, var(--ink) 5%, transparent);
   --dim: 0.4;
   --arrow-chevron: none;
   --arrow-plain: inline-block;
@@ -42,7 +42,9 @@
 }
 
 [data-theme='social'] [data-tone] {
-  --tone-hover: color-mix(in srgb, var(--tone-text) 8%, transparent);
+  --tone-hover: color-mix(in srgb, var(--tone-text) 5%, transparent);
+  --tone-line: color-mix(in srgb, var(--tone-text) 35%, transparent);
+  --tone-line-strong: color-mix(in srgb, var(--tone-text) 60%, transparent);
 }
 
 [data-theme='social'] [data-tone='ink'] {
@@ -50,6 +52,8 @@
   --tone-on: var(--surface);
   --tone-text: var(--ink);
   --tone-soft: color-mix(in srgb, var(--ink) 12%, transparent);
+  --tone-line: var(--line);
+  --tone-line-strong: color-mix(in srgb, var(--ink) 25%, transparent);
 }
 
 [data-theme='social'] [data-tone='paper'] {
@@ -64,6 +68,8 @@
   --tone-on: var(--surface);
   --tone-text: var(--ink);
   --tone-soft: color-mix(in srgb, var(--ink) 12%, transparent);
+  --tone-line: var(--line);
+  --tone-line-strong: color-mix(in srgb, var(--ink) 25%, transparent);
 }
 
 [data-theme='social'] [data-tone='info'] {

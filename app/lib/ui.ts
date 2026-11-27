@@ -104,8 +104,8 @@ export const dotTones = (tones: string[]): string[] =>
 
 export const dotClass = (tone: string): string => `size-1 rounded-full ${tone === 'feed' ? 'bg-ink-faint' : 'bg-(--tone)'}`;
 
-export const SEGMENTS = 'inline-flex h-10 overflow-hidden rounded-lg border border-ink text-sm';
-export const SEGMENT = 'transition inline-flex h-full cursor-pointer items-center gap-2 px-4 text-ink not-aria-pressed:not-aria-[current=page]:hover:bg-(--tone-hover) aria-pressed:bg-ink aria-pressed:text-page aria-[current=page]:bg-ink aria-[current=page]:text-page';
+export const SEGMENTS = 'inline-flex h-10 rounded-lg text-sm ring-1 ring-line ring-inset';
+export const SEGMENT = 'transition inline-flex h-full cursor-pointer items-center gap-2 rounded-lg px-4 text-ink-soft not-aria-pressed:not-aria-[current=page]:hover:bg-(--tone-hover) aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-1 aria-pressed:ring-line-strong aria-pressed:ring-inset aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:ring-1 aria-[current=page]:ring-line-strong aria-[current=page]:ring-inset';
 
 export interface By {
   name: string;
@@ -124,4 +124,4 @@ export const WEEK_ROW = 'grid grid-cols-7 gap-1';
 
 export const QUIET = 'transition grid shrink-0 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-(--tone-hover) hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
 
-export const CHIP = 'transition inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset not-aria-pressed:not-aria-[current]:hover:bg-(--tone-hover) aria-[current]:bg-surface aria-[current]:text-ink aria-[current]:ring-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
+export const CHIP = 'transition inline-flex h-(--control-md) items-center gap-3 rounded-lg text-sm text-ink-soft ring-1 ring-line ring-inset not-aria-pressed:not-aria-[current]:hover:bg-(--tone-hover) aria-[current]:bg-surface aria-[current]:text-ink aria-[current]:ring-line-strong aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-line-strong focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';
