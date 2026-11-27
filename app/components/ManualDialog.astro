@@ -21,7 +21,7 @@ const { variant, platform, story, images } = Astro.props;
         {story ? 'The image is on your clipboard, or in the share menu on a phone.' : 'The text is on your clipboard.'} Mark it as posted when it is up.
       </Text>
     </div>
-    <div class="flex items-center justify-end gap-2">
+    <div class="flex items-center justify-end gap-3">
       <Button id="manual-copy-image" type="button" variant="outline" hidden={!images} class="mr-auto">Copy image</Button>
       <form method="dialog">
         <Button type="submit" variant="outline" autofocus>Not yet</Button>

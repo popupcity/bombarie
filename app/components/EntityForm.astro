@@ -22,7 +22,7 @@ const { linkedin, instagram, error = '' } = Astro.props;
   {error && <Alert>{error}</Alert>}
   <div class="flex flex-col gap-4">
     <Field label="LinkedIn" for="linkedin" hint={SPELLING}>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         <div class="min-w-0 flex-1">
           <Input id="linkedin" name="linkedin" label="LinkedIn" value={linkedin} placeholder="Paste a company page address, or a urn:li:organization: urn" autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />
         </div>

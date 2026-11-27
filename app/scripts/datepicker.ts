@@ -178,7 +178,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
       grid,
       h(
         'div',
-        { class: '-mx-4 flex items-center justify-between gap-4 border-t border-line px-4 pt-4' },
+        { class: '-mx-4 flex items-center justify-between gap-3 border-t border-line px-4 pt-4' },
         h(
           'button',
           {

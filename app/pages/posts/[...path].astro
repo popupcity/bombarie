@@ -192,12 +192,12 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
         </Card>
         <div data-tone="warn" class="hidden items-center justify-between gap-4 rounded-lg bg-(--tone-soft) px-4 py-3 text-sm text-(--tone-text) has-[#conflict:not([hidden])]:flex">
           <span>This file changed elsewhere. Your text is kept here.</span>
-          <span id="conflict" hidden class="flex gap-2">
+          <span id="conflict" hidden class="flex gap-3">
             <Button id="reload" type="button" variant="outline">Reload</Button>
             <Button id="overwrite" type="button" variant="outline" tone="bad">Overwrite</Button>
           </span>
         </div>
-        <nav class="flex flex-wrap gap-2" aria-label="Variants">
+        <nav class="flex flex-wrap gap-3" aria-label="Variants">
           {
             campaign.variants.map((candidate) => (
               <a
@@ -206,10 +206,10 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
                 aria-label={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}${candidate.type ? `, ${candidate.type}` : ''}`}
                 title={`${candidate.label} on ${PLATFORM_LABEL[candidate.platform]}`}
                 data-control
-                class={`${CHIP} pr-4 pl-1`}
+                class={`${CHIP} pl-1 ${candidate === variant ? 'pr-4' : 'pr-2'}`}
               >
                 <ChannelMark channel={candidate} size="lg" />
-                <span aria-hidden="true">{candidate.label}</span>
+                {candidate === variant && <span aria-hidden="true">{candidate.label}</span>}
                 {candidate.type && <span aria-hidden="true" class="rounded-sm bg-track px-2 py-1 text-xs text-ink-soft capitalize">{candidate.type}</span>}
               </a>
             ))
@@ -297,7 +297,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
                         </div>
                       </>
                     )}
-                    <div class="flex flex-wrap items-center gap-4 md:peer-[:not(:empty)]:pl-14">
+                    <div class="flex flex-wrap items-center gap-3 md:peer-[:not(:empty)]:pl-14">
                       {repliable && <Button id="post-replies" type="button" hidden>Post reply</Button>}
                       <Button id="add-reply" popovertarget={choosing ? 'reply-menu' : undefined} type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a reply under this post'}>Add reply{choosing && <Icon name="caret-down" class={CARET} />}</Button>
                     </div>
@@ -425,7 +425,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
           <div class="flex flex-col gap-4">
             <Heading variant="card" as="h2" id="reply-delete-title">Delete this reply?</Heading>
             <Text variant="small" class="text-ink-soft">It is removed here. {variant.platform === 'threads' ? 'Threads does not let other apps delete replies; remove it there yourself.' : `Choose whether it also goes from ${PLATFORM_LABEL[variant.platform]}.`}</Text>
-            <div class="flex flex-wrap items-center justify-end gap-2">
+            <div class="flex flex-wrap items-center justify-end gap-3">
               <form method="dialog"><Button type="submit" variant="outline" autofocus>Cancel</Button></form>
               <Button id="reply-delete-local" type="button" variant="outline" tone="bad">Only here</Button>
               <Button id="reply-delete-both" type="button" tone="bad" hidden>From {PLATFORM_LABEL[variant.platform]} and here</Button>

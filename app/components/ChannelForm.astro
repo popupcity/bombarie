@@ -24,7 +24,7 @@ const hint = `${platform === 'substack' ? 'The RSS address of this publication' 
 <div class="grid gap-x-8 gap-y-12 lg:grid-cols-3">
   <form id={formId} method="post" class="flex flex-col gap-8 lg:col-span-2">
     <slot name="top" />
-    <div class="flex flex-wrap items-center gap-2"><slot name="identity" /></div>
+    <div class="flex flex-wrap items-center gap-3"><slot name="identity" /></div>
     <div class="flex flex-col gap-4">
     {
       platform === 'instagram' && (
@@ -44,7 +44,7 @@ const hint = `${platform === 'substack' ? 'The RSS address of this publication' 
       setup && (
         <>
           <Field label="Redirect URL" for="redirect">
-            <div class="flex gap-2">
+            <div class="flex gap-3">
               <div class="min-w-0 flex-1">
                 <Input id="redirect" label="Redirect URL" value={setup.redirectUri} readonly {...quiet} />
               </div>

@@ -22,7 +22,7 @@ const { id, title, intent, variant, confirm, tone = 'bad', field } = Astro.props
       <Heading variant="card" as="h2" id={`${id}-title`}>{title}</Heading>
       <Text variant="small" class="text-ink-soft" id={`${id}-text`}><slot /></Text>
     </div>
-    <div class="flex justify-end gap-2">
+    <div class="flex justify-end gap-3">
       <form method="dialog">
         <Button type="submit" variant="outline" autofocus>Cancel</Button>
       </form>

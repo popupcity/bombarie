@@ -70,7 +70,7 @@ const roles: [Role, string][] = [['admin', 'Can add and remove users.'], ['membe
               <Card as="li" class="flex items-center gap-4">
                 <img src={githubAvatar(name)} alt="" class="size-8 rounded-lg" />
                 <Text class="min-w-0 flex-1 truncate">{name}</Text>
-                <form method="post" class="flex items-center gap-2">
+                <form method="post" class="flex items-center gap-3">
                   <input type="hidden" name="name" value={name} />
                   <ChoiceMenu id={`role-${name}`} submit disableActive label={cap(role)} tone={tone[role] ?? 'ink'} options={[...roles.map(([value, text]) => ({ label: cap(value), text, active: role === value, attrs: { name: 'role', value } }))]} />
                   <TrashButton type="submit" name="remove" value="1" label={`Remove ${name}`} title="Remove" />
@@ -79,7 +79,7 @@ const roles: [Role, string][] = [['admin', 'Can add and remove users.'], ['membe
             ))
           }
         </ul>
-        <Card as="form" id="add-user" method="post" hidden class="flex items-center gap-4 data-[open]:flex">
+        <Card as="form" id="add-user" method="post" hidden class="flex items-center gap-3 data-[open]:flex">
           <input type="hidden" name="add" value="1" />
           <Input id="name" name="name" label="GitHub username" placeholder="GitHub username" required autocomplete="off" />
           <Button type="submit">Add</Button>
