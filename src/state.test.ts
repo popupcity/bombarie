@@ -110,16 +110,20 @@ test('the name that started a post travels from the claim to the posted state', 
   assert.equal((await store.get('f/a.md') as { by?: string }).by, 'anna');
 });
 
-test('a reminder is forgotten when the post gets a date after it was sent, and nothing else ever is', async () => {
+test('a reminder is forgotten when the post gets a later date or goes back to draft, and nothing else ever is', async () => {
   const store = fresh();
+  const planned = (date: Date) => ({ status: 'planned', date });
   await store.create('f/a.md', { status: 'reminded', at: now.toISOString() });
-  assert.equal(await rearm(store, 'f/a.md', later(-60_000)), false);
+  assert.equal(await rearm(store, 'f/a.md', planned(later(-60_000))), false);
   assert.equal((await store.get('f/a.md'))?.status, 'reminded');
-  assert.equal(await rearm(store, 'f/a.md', later(60_000)), true);
+  assert.equal(await rearm(store, 'f/a.md', planned(later(60_000))), true);
   assert.equal(await store.get('f/a.md'), null);
+
+  await store.create('f/c.md', { status: 'reminded', at: now.toISOString() });
+  assert.equal(await rearm(store, 'f/c.md', { status: 'draft', date: later(-60_000) }), true);
 
   await claim(store, 'f/b.md', now);
   await complete(store, 'f/b.md', 'r', undefined, now);
-  assert.equal(await rearm(store, 'f/b.md', later(60_000)), false);
+  assert.equal(await rearm(store, 'f/b.md', { status: 'draft', date: later(60_000) }), false);
   assert.equal((await store.get('f/b.md'))?.status, 'posted');
 });

@@ -14,7 +14,7 @@ import { videoCover } from './videocover.ts';
 import { PLATFORM_LABEL, type Platform, type PostStatus } from '../../src/types.ts';
 import { plannedText, segmentLook } from '../lib/ui.ts';
 import { autocomplete } from './autocomplete.ts';
-import { splitParts } from '../../src/parts.ts';
+import { joinThread, splitThread } from '../../src/parts.ts';
 import './datepicker.ts';
 import { h } from './dom.ts';
 import { uploadTile } from './uploads.ts';
@@ -97,6 +97,16 @@ function init(root: HTMLElement) {
     bell.querySelector<HTMLElement>('[data-off]')!.hidden = tip.on;
   };
 
+  const own = root.dataset.own ?? '';
+  const authors = JSON.parse(root.dataset.authors ?? '[]') as { key: string; name: string; avatar?: string; usable: boolean }[];
+  const authorOf = (key: string | undefined) => (key && key !== own ? authors.find((author) => author.key === key) : undefined);
+  const commentAuthors = (): (string | undefined)[] => {
+    const fields = readFields(raw);
+    return splitThread(fields.body)
+      .slice(1)
+      .map((part) => part.by);
+  };
+
   const spans = (segments: Preview['segments']): HTMLElement[] =>
     segments.map((segment) => {
       const look = segmentLook(platform, segment.kind);
@@ -111,6 +121,12 @@ function init(root: HTMLElement) {
         if (!comment) return h('li', { class: 'flex flex-col gap-1' }, h('span', { class: 'text-xs text-ink-soft' }, `Reply ${index + 1}`), h('p', { class: 'text-sm break-words whitespace-pre-wrap' }, ...spans(segments)));
         const item = comment.content.firstElementChild!.cloneNode(true) as HTMLElement;
         item.querySelector('[data-comment-text]')!.replaceChildren(...spans(segments));
+        const other = authorOf(commentAuthors()[index]);
+        if (other) {
+          item.querySelector('[data-comment-name]')!.textContent = other.name;
+          const face = item.querySelector('[data-comment-avatar]')!.firstElementChild!;
+          face.replaceChildren(other.avatar ? h('img', { src: `/img/${other.avatar}?size=96`, alt: '', class: 'size-full object-cover' }) : other.name.slice(0, 2).toUpperCase());
+        }
         return item;
       })
     );
@@ -425,8 +441,6 @@ function init(root: HTMLElement) {
   function refreshReadiness(fields: Fields, result: Preview) {
     const open = plan.dataset.recorded === undefined;
     const isManual = byHand(fields);
-    const plannedHint = statusOption('planned')?.querySelector('[data-option-text]');
-    if (plannedHint) plannedHint.textContent = plannedText(isManual);
     const reached = fields.ok && fields.date !== '' && parseDate(fields.date).getTime() <= Date.now();
     const hand = isManual && reached && open;
     const due = !hand && fields.ok && open && postsNow({ manual: isManual, connected: !connection, date: fields.date, now: new Date() });
@@ -448,7 +462,9 @@ function init(root: HTMLElement) {
     if (plannedOption) {
       const already = fields.ok && fields.status === 'planned';
       plannedOption.disabled = !already && plan.disabled;
-      plannedOption.title = plannedOption.disabled ? (reason ?? '') : '';
+      const hint = plannedOption.querySelector('[data-option-text]');
+      const ago = fields.ok && fields.date && !already ? Date.now() - parseDate(fields.date).getTime() : 0;
+      if (hint) hint.textContent = plannedOption.disabled && reason ? reason : plannedText(isManual, ago);
     }
     const postedOption = statusOption('posted');
     if (postedOption && fields.ok) postedOption.hidden = !byHand(fields);
@@ -582,7 +598,8 @@ function init(root: HTMLElement) {
         savedRaw = text;
         localStorage.removeItem(draftKey);
         autosaveStopped = false;
-        if (data.folder && (data.folder !== folder || data.rearmed)) {
+        if (data.rearmed) document.getElementById('reminder-sent')?.remove();
+        if (data.folder && data.folder !== folder) {
           sending = false;
           toastAfterReload('Saved.', 'ok');
           location.replace(`/posts/${encodeURIComponent(data.folder)}/${encodeURIComponent(variant)}`);
@@ -623,8 +640,12 @@ function init(root: HTMLElement) {
   const replyBox = document.getElementById('replies');
   const replyAreas = (): HTMLTextAreaElement[] => (replyBox ? [...replyBox.querySelectorAll('textarea')] : []);
   const commitBody = () => {
-    const parts = [body, ...replyAreas()].map((area) => fromEdit(area.value, entities));
-    edit(withBody(raw, replyBox ? parts.join('\n\n---\n\n') : (parts[0] ?? '')));
+    const first = fromEdit(body.value, entities);
+    const later = replyAreas().map((area) => {
+      const by = area.closest<HTMLElement>('[data-reply]')?.dataset.by;
+      return { text: fromEdit(area.value, entities), ...(by && { by }) };
+    });
+    edit(withBody(raw, replyBox ? joinThread([{ text: first }, ...later]) : first));
   };
   const noun = platform === 'threads' ? 'Reply' : 'Comment';
   const numberReplies = () => {
@@ -639,6 +660,7 @@ function init(root: HTMLElement) {
     for (const [index, wrapper] of [...(replyBox?.children ?? [])].entries()) {
       if (index >= repliesSent) continue;
       wrapper.querySelector('textarea')?.setAttribute('readonly', '');
+      wrapper.querySelector<HTMLButtonElement>('[popovertarget]')?.setAttribute('disabled', '');
     }
   }
   function refreshRepliesButton() {
@@ -675,7 +697,41 @@ function init(root: HTMLElement) {
   document.getElementById('reply-delete-local')?.addEventListener('click', () => void deleteSentReply('local'));
   document.getElementById('reply-delete-both')?.addEventListener('click', () => void deleteSentReply('both'));
   let replyCounter = 0;
-  function addReplyField(text: string): HTMLTextAreaElement {
+  function authorMenu(wrapper: HTMLElement): HTMLElement | null {
+    const template = document.getElementById('reply-author') as HTMLTemplateElement | null;
+    if (!template) return null;
+    const copy = template.content.cloneNode(true) as DocumentFragment;
+    const trigger = copy.querySelector<HTMLButtonElement>('[popovertarget]')!;
+    const menu = copy.querySelector<HTMLElement>('[popover]')!;
+    const name = copy.querySelector<HTMLElement>('#reply-author-label')!;
+    menu.id = `reply-author-${replyCounter}`;
+    name.removeAttribute('id');
+    trigger.setAttribute('popovertarget', menu.id);
+    trigger.style.setProperty('anchor-name', `--${menu.id}`);
+    menu.style.setProperty('position-anchor', `--${menu.id}`);
+    const paint = () => {
+      const key = wrapper.dataset.by ?? own;
+      const chosen = authors.find((author) => author.key === key);
+      name.textContent = chosen ? `${chosen.name}${chosen.usable || key === own ? '' : ' (not connected)'}` : key;
+      for (const option of menu.querySelectorAll<HTMLElement>('[data-author]')) {
+        const active = option.dataset.author === key;
+        option.setAttribute('aria-pressed', String(active));
+        option.querySelector('span[aria-hidden]')?.classList.toggle('invisible', !active);
+      }
+    };
+    for (const option of menu.querySelectorAll<HTMLElement>('[data-author]'))
+      option.addEventListener('click', () => {
+        const key = option.dataset.author ?? own;
+        if (key === own) delete wrapper.dataset.by;
+        else wrapper.dataset.by = key;
+        paint();
+        menu.hidePopover();
+        commitBody();
+      });
+    paint();
+    return h('div', {}, ...(copy.children as unknown as HTMLElement[]));
+  }
+  function addReplyField(text: string, by?: string): HTMLTextAreaElement {
     replyCounter += 1;
     const area = h('textarea', { id: `reply-${replyCounter}`, rows: '4', placeholder: 'Write the reply. Type @ to mention.', 'aria-label': 'Reply', class: `${body.className.replace(/\bpr-14\b/, '').replace(/\bmin-h-56\b/, 'min-h-32')} pr-14` }) as HTMLTextAreaElement;
     area.value = text;
@@ -688,7 +744,11 @@ function init(root: HTMLElement) {
       commitBody();
     });
     const label = h('p', { 'data-reply-label': '', class: 'text-sm text-ink-soft' });
-    const wrapper = h('div', { class: 'flex flex-col gap-2' }, label, h('div', { class: 'relative' }, area, remove));
+    const head = h('div', { class: 'flex items-center justify-between gap-4' }, label);
+    const wrapper = h('div', { 'data-reply': '', class: 'flex flex-col gap-2' }, head, h('div', { class: 'relative' }, area, remove));
+    if (by && by !== own) wrapper.dataset.by = by;
+    const menu = authorMenu(wrapper);
+    if (menu) head.append(menu);
     replyBox?.append(wrapper);
     numberReplies();
     autocomplete(area, 'at', entities, platform);
@@ -700,10 +760,10 @@ function init(root: HTMLElement) {
       body.value = toEdit(text, entities);
       return;
     }
-    const [first = '', ...later] = splitParts(text);
-    body.value = toEdit(first, entities);
+    const [first, ...later] = splitThread(text);
+    body.value = toEdit(first?.text ?? '', entities);
     replyBox.replaceChildren();
-    for (const part of later) addReplyField(toEdit(part, entities));
+    for (const part of later) addReplyField(toEdit(part.text, entities), part.by);
     lockSentReplies();
   }
   body.addEventListener('input', commitBody);

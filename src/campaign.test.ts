@@ -166,3 +166,23 @@ test('a new empty draft shows no problems, and the problems come back once it ha
     (err) => err instanceof PlanBlocked && /text is empty/.test(err.problems.join())
   );
 });
+
+test('a post cannot be planned when a comment is by an account that cannot post', async () => {
+  const root = repo();
+  await assert.rejects(
+    save(root, 'jeroen-linkedin', '---\nstatus: planned\ndate: 2026-11-20T10:30\n---\nOpent.\n\n--- nourn-linkedin\n\nMooi.\n'),
+    (err) => err instanceof PlanBlocked && /comment 1 cannot be posted as/.test(err.problems.join())
+  );
+});
+
+test('a variant for another platform leaves the comment authors behind', async () => {
+  const root = repo();
+  await save(root, 'jeroen-linkedin', '---\ndate: 2026-11-20T10:30\n---\nPost.\n\n--- nourn-linkedin\n\nMooi.\n');
+  const { rmSync } = await import('node:fs');
+  rmSync(join(root, 'posts', FILE, 'insta.md'));
+  const { addVariant } = await import('./campaign.ts');
+  const made = await addVariant(root, fileContentStore(root), FILE, 'jeroen-linkedin', 'insta');
+  const raw = readFileSync(join(root, 'posts', FILE, `${made}.md`), 'utf8');
+  assert.match(raw, /\n---\n\nMooi\./);
+  assert.doesNotMatch(raw, /nourn-linkedin/);
+});

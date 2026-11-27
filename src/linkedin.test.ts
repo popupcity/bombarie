@@ -279,3 +279,25 @@ test('a comment with an entity goes out with tags, and as plain text when Linked
   assert.match((await linkedin.send(post(tagged), person, credentials, broken.context)).warning ?? '', /comment 1 of 1 failed/);
   assert.equal(broken.calls.filter((call) => call.url.includes('/socialActions/')).length, 1);
 });
+
+test('a comment by another account goes out with that account as actor and with its token, the others as the author', async () => {
+  const { calls, context } = setup((url) => (url.includes('/socialActions/') ? created('urn:li:comment:1') : created('urn:li:share:7')));
+  const speaker = async () => ({ urn: 'urn:li:person:joop', credentials: { accessToken: 'JOOP' } });
+  const result = await linkedin.send(post({ replies: ['By Joop.', 'By me.'], replyBy: ['joop-linkedin', ''] }), person, credentials, { ...context, speaker });
+  const comments = calls.filter((call) => call.url.includes('/socialActions/'));
+  assert.deepEqual(comments.map((call) => (bodyOf(call) as { actor: string }).actor), ['urn:li:person:joop', 'urn:li:person:abc']);
+  const token = (index: number) => (comments[index]!.init.headers as Record<string, string>).Authorization;
+  assert.equal(token(0), 'Bearer JOOP');
+  assert.notEqual(token(1), 'Bearer JOOP');
+  assert.deepEqual(result.replies?.by, ['joop-linkedin', '']);
+});
+
+test('a comment is never posted under the author when the chosen account cannot post', async () => {
+  const { calls, context } = setup((url) => (url.includes('/socialActions/') ? created('urn:li:comment:1') : created('urn:li:share:7')));
+  const speaker = async () => Promise.reject(new Error('Joop is not connected'));
+  for (const extra of [{ speaker }, {}]) {
+    const result = await linkedin.send(post({ replies: ['By Joop.'], replyBy: ['joop-linkedin'] }), person, credentials, { ...context, ...extra });
+    assert.match(result.warning ?? '', /comment 1 of 1 failed/);
+  }
+  assert.equal(calls.filter((call) => call.url.includes('/socialActions/')).length, 0);
+});

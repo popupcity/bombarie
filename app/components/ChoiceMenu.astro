@@ -32,7 +32,7 @@ const { id, label, tone, options, submit = false, triggerId, labelId, disableAct
 <div id={id} popover style={`position-anchor:--${id}`} class:list={[MENU, 'w-64 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [right:anchor(right)] [top:anchor(bottom)]']}>
   {
     options.map((option) => (
-      <button type={submit ? 'submit' : 'button'} disabled={disableActive && option.active} aria-pressed={option.active} {...option.attrs} class:list={[MENU_ITEM, 'items-start py-2 disabled:cursor-default disabled:hover:bg-transparent']}>
+      <button type={submit ? 'submit' : 'button'} disabled={disableActive && option.active} aria-pressed={option.active} {...option.attrs} class:list={[MENU_ITEM, 'items-start py-2 disabled:cursor-default disabled:text-ink-soft disabled:hover:bg-transparent']}>
         <Icon name="check" class:list={['mt-1 shrink-0', !option.active && 'invisible']} />
         <span><span class="block">{option.label}</span>{option.text && <span class="block text-ink-soft" data-option-text>{option.text}</span>}</span>
       </button>

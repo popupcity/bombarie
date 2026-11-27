@@ -62,9 +62,9 @@ export async function fail(store: StateStore, id: string, message: string, now: 
   );
 }
 
-export async function rearm(store: StateStore, id: string, date: Date): Promise<boolean> {
+export async function rearm(store: StateStore, id: string, post: { status: string; date: Date }): Promise<boolean> {
   const state = await store.get(id);
-  if (state?.status !== 'reminded' || date.getTime() <= Date.parse(state.at)) return false;
+  if (state?.status !== 'reminded' || (post.status === 'planned' && post.date.getTime() <= Date.parse(state.at))) return false;
   await store.remove(id);
   return true;
 }

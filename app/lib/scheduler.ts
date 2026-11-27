@@ -22,7 +22,7 @@ async function tick(): Promise<void> {
   const now = new Date();
   const { posts } = readPosts(root, loadChannels(root));
   const deps = localDeps(root, now);
-  for (const post of posts) await rearm(deps.store, post.id, post.date);
+  for (const post of posts) await rearm(deps.store, post.id, post);
   const outcomes = await run(posts, deps);
   await refreshFeeds(root, deps.channels, fetch, now);
   await refreshThreadsTokens(tokensPath(), Object.entries(deps.channels).filter(([, channel]) => channel.platform === 'threads').map(([name]) => name), fetch, now);

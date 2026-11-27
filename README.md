@@ -9,7 +9,7 @@ Built by [Pop-Up City](https://popupcity.net), an urban innovation studio, for i
 - A calendar and a list of everything planned, posted and late, with a live preview per platform.
 - Posts to LinkedIn, Instagram, Facebook and Threads through their APIs. Substack and your own blog are shown from their RSS feeds; Substack posts are reminders, because Substack has no posting API.
 - One post, several channels: a post folder holds one markdown file per channel, so each channel can have its own text and pictures.
-- Replies on Threads (and comments on LinkedIn) after the first `---` in a post.
+- Replies on Threads (and comments on LinkedIn) after the first `---` in a post. A LinkedIn comment can be posted by another connected account: `--- joop-linkedin`.
 - An ideas inbox you can fill from a bookmarklet or a Telegram bot (send `/planned` to the bot to see what is coming), and entities (`[[Name]]`) that become real mentions on LinkedIn and Instagram.
 - A late post is skipped, never posted late.
 

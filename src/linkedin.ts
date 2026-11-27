@@ -78,35 +78,52 @@ export function commentAttributes(text: string, mentions: Record<string, string>
   });
 }
 
-async function comment(context: SendContext, headers: Record<string, string>, owner: string, id: string, texts: string[], mentions: Record<string, string>, offset: number): Promise<ReplyResult> {
+interface Authors {
+  by?: string[] | undefined;
+  speaker?: SendContext['speaker'] | undefined;
+}
+
+async function comment(context: SendContext, headers: Record<string, string>, owner: string, id: string, texts: string[], mentions: Record<string, string>, offset: number, authors: Authors = {}): Promise<ReplyResult> {
   const ids: string[] = [];
+  const by: string[] = [];
+  const who = (): { by?: string[] } => (by.some(Boolean) ? { by } : {});
   const untagged: string[] = [];
   let sent = 0;
   const told = (): string[] => (untagged.length > 0 ? [`posted without tags, LinkedIn refused them: ${untagged.join(', ')}`] : []);
   for (const [index, text] of texts.entries()) {
     const number = offset + index + 1;
-    const post = (base: string, using: Record<string, string>, message: object) =>
-      request(context, `${base}/${encodeURIComponent(id)}/comments`, { method: 'POST', headers: using, body: JSON.stringify({ actor: owner, object: id, message }) }, `comment ${number}`, true);
+    const other = authors.by?.[index] ?? '';
     try {
+      let actor = owner;
+      let own = headers;
+      if (other) {
+        if (!authors.speaker) throw new ProviderError(`no way to comment as ${other}`, 'invalid');
+        const speaker = await authors.speaker(other);
+        actor = speaker.urn;
+        own = { ...headers, Authorization: `Bearer ${speaker.credentials.accessToken}` };
+      }
+      const post = (base: string, using: Record<string, string>, message: object) =>
+        request(context, `${base}/${encodeURIComponent(id)}/comments`, { method: 'POST', headers: using, body: JSON.stringify({ actor, object: id, message }) }, `comment ${number}`, true);
       const attributes = commentAttributes(text, mentions);
       let res: Response | undefined;
       if (attributes.length > 0) {
-        res = await post(TAGGED_COMMENTS, headers, { text, attributes }).catch((err: unknown) => {
+        res = await post(TAGGED_COMMENTS, own, { text, attributes }).catch((err: unknown) => {
           if (err instanceof ProviderError && (err.code === 'invalid' || err.code === 'auth')) return undefined;
           throw err;
         });
         if (!res) untagged.push(`comment ${number}`);
       }
-      res ??= await post(COMMENTS, oldStyle(headers), { text });
+      res ??= await post(COMMENTS, oldStyle(own), { text });
       const data = (await res.json().catch(() => ({}))) as { id?: unknown };
       ids.push(typeof data.id === 'string' || typeof data.id === 'number' ? String(data.id) : (res.headers.get('x-restli-id') ?? ''));
+      by.push(other);
       sent += 1;
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
-      return { sent, ids, warning: [`comment ${number} of ${offset + texts.length} failed: ${reason}${reason.includes('(403)') ? ' LinkedIn may not allow comments with this app yet.' : ''}`, ...told()].join('; ') };
+      return { sent, ids, ...who(), warning: [`comment ${number} of ${offset + texts.length} failed: ${reason}${reason.includes('(403)') ? ' LinkedIn may not allow comments with this app yet.' : ''}`, ...told()].join('; ') };
     }
   }
-  return { sent, ids, ...(untagged.length > 0 && { warning: told()[0]! }) };
+  return { sent, ids, ...who(), ...(untagged.length > 0 && { warning: told()[0]! }) };
 }
 
 async function request(context: SendContext, url: string, init: RequestInit, what: string, final = false): Promise<Response> {
@@ -299,15 +316,15 @@ export const linkedin: Provider = {
     }
     await context.checkpoint(id);
     const replies = post.replies ?? [];
-    const done = await comment(context, headers, owner, id, replies, post.mentions, 0);
-    return { id, url: postUrl(id), ...(done.warning !== undefined && { warning: `Posted, but ${done.warning}` }), ...(replies.length > 0 && { replies: { count: done.sent, ids: done.ids } }) };
+    const done = await comment(context, headers, owner, id, replies, post.mentions, 0, { by: post.replyBy, speaker: context.speaker });
+    return { id, url: postUrl(id), ...(done.warning !== undefined && { warning: `Posted, but ${done.warning}` }), ...(replies.length > 0 && { replies: { count: done.sent, ids: done.ids, ...(done.by && { by: done.by }) } }) };
   },
 
   async reply(input, channel, credentials, fetchImpl): Promise<ReplyResult> {
     const problem = urnProblem(channel);
     if (problem) throw new ProviderError(problem, 'invalid');
     const headers = { Authorization: `Bearer ${credentials.accessToken}`, 'LinkedIn-Version': VERSION, 'X-Restli-Protocol-Version': '2.0.0', 'Content-Type': 'application/json' };
-    return comment({ fetch: fetchImpl } as SendContext, headers, channel.urn as string, input.remoteId, input.texts, input.mentions ?? {}, input.offset);
+    return comment({ fetch: fetchImpl } as SendContext, headers, channel.urn as string, input.remoteId, input.texts, input.mentions ?? {}, input.offset, { by: input.by, speaker: input.speaker });
   },
 
   async removeReply(input, channel, credentials, fetchImpl): Promise<void> {

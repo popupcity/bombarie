@@ -6,7 +6,7 @@ import Text from 'ui/src/components/Text.astro';
 import { removeUnusedFile } from '../../../src/media.ts';
 import { COMPOSE_URL, PLATFORM_LABEL, isMedia, takesMedia } from '../../../src/types.ts';
 import { dateLabel, postsNow } from '../../../src/plan.ts';
-import { whenLabel } from '../../../src/time.ts';
+import { clock, whenLabel, ymd } from '../../../src/time.ts';
 import Chip from '../../components/Chip.astro';
 import ChannelMark from '../../components/ChannelMark.astro';
 import TitleField from '../../components/TitleField.astro';
@@ -40,6 +40,7 @@ import ActionPanel from '../../components/ActionPanel.astro';
 import ActionRow from '../../components/ActionRow.astro';
 import ValueButton from '../../components/ValueButton.astro';
 import { photoSizes } from '../../lib/photo.ts';
+import { isPerson } from '../../../src/speaker.ts';
 import PlatformPreview from '../../components/PlatformPreview.astro';
 import Section from '../../components/Section.astro';
 
@@ -103,7 +104,9 @@ const images = fields.ok ? fields.images : [];
 const fits = (name: string): boolean => takesMedia(variant.platform, name);
 const library = (await content.list(`posts/${campaign.folder}`)).filter((name) => isMedia(name) && fits(name));
 const sizes = await photoSizes(library, root, 'posts', campaign.folder);
-const recorded = await states.get(`${campaign.folder}/${variant.base}.md`);
+const stored = await states.get(`${campaign.folder}/${variant.base}.md`);
+const remindedAt = stored?.status === 'reminded' ? stored.at : undefined;
+const recorded = remindedAt ? null : stored;
 const settled = lastOutcome(`${campaign.folder}/${variant.base}.md`);
 const settledToast = settled && Date.now() - new Date(settled.at).getTime() < 120_000 ? { text: outcomeWording(settled.status, settled.message), tone: settled.status === 'posted' ? 'ok' : settled.status === 'unconfirmed' ? 'warn' : 'bad' } : null;
 if (settled) forgetOutcome(`${campaign.folder}/${variant.base}.md`);
@@ -113,6 +116,14 @@ const markedByHand = recorded?.status === 'posted' && recorded.remoteId === MANU
 const repliable = recorded?.status === 'posted' && !markedByHand && canReply(providers, variant.platform);
 const unpostable = recorded?.status === 'posted' && !markedByHand && canUnpost(providers, variant.platform);
 const connections = await loadConnections();
+const known = loadChannels(root);
+const authors =
+  variant.platform === 'linkedin'
+    ? channelInfos(known)
+        .filter((info) => isPerson(known[info.name]))
+        .map((info) => ({ key: info.name, name: info.label, avatar: info.avatar, usable: !connections[info.name] }))
+    : [];
+const pickable = authors.filter((author) => author.usable || author.key === variant.channel);
 const planned = fields.ok && fields.status === 'planned';
 const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (!planned && Boolean(connections[variant.channel]))));
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
@@ -155,6 +166,8 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
         data-variant={variant.base}
         data-revision={variant.revision}
         data-platform={variant.platform}
+        data-own={variant.channel}
+        data-authors={JSON.stringify(authors)}
         data-posting={recorded?.status === 'posting' && Date.now() - new Date(recorded.at).getTime() < 10 * 60_000 ? '' : undefined}
         data-type={variant.type ?? undefined}
         data-due={variant.post?.date.toISOString()}
@@ -235,6 +248,11 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
                   <div class="flex flex-col gap-4">
                     <div id="replies" class="flex flex-col gap-8 empty:hidden"></div>
                     <ReplyTemplate />
+                    {pickable.length > 1 && (
+                      <template id="reply-author">
+                        <ChoiceMenu id="reply-author-menu" labelId="reply-author-label" label="" tone="ink" options={pickable.map((author) => ({ label: author.name, active: false, attrs: { 'data-author': author.key } }))} />
+                      </template>
+                    )}
                     <div>
                       <Button id="add-reply" type="button" variant="outline" title={variant.platform === 'threads' ? 'Add a reply under this post, as a thread' : 'Add a comment under this post'}>{variant.platform === 'threads' ? 'Add reply' : 'Add comment'}</Button>
                     </div>
@@ -300,6 +318,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
                   </span>
                 </div>
               </ActionRow>
+              {remindedAt && <Text id="reminder-sent" variant="small" class="text-ink-soft">Reminder sent {whenLabel(`${ymd(new Date(remindedAt))}T${clock(new Date(remindedAt))}`)}.</Text>}
               {
                 recorded?.status === 'posted' && recorded.url && (
                   <ActionRow label="Live">
@@ -317,11 +336,10 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
                 </div>
               </ActionRow>
               <input id="manual" type="checkbox" checked={fields.ok && fields.manual} class="sr-only" tabindex="-1" aria-hidden="true" />
-              {!forcedManual && (
               <ActionRow label="Posting">
                 {
-                  connections[variant.channel] && manualNow ? (
-                    <Button variant="soft" tone="manual" tabindex="-1" title="This channel has no connection yet, so you post it yourself" class="cursor-default hover:opacity-100">Manual</Button>
+                  forcedManual || (connections[variant.channel] && manualNow) ? (
+                    <Button variant="soft" tone="manual" tabindex="-1" title={forcedManual ? `${PLATFORM_LABEL[variant.platform]} cannot be posted to from here, so you post it yourself` : 'This channel has no connection yet, so you post it yourself'} class="cursor-default hover:opacity-100">Manual</Button>
                   ) : (
                     <ChoiceMenu
                       id="mode-menu"
@@ -337,7 +355,6 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
                   )
                 }
               </ActionRow>
-              )}
               <Fragment slot="actions">
                 <Button id="plan" type="button" aria-describedby="hint" data-recorded={recorded !== null ? '1' : undefined} hidden={planned || recorded !== null}>{instant ? 'Post now' : 'Plan'}</Button>
                 {repliable && <Button id="post-replies" type="button" hidden>Post comment</Button>}

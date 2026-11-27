@@ -62,6 +62,7 @@ export interface Post {
   title?: string;
   text: string;
   replies?: string[];
+  replyBy?: string[];
 }
 
 export interface Credentials {
@@ -73,13 +74,20 @@ export interface Credentials {
 
 export interface RepliesDone {
   count: number;
+  by?: string[];
   last?: string;
   ids?: string[];
+}
+
+export interface Speaker {
+  urn: string;
+  credentials: Credentials;
 }
 
 export interface ReplyResult {
   sent: number;
   ids: string[];
+  by?: string[];
   last?: string;
   warning?: string;
 }
@@ -110,6 +118,7 @@ export interface SendContext {
   progress?(text: string): void;
   readMedia(path: string): Promise<Uint8Array>;
   checkpoint(id: string): Promise<void>;
+  speaker?: (channel: string) => Promise<Speaker>;
 }
 
 export interface Provider {
@@ -118,6 +127,6 @@ export interface Provider {
   send(post: Post, channel: Channel, credentials: Credentials, context: SendContext): Promise<SendResult>;
   remove?(remoteId: string, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<void>;
   removeReply?(input: { remoteId: string; replyId: string }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<void>;
-  reply?(input: { remoteId: string; texts: string[]; mentions?: Record<string, string>; offset: number; last?: string }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<ReplyResult>;
+  reply?(input: { remoteId: string; texts: string[]; mentions?: Record<string, string>; by?: string[]; speaker?: (channel: string) => Promise<Speaker>; offset: number; last?: string }, channel: Channel, credentials: Credentials, fetchImpl: typeof fetch): Promise<ReplyResult>;
   refresh?(credentials: Credentials, fetchImpl: typeof fetch): Promise<Credentials>;
 }

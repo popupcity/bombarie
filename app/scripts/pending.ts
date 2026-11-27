@@ -68,7 +68,7 @@ document.addEventListener('submit', (event) => {
   setTimeout(() => {
     if (event.defaultPrevented) return;
     startProgress();
-    if (submitter instanceof HTMLButtonElement) busy(submitter, submitter.dataset.pending);
+    if (submitter instanceof HTMLButtonElement && submitter.matches('[data-ui="button"], [data-pending]')) busy(submitter, submitter.dataset.pending);
   }, 0);
 });
 

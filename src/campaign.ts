@@ -2,7 +2,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { revisionOf } from './content-store.ts';
 import type { ContentStore } from './content-store.ts';
+import { joinThread, splitThread } from './parts.ts';
 import { readiness } from './plan.ts';
+import { isPerson } from './speaker.ts';
 import { readFields, setFrontmatter, statusOfRaw, withBody, withImages, withManual } from './frontmatter.ts';
 import type { Fields } from './frontmatter.ts';
 import { loadEntities } from './entities.ts';
@@ -177,6 +179,14 @@ export async function saveVariant(
         })
       : null;
     const problems = [...(checked.error ? [checked.error] : []), ...checked.issues, ...(reason ? [reason] : [])];
+    if (fields.ok && !fields.manual && checked.post?.replyBy) {
+      const known = loadChannels(root);
+      for (const [index, author] of checked.post.replyBy.entries()) {
+        if (!author) continue;
+        const trouble = isPerson(known[author]) ? await connection(author) : 'it is not a personal LinkedIn channel';
+        if (trouble) problems.push(`comment ${index + 1} cannot be posted as ${known[author]?.name ?? author}: ${trouble}`);
+      }
+    }
     if (problems.length > 0) throw new PlanBlocked(problems);
   }
   await store.write(path, raw, input.revision);
@@ -271,6 +281,7 @@ export async function addVariant(root: string, store: ContentStore, folder: stri
     const kept = fields.images.filter((image) => takesMedia(platform, image));
     const images = resolved.type === 'story' ? kept.slice(0, 1) : kept;
     if (images.length !== fields.images.length) text = withImages(text, images);
+    if (platform !== 'linkedin' && splitThread(fields.body).some((part) => part.by)) text = withBody(text, joinThread(splitThread(fields.body).map((part) => ({ text: part.text }))));
   }
   await store.create(`posts/${folder}/${name}.md`, text);
   return name;

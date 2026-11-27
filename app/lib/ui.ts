@@ -54,8 +54,8 @@ const SEGMENT_TONE: Record<string, string> = { mention: 'info', handle: 'info', 
 
 export function cardActions(card: { status: Status; url?: string }) {
   if (card.url !== undefined) return { toggles: null, movable: false, removable: false, any: false };
-  const toggles = card.status === 'draft' ? { action: 'plan', label: 'Plan' } : card.status === 'planned' ? { action: 'draft', label: 'Back to draft' } : null;
-  const movable = card.status === 'draft' || card.status === 'planned' || card.status === 'late';
+  const toggles = card.status === 'draft' ? { action: 'plan', label: 'Plan' } : card.status === 'planned' || card.status === 'reminded' ? { action: 'draft', label: 'Back to draft' } : null;
+  const movable = ['draft', 'planned', 'late', 'reminded'].includes(card.status);
   const removable = !['posting', 'unconfirmed'].includes(card.status);
   return { toggles, movable, removable, any: toggles !== null || movable || removable };
 }
@@ -68,7 +68,11 @@ export const schemeOf = (value: string | undefined): 'light' | 'dark' | undefine
 
 export const HTML_CLASS = 'scheme-light-dark data-[scheme=light]:scheme-light data-[scheme=dark]:scheme-dark scroll-smooth bg-page text-[106.25%]';
 
-export const plannedText = (manual: boolean): string => (manual ? 'You get a reminder at the date.' : 'Posts by itself at the date.');
+export const plannedText = (manual: boolean, ago = 0): string => {
+  if (!manual) return 'Posts by itself at the date.';
+  if (ago <= 0) return 'You get a reminder at the date.';
+  return ago <= 24 * 60 * 60_000 ? 'That time has passed: the reminder comes right away.' : 'That time has passed, so no reminder comes.';
+};
 
 export const SWAPPED = 'bombarie:swapped';
 

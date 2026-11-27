@@ -1,5 +1,6 @@
 import { due } from './plan.ts';
 import type { Channels } from './channels.ts';
+import { speakers } from './speaker.ts';
 import { checkpoint, claim, complete, fail, unstarted } from './state.ts';
 import type { StateStore } from './state.ts';
 import { ProviderError } from './types.ts';
@@ -66,6 +67,7 @@ async function sendOne(post: Post, deps: RunDeps, hooks: RunHooks = {}): Promise
   try {
     result = await provider.send(post, channel, credentials, {
       ...deps.context(post),
+      speaker: speakers(deps.channels, deps.credentials),
       checkpoint: (remoteId) => checkpoint(deps.store, id, remoteId)
     });
   } catch (err) {

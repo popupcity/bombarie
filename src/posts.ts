@@ -5,7 +5,7 @@ import { resolveName } from './channels.ts';
 import { loadEntities } from './entities.ts';
 import { isRecord, splitFrontmatter } from './frontmatter.ts';
 import { expandWikilinks } from './mentions.ts';
-import { splitParts } from './parts.ts';
+import { splitThread } from './parts.ts';
 import type { Entities } from './mentions.ts';
 import { isAutomatic } from './connect.ts';
 import { parseDate } from './time.ts';
@@ -58,9 +58,11 @@ export function parsePost({ id, folder, text, channel, type, platform, entities 
 
   const forbidden = FORBIDDEN_BODY.find((token) => body.includes(token));
   if (forbidden) throw new Error(`the text contains "${forbidden}"; platforms show it literally`);
-  const [firstPart = '', ...laterParts] = splitParts(body);
-  const expanded = expandWikilinks(firstPart, platform, entities);
-  const replies = laterParts.map((part) => expandWikilinks(part, platform, entities));
+  const [first, ...later] = splitThread(body);
+  const expanded = expandWikilinks(first?.text ?? '', platform, entities);
+  const replies = later.map((part) => expandWikilinks(part.text, platform, entities));
+  const replyBy = later.map((part) => (part.by && part.by !== channel ? part.by : ''));
+  if (platform !== 'linkedin' && replyBy.some(Boolean)) throw new Error('only a LinkedIn comment can be posted by another account');
   if (!manual && status === 'planned' && expanded.text === '') throw new Error('the text is empty; write something before planning');
 
   return {
@@ -75,7 +77,8 @@ export function parsePost({ id, folder, text, channel, type, platform, entities 
     ...(data.link !== undefined && { link: data.link }),
     ...(typeof data.title === 'string' && { title: data.title }),
     text: expanded.text,
-    ...(replies.length > 0 && { replies: replies.map((reply) => reply.text) })
+    ...(replies.length > 0 && { replies: replies.map((reply) => reply.text) }),
+    ...(replyBy.some(Boolean) && { replyBy })
   };
 }
 

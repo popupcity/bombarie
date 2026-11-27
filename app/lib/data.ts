@@ -174,7 +174,7 @@ export async function cardAction(action: string, id: string, value: string): Pro
       raw = withDate(current.text, value);
     } else return { ok: false, text: 'Unknown action.' };
     const saved = await saveVariant(root, content, folder, base, { raw, revision: current.revision }, new Date(), async (name) => (await loadConnections())[name] ?? null);
-    if (saved.post) await rearm(states, id, saved.post.date);
+    if (saved.post) await rearm(states, id, saved.post);
     return { ok: true, text: action === 'plan' ? 'Planned.' : action === 'draft' ? 'Back to draft.' : 'Date changed.' };
   } catch (err) {
     if (err instanceof PlanBlocked) return { ok: false, text: sentence(err.problems.join('; ')) };
@@ -212,7 +212,7 @@ export const deleteFromPlatform = (folder: string, base: string): Promise<Done> 
 
 export const postRepliesNow = (folder: string, base: string): Promise<Done> =>
   onPost(folder, base, async (post, id) => {
-    const result = await postReplies(id, post.channel, post.replies ?? [], { ...localDeps(root, new Date()), fetch }, post.mentions);
+    const result = await postReplies(id, post.channel, post.replies ?? [], { ...localDeps(root, new Date()), fetch }, post.mentions, post.replyBy);
     if (result.warning) throw new Error(result.warning);
     return result.sent === 0 ? 'Nothing new to post.' : result.sent === 1 ? 'Comment posted.' : `${result.sent} comments posted.`;
   });
