@@ -133,3 +133,15 @@ test('a missing permission is a problem, not a row of empty numbers', async () =
   await assert.rejects(collectInstagram(root, 'ig', credentials99, denied, new Date('2026-11-27T12:00:00Z')), /permission/);
   assert.equal(readStats(root, 'ig', 'days')[0]?.followers, '6373');
 });
+
+test('the views of one day are asked with a window that holds only that day', async () => {
+  const windows: number[] = [];
+  const base = instagram();
+  const spy = (async (url: string) => {
+    const query = new URL(url).searchParams;
+    if (query.get('metric') === 'views' && query.get('metric_type') === 'total_value') windows.push(Number(query.get('until')) - Number(query.get('since')));
+    return base.fetchImpl(url);
+  }) as unknown as typeof fetch;
+  await collectInstagram(fresh(), 'ig', credentials99, spy, new Date('2026-11-27T12:00:00Z'));
+  assert.deepEqual(windows, [23 * 3600]);
+});

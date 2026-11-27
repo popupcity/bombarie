@@ -21,6 +21,7 @@ export const POST_COLUMNS = {
 export const STORY_COLUMNS = ['date', 'url', 'type', ...Object.values(STORY_NUMBERS), 'updated'];
 
 const DAY_MS = 86_400_000;
+const INSIDE_MS = 60 * 60_000;
 const BACKFILL_DAYS = 90;
 const WINDOW_DAYS = 30;
 const OVERLAP_DAYS = 4;
@@ -186,7 +187,7 @@ export async function collectInstagram(root: string, channel: string, credential
     const row = days.day(end.slice(0, 10));
     if (index < ends.length - WINDOW_DAYS || (row.views && index < ends.length - OVERLAP_DAYS)) continue;
     const stamp = Date.parse(end);
-    const value = (await optional({ metric: 'views', metric_type: 'total_value', period: 'day', since: seconds(stamp - DAY_MS), until: seconds(stamp) }))[0]?.total_value?.value;
+    const value = (await optional({ metric: 'views', metric_type: 'total_value', period: 'day', since: seconds(stamp - DAY_MS + INSIDE_MS), until: seconds(stamp) }))[0]?.total_value?.value;
     if (value !== undefined) row.views = String(value);
   }
   await days.save(DAY_COLUMNS.instagram);
