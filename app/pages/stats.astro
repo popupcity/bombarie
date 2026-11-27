@@ -2,10 +2,11 @@
 import Button from '@popupcity/ui/src/components/Button.astro';
 import Card from '@popupcity/ui/src/components/Card.astro';
 import Heading from '@popupcity/ui/src/components/Heading.astro';
+import Icon from '@popupcity/ui/src/components/Icon.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
 import { channelInfos, loadChannels } from '../../src/channels.ts';
-import { DAILY, SORTS, audience, axis, rangeOf, since, sortOf, topPosts } from '../../src/insights.ts';
-import type { Range, Sort } from '../../src/insights.ts';
+import { METRICS, SORTS, axis, before, dailyOf, engagement, followerLine, followersOf, metricOf, rangeOf, scale, since, sortOf, summed, topPosts, viewTotal } from '../../src/insights.ts';
+import type { Metric, Range, Sort } from '../../src/insights.ts';
 import { readPosts } from '../../src/posts.ts';
 import { readStats } from '../../src/stats.ts';
 import { ymd } from '../../src/time.ts';
@@ -13,20 +14,22 @@ import { PLATFORM_LABEL, needsCover } from '../../src/types.ts';
 import ChannelChip from '../components/ChannelChip.astro';
 import Chart from '../components/Chart.astro';
 import ChannelMark from '../components/ChannelMark.astro';
-import Hint from '../components/Hint.astro';
+import StatTile from '../components/StatTile.astro';
 import PlatformMark from '../components/PlatformMark.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Shell from '../layouts/Shell.astro';
 import { root, states } from '../lib/data.ts';
 import { SEGMENT, SEGMENTS, postHref } from '../lib/ui.ts';
 
-const PAGE = 10;
+const PAGE = 5;
 const now = new Date();
 const query = Astro.url.searchParams;
 const range = rangeOf(query.get('range'));
 const sort = sortOf(query.get('sort'));
 const shown = Math.max(Number(query.get('top')) || PAGE, PAGE);
 const from = since(range, now);
+const earlier = before(range, now);
+const metric = metricOf(query.get('metric'));
 
 const channels = loadChannels(root);
 const measured = channelInfos(channels)
@@ -34,11 +37,19 @@ const measured = channelInfos(channels)
   .filter((channel) => channel.days.length > 0 || channel.posts.length > 0);
 const hidden = new Set((query.get('hide') ?? '').split(',').filter((name) => measured.some((channel) => channel.info.name === name)));
 const picked = measured.filter((channel) => !hidden.has(channel.info.name));
-const cards = picked.map((channel) => {
-  const found = audience(channel.days, channel.posts, channel.info.platform, from);
-  const earliest = [found.daily[0]?.date, found.growth[0]?.date].filter((date) => date !== undefined).sort()[0] ?? ymd(now);
-  return { ...channel, audience: found, time: axis(earliest > from ? earliest : from, ymd(now)) };
-});
+const accounts = picked.map((channel) => ({ days: channel.days, posts: channel.posts, platform: channel.info.platform }));
+const people = picked.map((channel) => followersOf(channel.days, from));
+const counted = people.filter((found) => found.followers !== null);
+const followers = {
+  value: counted.length > 0 ? counted.reduce((total, found) => total + found.followers!, 0) : null,
+  change: counted.length > 0 && counted.every((found) => found.change !== null) ? counted.reduce((total, found) => total + found.change!, 0) : null
+};
+const views = viewTotal(accounts, from, earlier);
+const reactions = engagement(accounts, from, earlier);
+const points = metric === 'followers' ? followerLine(accounts, from) : summed(accounts, metric, from);
+const rows = picked.map((channel, index) => ({ info: channel.info, ...people[index]!, daily: metric === 'followers' ? followerLine([accounts[index]!], from) : dailyOf(channel.days, metric, from) }));
+const first = [points[0]?.date, ...rows.map((row) => row.daily[0]?.date)].filter((date) => date !== undefined).sort()[0] ?? ymd(now);
+const time = axis(first > from ? first : from, ymd(now));
 const top = topPosts(picked.map((channel) => ({ channel: channel.info.name, platform: channel.info.platform, posts: channel.posts })), sort, from);
 const infoOf = new Map(measured.map((channel) => [channel.info.name, channel.info]));
 
@@ -51,11 +62,12 @@ for (const post of readPosts(root, channels).posts) {
   made.set(state.url, { href: postHref(post.id), ...(first && { image: `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(first) ? `${first}.cover.jpg` : first)}?size=96` }) });
 }
 
-const href = (change: { range?: Range; hide?: string[]; sort?: Sort; top?: number }): string => {
-  const next = { range, hide: [...hidden], sort, top: 0, ...change };
+const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: Sort; top?: number }): string => {
+  const next = { range, hide: [...hidden], metric, sort, top: 0, ...change };
   const params = new URLSearchParams();
   if (next.range !== '30') params.set('range', next.range);
   if (next.hide.length > 0) params.set('hide', next.hide.join(','));
+  if (next.metric !== 'views') params.set('metric', next.metric);
   if (next.sort !== 'views') params.set('sort', next.sort);
   if (next.top > PAGE) params.set('top', String(next.top));
   return params.size > 0 ? `/stats?${params}` : '/stats';
@@ -63,13 +75,15 @@ const href = (change: { range?: Range; hide?: string[]; sort?: Sort; top?: numbe
 
 const RANGE_LABELS: Record<Range, string> = { '30': '30 days', '90': '90 days', '365': '1 year', all: 'All time' };
 const SORT_LABELS: Record<Sort, string> = { views: 'Views', likes: 'Likes', replies: 'Replies' };
+const METRIC_LABELS: Record<Metric, string> = { views: 'Views', reach: 'Reach', followers: 'Followers' };
+const compact = (value: number): string => value.toLocaleString('en-GB', { notation: 'compact', maximumFractionDigits: 1 });
 const number = (value: number): string => value.toLocaleString('en-GB');
 const signed = (value: number): string => (value > 0 ? `+${number(value)}` : number(value));
 const dayLabel = (day: string): string => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(day.slice(0, 4) !== ymd(now).slice(0, 4) && { year: 'numeric' }), timeZone: 'UTC' });
 ---
 
 <Shell title="Stats">
-  <div class="flex flex-col gap-8">
+  <div data-view="stats" class="flex flex-col gap-8">
     <div class="flex flex-col gap-4 xl:sticky xl:top-0 xl:z-20 xl:-mx-12 xl:flex-row xl:items-center xl:justify-between xl:bg-page xl:px-12">
       <PageHeader title="Stats" />
       {
@@ -84,107 +98,120 @@ const dayLabel = (day: string): string => new Date(`${day}T12:00:00Z`).toLocaleD
     </div>
     {
       measured.length === 0 ? (
-        <Text variant="body" class="text-ink-soft">No numbers yet. They are collected once a day for connected Instagram and Threads channels.</Text>
+        <Text variant="body" class="text-ink-soft">No numbers yet.</Text>
       ) : (
-        <div class="grid items-start gap-x-8 gap-y-12 xl:grid-cols-3">
-          <section aria-label="Audience" class="flex min-w-0 flex-col gap-4 xl:col-span-2">
-            <nav aria-label="Channels" class="flex flex-wrap gap-3">
-              {measured.map(({ info }) => {
-                const off = hidden.has(info.name);
-                const named = `${info.label} on ${PLATFORM_LABEL[info.platform]}`;
-                return <ChannelChip channel={info} href={href({ hide: off ? [...hidden].filter((name) => name !== info.name) : [...hidden, info.name] })} said={`${off ? 'Show' : 'Hide'} ${named}`} active={!off} current="true" named={false} />;
-              })}
-            </nav>
-            {picked.length === 0 && <Text variant="body" class="text-ink-faint">All channels are switched off.</Text>}
-            <ul class="flex flex-col gap-4 empty:hidden">
-              {cards.map(({ info, audience: found, time }) => (
-                <Card as="li" class="flex flex-col gap-8">
+        <div class="flex flex-col gap-8">
+          <nav aria-label="Channels" class="flex flex-wrap gap-3">
+            {measured.map(({ info }) => {
+            const off = hidden.has(info.name);
+            const named = `${info.label} on ${PLATFORM_LABEL[info.platform]}`;
+            return <ChannelChip channel={info} href={href({ hide: off ? [...hidden].filter((name) => name !== info.name) : [...hidden, info.name] })} said={`${off ? 'Show' : 'Hide'} ${named}`} active={!off} current="true" named={false} />;
+            })}
+          </nav>
+          {picked.length === 0 ? (
+            <Text variant="body" class="text-ink-faint">All channels are switched off.</Text>
+          ) : (
+            <div class="flex flex-col gap-12">
+              <ul aria-label="At a glance" class="grid gap-8 md:grid-cols-3">
+                <li class="contents">
+                  <StatTile label="Followers" value={followers.value === null ? '–' : number(followers.value)} change={followers.change === null ? undefined : signed(followers.change)} note={counted.length === 1 ? '1 account' : `${counted.length} accounts`} />
+                </li>
+                <li class="contents">
+                  <StatTile label="Views" value={number(views.value)} change={views.change === null ? undefined : signed(views.change)} />
+                </li>
+                <li class="contents">
+                  <StatTile label="Likes and replies" value={number(reactions.value)} change={reactions.change === null ? undefined : signed(reactions.change)} note={`from ${reactions.posts === 1 ? '1 post' : `${number(reactions.posts)} posts`}`} />
+                </li>
+              </ul>
+              <div class="grid items-start gap-x-8 gap-y-12 xl:grid-cols-3">
+                <section aria-label="Audience" class="flex min-w-0 flex-col gap-8 xl:col-span-2">
                   <div class="flex flex-col gap-4">
-                    <div class="flex items-center gap-3">
-                      <ChannelMark channel={info} size="lg" on="surface" />
-                      <Text variant="small" class="min-w-0 truncate">{info.label}</Text>
+                    <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
+                      <Heading variant="block" as="h2">{metric === 'followers' ? 'Followers' : `${METRIC_LABELS[metric]} per day`}</Heading>
+                      <nav aria-label="Show" class:list={[SEGMENTS, 'w-fit']}>
+                        {METRICS.map((key) => (
+                          <a href={href({ metric: key })} aria-current={key === metric ? 'page' : undefined} class={SEGMENT}>{METRIC_LABELS[key]}</a>
+                        ))}
+                      </nav>
                     </div>
-                    <p class="flex flex-wrap items-baseline gap-2 tabular-nums">
-                      <span class="text-title">{found.followers === null ? '–' : number(found.followers)}</span>
-                      <span class="text-sm text-ink-soft">followers</span>
-                      {found.change !== null && <span class="text-sm text-ink-soft">{signed(found.change)}</span>}
-                    </p>
-                    {found.growth.length > 1 ? (
-                      <Chart kind="line" points={found.growth} time={time} dated={found.daily.length === 0} label={`Followers of ${info.label}`} said={(point) => `${dayLabel(point.date)}: ${number(point.value)} followers`} />
-                    ) : (
-                      <Text variant="small" class="text-ink-faint">{found.measuredSince ? `Measuring since ${dayLabel(found.measuredSince)}.` : 'Not measured yet.'}</Text>
-                    )}
+                    <Card class="flex flex-col gap-4">
+                      {points.length > (metric === 'followers' ? 1 : 0) ? (
+                        <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={points} time={time} grid={scale(points.map((point) => point.value), metric !== 'followers')} number={compact} class="h-64" label={`${METRIC_LABELS[metric]} of the channels shown`} said={(point) => `${dayLabel(point.date)}: ${number(point.value)}`} />
+                      ) : (
+                        <Text variant="body" class="flex h-64 items-center justify-center text-center text-ink-faint">No data yet.</Text>
+                      )}
+                    </Card>
                   </div>
-                  <div class="flex flex-col gap-4">
-                    {found.daily.length > 0 && DAILY[info.platform] && (
-                      <div class="flex flex-col gap-2">
-                        <div class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
-                          <span>{DAILY[info.platform]!.label}</span>
-                          <span class="tabular-nums">peak {number(Math.max(...found.daily.map((point) => point.value)))}</span>
-                        </div>
-                        <Chart kind="bars" points={found.daily} time={time} dated label={`${DAILY[info.platform]!.label} for ${info.label}`} said={(point) => `${dayLabel(point.date)}: ${number(point.value)}`} />
-                      </div>
-                    )}
-                    <Text variant="small" class="text-ink-soft">{found.posts === 1 ? '1 post' : `${number(found.posts)} posts`} in this period</Text>
-                  </div>
-                </Card>
-              ))}
-            </ul>
-          </section>
-
-          {picked.length > 0 && (
-          <section aria-label="Top posts" class="flex min-w-0 flex-col gap-4">
-            <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
-              <div class="flex items-center gap-2">
-                <Heading variant="block" as="h2" class="xl:sr-only 2xl:not-sr-only">Top posts</Heading>
-                <Hint text={`${from ? 'Posts published in this period, with their totals to date.' : 'All posts, with their totals to date.'} Stories are left out.`} />
-              </div>
-              <nav aria-label="Sort by" class:list={[SEGMENTS, 'w-fit']}>
-                {SORTS.map((key) => (
-                  <a href={href({ sort: key })} aria-current={key === sort ? 'page' : undefined} class={SEGMENT}>{SORT_LABELS[key]}</a>
-                ))}
-              </nav>
-            </div>
-            {top.posts.length === 0 ? (
-              <Text variant="body" class="text-ink-faint">No posts in this period.</Text>
-            ) : (
-              <ol class="flex flex-col gap-4">
-                {top.posts.slice(0, shown).map((post, index) => {
-                  const own = made.get(post.url);
-                  const info = infoOf.get(post.channel)!;
-                  return (
-                    <li>
-                      <Card variant="row" href={own?.href ?? post.url} target={own ? undefined : '_blank'} rel={own ? undefined : 'noopener noreferrer'} class="flex items-start gap-3">
-                        <span class="w-5 shrink-0 text-sm text-ink-soft tabular-nums">{index + 1}</span>
-                        {own?.image ? (
-                          <span class="relative size-10 shrink-0">
-                            <img src={own.image} alt="" loading="lazy" class="size-10 rounded-lg bg-track object-cover" />
-                            <PlatformMark platform={info.platform} class="absolute -right-1 -bottom-1 size-5 ring-2 ring-surface" />
-                          </span>
-                        ) : (
-                          <span class="flex size-10 shrink-0 items-center justify-center">
-                            <ChannelMark channel={info} size="lg" on="surface" />
-                          </span>
-                        )}
-                        <span class="flex min-w-0 flex-1 flex-col gap-2">
-                          <span class:list={['line-clamp-2 text-sm break-words', !post.text && 'text-ink-faint']}>{post.text || 'No text.'}</span>
-                          <span class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
-                            <span class="truncate">{post.type} · {dayLabel(post.day)}</span>
-                            <span class="shrink-0 tabular-nums"><span class="text-base text-ink">{number(post.value)}</span> {SORT_LABELS[sort].toLowerCase()}</span>
-                          </span>
+                  <Card as="ul" variant="bare" class="divide-y divide-line">
+                    {rows.map((row) => (
+                      <li class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 p-4 md:p-6 sm:grid-cols-[auto_minmax(0,1fr)_96px_minmax(0,1fr)]">
+                        <ChannelMark channel={row.info} size="lg" on="surface" />
+                        <span class="min-w-0 truncate text-sm">{row.info.label}<span class="sr-only"> on {PLATFORM_LABEL[row.info.platform]}</span></span>
+                        <span class="col-start-2 flex items-baseline gap-2 tabular-nums sm:col-start-auto sm:justify-end">
+                          <span>{row.followers === null ? '–' : number(row.followers)}</span>
+                          {row.change !== null && <span class="text-xs text-ink-soft">{signed(row.change)}</span>}
                         </span>
-                      </Card>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-            {top.unmeasured > 0 && <Text variant="small" class="text-ink-soft">{`${number(top.unmeasured)} ${top.unmeasured === 1 ? 'post has' : 'posts have'} no ${sort} yet.`}</Text>}
-            {top.posts.length > shown && <div><Button href={href({ top: shown + PAGE })} variant="outline">Show {Math.min(PAGE, top.posts.length - shown)} more</Button></div>}
-          </section>
+                        <span class="col-span-2 min-w-0 sm:col-span-1">
+                          {row.daily.length > 1 && <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={row.daily} time={time} grid={undefined} label={`${METRIC_LABELS[metric]} of ${row.info.label}`} said={(point) => `${dayLabel(point.date)}: ${number(point.value)}`} />}
+                        </span>
+                      </li>
+                    ))}
+                  </Card>
+                </section>
+
+                <section aria-label="Top posts" class="flex min-w-0 flex-col gap-4">
+                  <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
+                    <Heading variant="block" as="h2" class="xl:sr-only 2xl:not-sr-only">Top posts</Heading>
+                    <nav aria-label="Sort by" class:list={[SEGMENTS, 'w-fit']}>
+                      {SORTS.map((key) => (
+                        <a href={href({ sort: key })} aria-current={key === sort ? 'page' : undefined} class={SEGMENT}>{SORT_LABELS[key]}</a>
+                      ))}
+                    </nav>
+                  </div>
+                  {top.length === 0 ? (
+                    <Text variant="body" class="text-ink-faint">No posts in this period.</Text>
+                  ) : (
+                    <Card as="ul" variant="bare" class="divide-y divide-line overflow-hidden">
+                      {top.slice(0, shown).map((post, index) => {
+                        const own = made.get(post.url);
+                        const info = infoOf.get(post.channel)!;
+                        return (
+                          <li>
+                            <a href={own?.href ?? post.url} target={own ? undefined : '_blank'} rel={own ? undefined : 'noopener noreferrer'} class="transition flex items-start gap-3 p-4 md:p-6 hover:bg-(--tone-hover) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink">
+                              <span class="w-4 shrink-0 text-right text-sm text-ink-soft tabular-nums">{index + 1}</span>
+                              {own?.image ? (
+                                <span class="relative size-8 shrink-0">
+                                  <img src={own.image} alt="" loading="lazy" class="size-8 rounded-lg bg-track object-cover" />
+                                  <PlatformMark platform={info.platform} class="absolute -right-1 -bottom-1 size-5 ring-2 ring-surface" />
+                                </span>
+                              ) : (
+                                <ChannelMark channel={info} size="lg" on="surface" />
+                              )}
+                              <span class="flex min-w-0 flex-1 flex-col gap-2">
+                                <span class:list={['line-clamp-2 text-sm break-words', !post.text && 'text-ink-faint']}>{post.text || 'No text.'}</span>
+                                <span class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
+                                  <span class="flex min-w-0 items-center"><span class="truncate">{post.type}</span><Icon name="dot" /><span class="shrink-0">{dayLabel(post.day)}</span></span>
+                                  <span class="shrink-0 tabular-nums"><span class="text-base leading-4 text-ink">{number(post.value)}</span> {SORT_LABELS[sort].toLowerCase()}</span>
+                                </span>
+                              </span>
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </Card>
+                  )}
+                  {top.length > shown && <div><Button href={href({ top: shown + PAGE })} data-more-posts variant="outline">Show {Math.min(PAGE, top.length - shown)} more</Button></div>}
+                </section>
+              </div>
+            </div>
           )}
         </div>
       )
     }
   </div>
+  <Fragment slot="after">
+    <script>
+      import '../scripts/stats.ts';
+    </script>
+  </Fragment>
 </Shell>

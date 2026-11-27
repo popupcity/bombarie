@@ -1,5 +1,5 @@
 ---
-import type { Axis, Point } from '../../src/insights.ts';
+import type { Axis, Point, Scale } from '../../src/insights.ts';
 
 interface Props {
   points: Point[];
@@ -7,35 +7,43 @@ interface Props {
   label: string;
   said: (point: Point) => string;
   time: Axis;
-  dated?: boolean;
+  grid?: Scale | undefined;
+  number?: (value: number) => string;
+  class?: string;
 }
-const { points, kind, label, said, time, dated = false } = Astro.props;
-const values = points.map((point) => point.value);
-const high = Math.max(...values);
-const low = kind === 'bars' ? 0 : Math.min(...values);
-const span = high - low || 1;
+const { points, kind, label, said, time, grid, number = String, class: className = 'h-8' } = Astro.props;
+const low = grid?.low ?? 0;
+const high = grid?.high ?? Math.max(...points.map((point) => point.value), 1);
+const y = (value: number): number => 96 - ((value - low) / (high - low || 1)) * 92;
 const step = 100 / time.days;
-const top = (value: number): number => (high === low && kind === 'line' ? 20 : 38 - ((value - low) / span) * 36);
 const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 8 ? 'start' : at > 92 ? 'end' : 'middle');
 ---
 
-<div class="flex flex-col gap-1">
-  <svg viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label={label} class="block h-16 w-full text-ink">
-    {kind === 'line' && <polyline points={points.map((point) => `${time.at(point.date)},${top(point.value)}`).join(' ')} fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />}
+<div class:list={['grid min-w-0 gap-x-2 gap-y-1', grid && 'grid-cols-[48px_minmax(0,1fr)]']}>
+  {
+    grid && (
+      <svg aria-hidden="true" class:list={['w-full text-xs tabular-nums', className]}>
+        {grid.lines.map((value) => (
+          <text x="100%" y={`${y(value)}%`} dy="3" text-anchor="end" class="fill-ink-soft">{number(value)}</text>
+        ))}
+      </svg>
+    )
+  }
+  <svg role="img" aria-label={label} class:list={['block w-full text-ink', className]}>
+    {grid?.lines.map((value) => <line x1="0" x2="100%" y1={`${y(value)}%`} y2={`${y(value)}%`} class="stroke-line" />)}
+    {kind === 'line' && points.slice(1).map((point, index) => <line x1={`${time.at(points[index]!.date)}%`} y1={`${y(points[index]!.value)}%`} x2={`${time.at(point.date)}%`} y2={`${y(point.value)}%`} stroke="currentColor" stroke-width="2" stroke-linecap="round" />)}
     {
       points.map((point) => (
-        <g>
-          {kind === 'bars' && <rect x={time.at(point.date) - step * 0.35} y={point.value === 0 ? 39 : top(point.value)} width={step * 0.7} height={point.value === 0 ? 1 : 40 - top(point.value)} class="fill-ink-soft" />}
-          <rect x={time.at(point.date) - step / 2} y="0" width={step} height="40" fill="transparent">
-            <title>{said(point)}</title>
-          </rect>
+        <g class="group/point">
+          {kind === 'bars' && point.value > low && <rect x={`${time.at(point.date) - step * 0.35}%`} y={`${y(point.value)}%`} width={`${step * 0.7}%`} height={`${y(low) - y(point.value)}%`} rx="2" class="fill-ink-soft" />}
+          <rect x={`${time.at(point.date) - step / 2}%`} y="0" width={`${step}%`} height="100%" fill="transparent" data-tip={said(point)} />
         </g>
       ))
     }
   </svg>
   {
-    dated && (
-      <svg aria-hidden="true" class="block h-4 w-full text-2xs">
+    grid && (
+      <svg aria-hidden="true" class="col-start-2 block h-4 w-full text-xs">
         {time.ticks.map((tick) => (
           <text x={`${anchor(tick.at) === 'start' ? 0 : anchor(tick.at) === 'end' ? 100 : tick.at}%`} y="12" text-anchor={anchor(tick.at)} class="fill-ink-soft">{tick.label}</text>
         ))}

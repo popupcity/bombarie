@@ -27,3 +27,15 @@ test('the trailing icon of a labelled button is an arrow out or a caret', () => 
     .filter((entry) => !/: (arrow-square-out|caret-down|caret-right)$/.test(entry));
   assert.deepEqual(bad, []);
 });
+
+test('a separator is the Phosphor dot, never a typed character', () => {
+  const all = (dir: string): string[] => readdirSync(dir).flatMap((name) => (statSync(join(dir, name)).isDirectory() ? all(join(dir, name)) : /\.(astro|ts)$/.test(name) ? [join(dir, name)] : []));
+  const typed = [...all('app'), ...all('src').filter((file) => !file.endsWith('.test.ts'))].filter((file) => /\u00b7|&middot;| \u2022 |\u2219|\u22c5/.test(readFileSync(file, 'utf8')));
+  assert.deepEqual(typed, []);
+});
+
+test('a drawing gets the tooltip of the app, not the bare one of the browser', () => {
+  const all = (dir: string): string[] => readdirSync(dir).flatMap((name) => (statSync(join(dir, name)).isDirectory() ? all(join(dir, name)) : /\.(astro|ts)$/.test(name) ? [join(dir, name)] : []));
+  const bare = all('app').filter((file) => /<svg[\s\S]*?<title>[\s\S]*?<\/svg>/.test(readFileSync(file, 'utf8')));
+  assert.deepEqual(bare, []);
+});
