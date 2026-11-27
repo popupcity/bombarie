@@ -32,7 +32,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
   <time class="relative hidden h-8 items-center self-start text-sm text-ink-soft tabular-nums md:mt-6 md:flex">
     {showTime ? card.time : ''}
   </time>
-  <Card data-drag-card interactive alert={Boolean(card.problem)} class:list={['relative grid gap-4', first ? 'grid-cols-[minmax(0,1fr)_auto] gap-x-0 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-xl after:[box-shadow:inherit]' : 'grid-cols-1']}>
+  <Card data-drag-card interactive alert={Boolean(card.problem)} class:list={['@container relative grid gap-4', first ? 'grid-cols-[minmax(0,1fr)_auto] gap-x-0 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-xl after:[box-shadow:inherit]' : 'grid-cols-1']}>
     <div class:list={['grid min-w-0 grid-cols-[minmax(0,1fr)_auto] content-start items-center gap-x-2 gap-y-4', first && 'pr-4 md:pr-6']}>
       <div class="col-start-1 row-start-1 flex min-h-8 min-w-0 items-center gap-4 text-sm text-ink-soft">
         <time class="tabular-nums md:hidden">{card.time}</time>
@@ -42,7 +42,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
           {card.type && <span class="shrink-0 rounded-sm bg-track px-2 py-1 text-xs capitalize">{card.type}</span>}
         </span>
       </div>
-      <div class="contents md:col-start-2 md:row-start-1 md:flex md:items-center md:gap-2">
+      <div class="contents @xl:col-start-2 @xl:row-start-1 @xl:flex @xl:items-center @xl:gap-2">
         <span class="col-span-2 row-start-3 flex flex-wrap items-center gap-2 text-sm">
           <StatusBadge status={card.status} manual={card.manual} feed={card.feed} />
           {card.feed && <Icon name="arrow-square-out" class="text-ink-soft" />}
