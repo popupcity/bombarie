@@ -18,7 +18,7 @@ const toast = outcome && outcome.name === 'entity' ? { tone: outcome.ok ? 'ok' :
 ---
 
 <Shell title="Entities">
-  <div class="flex max-w-wide flex-col gap-8">
+  <div class="flex flex-col gap-8">
     <PageHeader title="Entities" />
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
     {

@@ -20,13 +20,9 @@ const { day, href, folderCounts = {}, anchor = false } = Astro.props;
 >
   <div class="flex h-8 items-center justify-between max-md:justify-center">
     <a href={href} class:list={['transition rounded-sm px-1 text-sm hover:bg-page max-md:after:absolute max-md:after:inset-0 max-md:after:rounded-lg', !day.inMonth && 'text-ink-soft']} aria-label={`Open ${day.day}`}>{day.date}</a>
-    {
-      !day.past && (
-        <button type="button" popovertarget="new-menu" data-day={day.day} title="New post on this day" aria-label={`New post on ${day.day}`} class="transition hidden size-8 cursor-pointer place-items-center rounded-lg text-ink-soft opacity-0 group-focus-within/cell:opacity-100 group-hover/cell:opacity-100 hover:bg-page hover:text-ink focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink md:grid">
-          <Icon name="plus" weight="bold" />
-        </button>
-      )
-    }
+    <button type="button" popovertarget="new-menu" data-day={day.day} title="New post on this day" aria-label={`New post on ${day.day}`} class="transition hidden size-8 cursor-pointer place-items-center rounded-lg text-ink-soft opacity-0 group-focus-within/cell:opacity-100 group-hover/cell:opacity-100 hover:bg-page hover:text-ink focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink md:grid">
+      <Icon name="plus" weight="bold" />
+    </button>
   </div>
   <div class="hidden flex-col gap-1 md:flex">
     {day.cards.map((card) => <PostChip card={card} siblings={folderCounts[card.id.split('/')[0] ?? ''] ?? 1} />)}

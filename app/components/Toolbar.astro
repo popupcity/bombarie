@@ -15,12 +15,12 @@ const tabs = [
 ];
 ---
 
-<div class="z-20 -mx-4 flex h-20 items-center gap-3 bg-page px-4 md:sticky md:top-0 md:-mx-12 md:px-12">
+<div class:list={['z-20 -mx-4 flex h-20 items-center gap-3 bg-page px-4 md:sticky md:top-0 md:-mx-12 md:px-12', notices.length === 0 && 'max-md:hidden']}>
   <div class="ml-auto flex items-center gap-3">
     <Notices notices={notices} />
   </div>
-  <Button href="#today" variant="outline">Today</Button>
-  <nav data-control class="inline-flex h-10 overflow-hidden rounded-lg border border-ink text-sm">
+  <Button href="#today" variant="outline" class="max-md:hidden">Today</Button>
+  <nav data-control class="max-md:hidden inline-flex h-10 overflow-hidden rounded-lg border border-ink text-sm">
     {
       tabs.map((tab) => (
         <a href={tab.href} aria-current={tab.id === view ? 'page' : undefined} class="inline-flex h-full items-center gap-2 px-4 text-ink aria-[current=page]:bg-ink aria-[current=page]:text-page">

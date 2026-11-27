@@ -69,7 +69,7 @@ const label = { new: 'New', approved: 'Approved', made: 'Made' } as const;
 ---
 
 <Shell title={idea.title || 'Untitled idea'}>
-  <div class="flex max-w-wide flex-col gap-8" data-idea={folder}>
+  <div class="flex flex-col gap-8" data-idea={folder}>
     <header class="flex h-20 items-center">
       <Heading variant="page" as="h1" class="sr-only">{idea.title || 'Untitled idea'}</Heading>
       <div class="min-w-0 flex-1">

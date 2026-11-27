@@ -1,7 +1,7 @@
 ---
 import Icon from 'ui/src/components/Icon.astro';
 import type { IconName } from 'ui/src/components/icons.ts';
-import { MENU_ITEM, RAIL_COOKIE } from '../lib/ui.ts';
+import { NAV_ITEM, RAIL_COOKIE } from '../lib/ui.ts';
 
 interface Props {
   href: string;
@@ -13,7 +13,7 @@ const { href, icon, label, current = false } = Astro.props;
 const railed = Astro.cookies.get(RAIL_COOKIE)?.value === '1';
 ---
 
-<a href={href} data-rail-name={label} title={railed ? label : undefined} aria-current={current ? 'page' : undefined} class:list={[MENU_ITEM, 'aria-[current=page]:bg-surface md:in-data-rail:justify-center md:in-data-rail:gap-0 md:in-data-rail:px-0']}>
+<a href={href} data-rail-name={label} title={railed ? label : undefined} aria-current={current ? 'page' : undefined} class:list={[NAV_ITEM, 'aria-[current=page]:bg-surface md:in-data-rail:justify-center md:in-data-rail:gap-0 md:in-data-rail:px-0']}>
   <Icon name={icon} class="text-ink-soft text-base" />
   <span class="md:in-data-rail:sr-only">{label}</span>
 </a>

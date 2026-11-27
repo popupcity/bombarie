@@ -57,7 +57,7 @@ const roles: [Role, string][] = [['admin', 'Can add and remove users.'], ['membe
 ---
 
 <Shell title="Settings">
-  <div class="flex max-w-wide flex-col gap-8">
+  <div class="flex flex-col gap-8">
     <PageHeader title="Settings" />
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
     {error && <Alert>{error}</Alert>}

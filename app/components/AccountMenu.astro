@@ -1,6 +1,6 @@
 ---
 import Icon from 'ui/src/components/Icon.astro';
-import { FADE_ABOVE, githubAvatar, MENU, MENU_ITEM, SCHEME_COOKIE, schemeOf, CARET } from '../lib/ui.ts';
+import { FADE_ABOVE, githubAvatar, MENU, MENU_ITEM, NAV_ITEM, SCHEME_COOKIE, schemeOf, CARET } from '../lib/ui.ts';
 
 const user = Astro.locals.user;
 const current = schemeOf(Astro.cookies.get(SCHEME_COOKIE)?.value) ?? 'auto';
@@ -12,7 +12,7 @@ const schemes = [
 ---
 
 <div class:list={[FADE_ABOVE, 'sticky bottom-0 z-10 shrink-0 bg-page py-4']}>
-  <button type="button" popovertarget="account-menu" style="anchor-name:--account-menu" class:list={[MENU_ITEM, 'w-full md:in-data-rail:w-10 md:in-data-rail:justify-center md:in-data-rail:gap-0 md:in-data-rail:px-0']}>
+  <button type="button" popovertarget="account-menu" style="anchor-name:--account-menu" class:list={[NAV_ITEM, 'w-full md:in-data-rail:w-10 md:in-data-rail:justify-center md:in-data-rail:gap-0 md:in-data-rail:px-0']}>
     {user ? <img src={githubAvatar(user)} alt="" class="size-6 rounded-sm" /> : <Icon name="sliders-horizontal" class="text-base text-ink-soft" />}
     <span class="min-w-0 flex-1 truncate text-left md:in-data-rail:sr-only">{user ?? 'Appearance'}</span>
     <span class="flex md:in-data-rail:hidden">
