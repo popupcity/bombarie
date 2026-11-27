@@ -10,11 +10,10 @@ interface Props {
   feed?: boolean | undefined;
 }
 const { status, manual = false, feed = false } = Astro.props;
-const shapes: Record<Status, string> = {
+const shapes: Record<Exclude<Status, 'reminded'>, string> = {
   posted: '<circle cx="6" cy="6" r="4.5" fill="currentColor" />',
   planned: '<circle cx="6" cy="6" r="4" fill="none" stroke="currentColor" stroke-width="1.5" />',
   draft: '<circle cx="6" cy="6" r="4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2" />',
-  reminded: '<polygon points="6,0.5 11.5,6 6,11.5 0.5,6" fill="currentColor" />',
   late: '<polygon points="6,0.5 11.5,11 0.5,11" fill="currentColor" />',
   failed: '<path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />',
   unconfirmed:
@@ -26,7 +25,7 @@ const shapes: Record<Status, string> = {
 ---
 
 {
-  manual && (
+  manual && status !== 'reminded' && (
     <span data-tone="manual" title="You post this yourself" class:list={['inline-flex w-fit items-center gap-1 rounded-sm px-2 py-1 text-xs', TINTED]}>
       <Icon name="hand" class="size-3" />
       Manual
@@ -41,7 +40,7 @@ const shapes: Record<Status, string> = {
     </span>
   ) : (
     <span data-tone={STATUS_TONE[status]} class:list={['inline-flex w-fit items-center gap-1 rounded-sm px-2 py-1 text-xs', TINTED]}>
-  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" class="shrink-0" set:html={shapes[status]} />
+  {status === 'reminded' ? <Icon name="bell" class="size-3" /> : <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" class="shrink-0" set:html={shapes[status]} />}
   {STATUS_LABEL[status]}
 </span>
   )
