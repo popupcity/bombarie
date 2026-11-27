@@ -89,7 +89,7 @@ const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: 
   if (next.metric !== 'views') params.set('metric', next.metric);
   if (next.sort !== 'views') params.set('sort', next.sort);
   if (next.top > PAGE) params.set('top', String(next.top));
-  return `/stats?${params}`;
+  return `/stats?${params.toString().replaceAll('%2C', ',')}`;
 };
 
 const RANGE_LABELS: Record<Range, string> = { week: 'Week', month: 'Month', quarter: 'Quarter', year: 'Year', all: 'All time' };
