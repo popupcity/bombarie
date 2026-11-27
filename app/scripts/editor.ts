@@ -136,8 +136,8 @@ function init(root: HTMLElement) {
   }
 
   const pdfPage = (name: string, extra = '', zoom = false) => {
-    const fallback = () => h('div', { class: `grid aspect-[4/5] w-full place-items-center bg-track p-2 text-center text-xs break-all text-ink-soft ${extra}` }, name);
-    const cover = h('img', { src: `/img/${encodeURIComponent(folder)}/${encodeURIComponent(`${name}.cover.jpg`)}?w=640`, alt: '', class: `block h-auto w-full object-contain ${extra}` });
+    const fallback = () => h('div', { class: `grid ${zoom ? 'aspect-square' : 'aspect-[4/5]'} w-full place-items-center bg-track p-2 text-center text-xs break-all text-ink-soft ${extra}` }, name);
+    const cover = h('img', { src: `/img/${encodeURIComponent(folder)}/${encodeURIComponent(`${name}.cover.jpg`)}?w=640`, alt: '', class: `block w-full ${zoom ? 'aspect-square object-cover' : 'h-auto object-contain'} ${extra}` });
     cover.addEventListener('error', () => cover.replaceWith(fallback()), { once: true });
     const url = `/img/${encodeURIComponent(folder)}/${encodeURIComponent(name)}`;
     return h('div', { class: 'relative', ...(zoom && { 'data-full': url, 'data-full-kind': mediaKind(name), 'data-full-set': 'editor' }) }, cover, h('span', { class: 'absolute bottom-2 left-2 rounded-sm bg-veil px-2 py-1 text-xs text-white' }, coverLabel(name)));
@@ -293,7 +293,7 @@ function init(root: HTMLElement) {
     const thumb = (name: string) =>
       needsCover(name)
         ? pdfPage(name, 'cursor-zoom-in rounded-lg ring-1 ring-line', true)
-        : h('img', { 'data-photo': true, ...sizes[name], src: `${full(name)}?w=512`, alt: '', 'data-full': full(name), 'data-full-set': 'editor', class: 'block h-auto w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line transition-opacity' });
+        : h('img', { 'data-photo': true, ...sizes[name], src: `${full(name)}?w=512`, alt: '', 'data-full': full(name), 'data-full-set': 'editor', class: 'block aspect-square w-full cursor-zoom-in rounded-lg object-cover ring-1 ring-line transition-opacity' });
     const template = $<HTMLTemplateElement>('image-tile');
     $('image-list').replaceChildren(
       ...names.map((name, index) => {

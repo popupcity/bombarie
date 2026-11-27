@@ -311,7 +311,9 @@ One component, `ActionPanel` (`app/components/ActionPanel.astro`), is the right-
 
 - **Numbers in UI text (2026-11-27):** a percentage and a pixel size are written closed up: `13%`, `1080×1920`.
 
-- **Post, media, then comments (2026-11-27):** the media of a post stand 16 px under its text, as on the platforms, and the comments come after, 48 px lower. With everything 32 px apart and the media under the comments it was not clear what belonged together. On a phone media stand two in a row, and a comment's picture shares the line of the name so the field gets the full width.
+- **Post, media, then comments (2026-11-27):** the media of a post stand under its text, as on the platforms, 32 px lower (they are their own part; 16 was too tight), and the comments come after, 48 px lower. With everything 32 px apart and the media under the comments it was not clear what belonged together. On a phone media stand two in a row, and a comment's picture shares the line of the name so the field gets the full width.
+
+- **Media strip (2026-11-27, replaces the wide drop box):** thumbnails in the strip are square (cropped; the lightbox shows the whole picture and the preview how it is posted), and Add media is a dashed square tile in the same grid, where the next one will appear, like Add entity. Two in a row on a phone, four wider. Files can still be dropped or pasted anywhere on the page. The upload placeholder is square too. The lists are `display: contents`, so the tile stays when the editor redraws them.
 
 - **Masonry (2026-11-24):** the Ideas list uses the `masonry` utility (CSS columns: 1, 2 or 3, 32 px apart). Columns have no row gap, so the utility gives each child a 32 px bottom margin: the one place a margin is allowed. The order runs down each column, not across.
 

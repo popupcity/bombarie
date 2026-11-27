@@ -7,7 +7,7 @@ export interface Tile {
 
 export function uploadTile(container: HTMLElement, name: string): Tile {
   const label = h('p', { class: 'truncate text-sm text-ink-soft' }, `${name} · waiting…`);
-  const shape = h('div', { class: 'aspect-[4/5] animate-pulse rounded-lg bg-track motion-reduce:animate-none' });
+  const shape = h('div', { class: 'aspect-square animate-pulse rounded-lg bg-track motion-reduce:animate-none' });
   const tile = h('li', { 'aria-busy': 'true', class: 'flex min-w-0 flex-col gap-2' }, shape, label);
   container.append(tile);
   return {
