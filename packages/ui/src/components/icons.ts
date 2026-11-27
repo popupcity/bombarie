@@ -107,7 +107,7 @@ export const icons = {
     trash,
     x
   },
-  bold: { 'arrow-right': arrowRightBold, check: checkBold, 'dots-three': dotsThreeBold, plus: plusBold, rss: rssBold, x: xBold },
+  bold: { 'arrow-right': arrowRightBold, check: checkBold, 'dots-three': dotsThreeBold, plus: plusBold, rss: rssBold.replace('viewBox="0 0 256 256"', 'viewBox="12 -12 256 256"'), x: xBold },
   fill: { star: starFill, dot, 'threads-logo': threadsLogo, 'facebook-logo': facebook, 'instagram-logo': instagram, 'linkedin-logo': linkedin, 'substack-logo': substack }
 };
 
