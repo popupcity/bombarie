@@ -339,7 +339,7 @@ const tab = 'inline-flex h-full cursor-pointer items-center px-4 text-ink aria-p
               <ActionRow label="Posting">
                 {
                   forcedManual || (connections[variant.channel] && manualNow) ? (
-                    <Button variant="soft" tone="manual" tabindex="-1" title={forcedManual ? `${PLATFORM_LABEL[variant.platform]} cannot be posted to from here, so you post it yourself` : 'This channel has no connection yet, so you post it yourself'} class="cursor-default hover:opacity-100">Manual</Button>
+                    <Chip size="control" tone="manual" title={forcedManual ? `${PLATFORM_LABEL[variant.platform]} cannot be posted to from here, so you post it yourself` : 'This channel has no connection yet, so you post it yourself'}>Manual</Chip>
                   ) : (
                     <ChoiceMenu
                       id="mode-menu"

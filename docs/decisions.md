@@ -305,7 +305,7 @@ One component, `ActionPanel` (`app/components/ActionPanel.astro`), is the right-
 
 - **A reminder never locks a post (2026-11-27):** `reminded` is not a record of something done: the editor treats the post as planned, with a line saying when the reminder went, and List and Calendar can move it or set it back. Back to draft forgets the reminder, like a later date. A status that cannot be chosen says why in the row itself; for a reminder with a time in the past the row says whether one still comes (within 24 hours) or not.
 
-- **Posting on every post (2026-11-27):** the Posting row is always there. Where there is nothing to choose (a platform the app cannot post to, such as Substack, or a channel without a connection) it is a fixed Manual with the reason as tooltip.
+- **Posting on every post (2026-11-27):** the Posting row is always there. Where there is nothing to choose (a platform the app cannot post to, such as Substack, or a channel without a connection) it is a fixed Manual chip (not a button, so 16 px at the sides like the other values in the column) with the reason as tooltip.
 
 - **Masonry (2026-11-24):** the Ideas list uses the `masonry` utility (CSS columns: 1, 2 or 3, 32 px apart). Columns have no row gap, so the utility gives each child a 32 px bottom margin: the one place a margin is allowed. The order runs down each column, not across.
 
