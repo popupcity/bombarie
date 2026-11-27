@@ -23,6 +23,16 @@ test('colours come from the named set: no opacity on a colour class, except the 
   );
 });
 
+test('one hover background: the tint of the tone, except the lightbox buttons and a planned Save, which keep their fill', () => {
+  const found = [...files('app'), ...files('packages/ui/src')].flatMap((file) =>
+    [...readFileSync(file, 'utf8').matchAll(/(?<![\w-])hover:bg-[^\s"'`]+/g)].map((match) => `${file} ${match[0]}`)
+  );
+  assert.deepEqual(
+    found.filter((hit) => !/ hover:bg-(?:\(--tone-hover\)|transparent)$/.test(hit) && hit !== 'app/scripts/lightbox.ts hover:bg-page' && hit !== 'app/pages/posts/[...path].astro hover:bg-(--tone)'),
+    []
+  );
+});
+
 test('no colour literal in a component or a script', () => {
   assert.deepEqual(hits(LITERAL, (file) => MOCKS.has(file) || file === 'components/AppHead.astro'), []);
 });

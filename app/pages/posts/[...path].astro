@@ -213,7 +213,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
           {
             addable.length > 0 && (
               <>
-                <button type="button" popovertarget="add-variant" aria-label="Add variant" title="Add variant" class="transition inline-flex size-10 cursor-pointer items-center justify-center rounded-lg text-xl text-ink ring-1 ring-line ring-inset [anchor-name:--add-variant] hover:ring-line-strong"><Icon name="plus" weight="bold" /></button>
+                <button type="button" popovertarget="add-variant" aria-label="Add variant" title="Add variant" class="transition inline-flex size-10 cursor-pointer items-center justify-center rounded-lg text-xl text-ink ring-1 ring-line ring-inset [anchor-name:--add-variant] hover:bg-(--tone-hover)"><Icon name="plus" weight="bold" /></button>
                 <form id="add-variant" popover method="post" class:list={[MENU, 'w-72 [inset:auto] [left:anchor(left)] [position-anchor:--add-variant] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]']}>
                   <input type="hidden" name="intent" value="add" />
                   <input type="hidden" name="from" value={variant.base} />
@@ -230,7 +230,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
         </nav>
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between gap-4">
-            <div role="group" aria-label="Editor view" data-tone="ink" class:list={[SEGMENTS, 'w-fit']}>
+            <div role="group" aria-label="Editor view" class:list={[SEGMENTS, 'w-fit']}>
               <button type="button" id="mode-edit" aria-pressed="true" class={SEGMENT}>Edit</button>
               <button type="button" id="mode-source" aria-pressed="false" class={SEGMENT}>Source</button>
             </div>

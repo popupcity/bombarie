@@ -4,7 +4,7 @@ import Button from 'ui/src/components/Button.astro';
 import Icon from 'ui/src/components/Icon.astro';
 import { channelInfos, loadChannels } from '../../src/channels.ts';
 import { loadConnections, root } from '../lib/data.ts';
-import { RAIL_COOKIE, brandName, FADE_BELOW, CARET } from '../lib/ui.ts';
+import { RAIL_COOKIE, brandName, FADE_BELOW, CARET, QUIET } from '../lib/ui.ts';
 import NewPostMenu from './NewPostMenu.astro';
 import AccountMenu from './AccountMenu.astro';
 import Wordmark from './Wordmark.astro';
@@ -42,7 +42,7 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
   <div class="flex min-h-full flex-col gap-8 px-4 max-md:pt-5 md:h-full md:overflow-y-auto md:in-data-rail:items-center md:in-data-rail:px-3">
     <div class:list={[FADE_BELOW, 'z-10 flex h-20 shrink-0 items-center justify-between gap-2 bg-page pl-1 max-md:hidden md:sticky md:top-0 md:in-data-rail:justify-center md:in-data-rail:pl-0']}>
       <a href="/" aria-label={brandName} class:list={[BRAND, 'min-w-0 md:in-data-rail:hidden']}><Logo class="size-8" /><span class="truncate"><Wordmark /></span></a>
-      <button type="button" data-rail-toggle aria-expanded={railed ? 'false' : 'true'} aria-controls="sidebar" aria-label={railed ? 'Open the sidebar' : 'Close the sidebar'} title={railed ? 'Open the sidebar' : 'Close the sidebar'} class="group relative grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-lg text-ink-soft transition hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink pointer-fine:not-in-data-rail:opacity-0 pointer-fine:group-hover/sidebar:opacity-100 focus-visible:opacity-100">
+      <button type="button" data-rail-toggle aria-expanded={railed ? 'false' : 'true'} aria-controls="sidebar" aria-label={railed ? 'Open the sidebar' : 'Close the sidebar'} title={railed ? 'Open the sidebar' : 'Close the sidebar'} class:list={[QUIET, 'group relative size-10 text-lg pointer-fine:not-in-data-rail:opacity-0 pointer-fine:group-hover/sidebar:opacity-100 focus-visible:opacity-100']}>
         <span class="col-start-1 row-start-1 hidden transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0 md:in-data-rail:flex"><Logo class="size-8" /></span>
         <span class="col-start-1 row-start-1 flex transition-opacity md:in-data-rail:opacity-0 md:in-data-rail:group-hover:opacity-100 md:in-data-rail:group-focus-visible:opacity-100"><Icon name="sidebar-simple" /></span>
         <span data-rail-hidden hidden data-tone="warn" class="absolute top-0 right-0 size-2 rounded-full bg-(--tone)"></span>
@@ -66,10 +66,10 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
       <div class="flex min-h-10 items-center justify-between pl-3">
         <Heading variant="label" as="h2">Channels</Heading>
         <div class="flex items-center gap-1">
-        <a href="/channels/new" title="Add channel" aria-label="Add channel" aria-current={path === '/channels/new' ? 'page' : undefined} class="transition grid size-8 place-items-center rounded-lg text-base text-ink-soft hover:bg-surface hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+        <a href="/channels/new" title="Add channel" aria-label="Add channel" aria-current={path === '/channels/new' ? 'page' : undefined} class:list={[QUIET, 'size-8 text-base aria-[current=page]:bg-surface aria-[current=page]:text-ink']}>
           <Icon name="plus" />
         </a>
-        <a href="/channels" title="Manage channels" aria-label="Manage channels" aria-current={path === '/channels' ? 'page' : undefined} class="transition grid size-8 place-items-center rounded-lg text-base text-ink-soft hover:bg-surface hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink">
+        <a href="/channels" title="Manage channels" aria-label="Manage channels" aria-current={path === '/channels' ? 'page' : undefined} class:list={[QUIET, 'size-8 text-base aria-[current=page]:bg-surface aria-[current=page]:text-ink']}>
           <Icon name="gear" />
         </a>
         </div>

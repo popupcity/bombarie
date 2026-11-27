@@ -1,11 +1,11 @@
-import { OVERLAY } from '../lib/ui.ts';
+import { OVERLAY, QUIET } from '../lib/ui.ts';
 import { icons } from 'ui/src/components/icons.ts';
 import { addDays, addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
 import { h } from './dom.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const NAV = 'transition grid size-8 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-page hover:text-ink';
+const NAV = `${QUIET} size-8`;
 let counter = 0;
 
 const icon = (name: 'caret-right', flip = false): HTMLElement => {
@@ -104,7 +104,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
                   tabindex: day.day === date ? '0' : '-1',
                   'aria-label': day.day,
                   class: `mx-auto grid size-10 cursor-pointer place-items-center rounded-lg tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
-                    day.day === date ? 'bg-ink text-page' : `transition hover:bg-track ${day.today ? 'ring-1 ring-ink ring-inset' : day.inMonth ? '' : 'text-ink-soft'}`
+                    day.day === date ? 'bg-ink text-page' : `transition hover:bg-(--tone-hover) ${day.today ? 'ring-1 ring-ink ring-inset' : day.inMonth ? '' : 'text-ink-soft'}`
                   }`,
                   onclick: () => {
                     date = day.day;

@@ -86,7 +86,7 @@ export function autocomplete(area: HTMLTextAreaElement, kind: Trigger, entities:
             id: `${list.id}-${index}`,
             role: 'option',
             'aria-selected': String(index === active),
-            class: 'flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 aria-selected:bg-page',
+            class: 'flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 aria-selected:bg-(--tone-hover)',
             onmousedown: (event) => {
               event.preventDefault();
               accept(index);

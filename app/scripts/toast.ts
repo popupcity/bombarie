@@ -1,5 +1,6 @@
 import { icons } from 'ui/src/components/icons.ts';
 import { h } from './dom.ts';
+import { QUIET } from '../lib/ui.ts';
 
 type Tone = 'ok' | 'bad' | 'warn' | 'info';
 
@@ -31,7 +32,7 @@ export function working(text: string): () => void {
 export function toast(text: string, tone: Tone = 'ok'): void {
   const glyph = h('span', { 'aria-hidden': 'true', class: 'inline-block size-4 shrink-0 [&>svg]:size-full' });
   glyph.innerHTML = GLYPH[tone];
-  const close = h('button', { type: 'button', 'aria-label': 'Close', class: 'transition grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg hover:bg-surface [&>svg]:size-4', onclick: () => dismiss(item) });
+  const close = h('button', { type: 'button', 'aria-label': 'Close', class: `${QUIET} size-8 [&>svg]:size-4`, onclick: () => dismiss(item) });
   close.innerHTML = icons.regular.x;
   const item = h(
     'div',

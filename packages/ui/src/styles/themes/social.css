@@ -20,6 +20,7 @@
   --radius-field: 8px;
   --control-ring: 1px;
   --hover-opacity: 0.85;
+  --tone-hover: color-mix(in srgb, var(--ink) 8%, transparent);
   --dim: 0.4;
   --arrow-chevron: none;
   --arrow-plain: inline-block;
@@ -38,6 +39,10 @@
   --control-sm: 32px;
   --control-md: 40px;
   --control-lg: 48px;
+}
+
+[data-theme='social'] [data-tone] {
+  --tone-hover: color-mix(in srgb, var(--tone-text) 8%, transparent);
 }
 
 [data-theme='social'] [data-tone='ink'] {

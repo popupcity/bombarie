@@ -20,7 +20,7 @@ test('whatever answers the mouse does it with a transition', () => {
     readFileSync(file, 'utf8')
       .split('\n')
       .flatMap((line, index) =>
-        line.includes('<Button') || line.startsWith('const reveal = ')
+        line.includes('<Button') || line.includes('[QUIET,') || line.startsWith('const reveal = ')
           ? []
           : [...line.matchAll(/"[^"\n]*"|'[^'\n]*'|`[^`\n]*`/g)].map((match) => match[0]).filter((text) => HOVER.test(text) && !/(?<![\w-])transition(?!\w)|transition-/.test(text)).map((text) => `${file}:${index + 1} ${text.slice(0, 60)}`)
       )

@@ -1,10 +1,10 @@
 import { icons } from 'ui/src/components/icons.ts';
 import { addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
-import { CARET, dotClass, dotTones, SWAPPED } from '../lib/ui.ts';
+import { CARET, dotClass, dotTones, QUIET, SWAPPED } from '../lib/ui.ts';
 import { h } from './dom.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const NAV = 'transition grid size-8 cursor-pointer place-items-center rounded-lg text-ink-soft hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-ink';
+const NAV = `${QUIET} size-8`;
 
 let listening: AbortController | undefined;
 
@@ -81,7 +81,7 @@ function start() {
               'aria-label': day.day,
               'aria-current': day.today ? 'date' : undefined,
               class: `relative grid h-8 cursor-pointer place-items-center rounded-lg pb-1 text-sm tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
-                selected ? 'bg-ink text-page' : `transition hover:bg-track ${day.today ? 'ring-1 ring-ink ring-inset' : ''} ${day.inMonth ? (dots.length > 0 ? 'text-ink' : 'text-ink-soft') : 'text-ink-faint'}`
+                selected ? 'bg-ink text-page' : `transition hover:bg-(--tone-hover) ${day.today ? 'ring-1 ring-ink ring-inset' : ''} ${day.inMonth ? (dots.length > 0 ? 'text-ink' : 'text-ink-soft') : 'text-ink-faint'}`
               }`,
               onclick: () => go(day.day)
             },
