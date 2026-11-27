@@ -1,4 +1,4 @@
-import { OVERLAY, QUIET } from '../lib/ui.ts';
+import { OVERLAY, QUIET, WEEK_ROW } from '../lib/ui.ts';
 import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addDays, addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
@@ -86,11 +86,11 @@ function open(button: HTMLElement, input: HTMLInputElement) {
     const grid = h(
       'div',
       { role: 'grid', 'aria-label': monthLabel(view), class: 'grid gap-1' },
-      h('div', { role: 'row', class: 'grid grid-cols-7 text-center text-xs text-ink-soft' }, ...WEEKDAYS.map((name) => h('span', { role: 'columnheader', class: 'py-1' }, name))),
+      h('div', { role: 'row', class: `${WEEK_ROW} text-center text-xs text-ink-soft` }, ...WEEKDAYS.map((name) => h('span', { role: 'columnheader', class: 'py-1' }, name))),
       ...weeks.map((week) =>
         h(
           'div',
-          { role: 'row', class: 'grid grid-cols-7' },
+          { role: 'row', class: WEEK_ROW },
           ...week.map((day) =>
             h(
               'span',
@@ -103,7 +103,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
                   'data-plain': '',
                   tabindex: day.day === date ? '0' : '-1',
                   'aria-label': day.day,
-                  class: `mx-auto grid size-10 cursor-pointer place-items-center rounded-lg tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
+                  class: `grid h-10 w-full cursor-pointer place-items-center rounded-lg tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
                     day.day === date ? 'bg-ink text-page' : `transition hover:bg-(--tone-hover) ${day.today ? 'ring-1 ring-ink ring-inset' : day.inMonth ? '' : 'text-ink-soft'}`
                   }`,
                   onclick: () => {

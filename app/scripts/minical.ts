@@ -1,6 +1,6 @@
 import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
-import { CARET, dotClass, dotTones, QUIET, SWAPPED } from '../lib/ui.ts';
+import { CARET, dotClass, dotTones, QUIET, SWAPPED, WEEK_ROW } from '../lib/ui.ts';
 import { h } from './dom.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -64,10 +64,10 @@ function start() {
         h('span', { 'aria-live': 'polite', class: 'text-base' }, monthLabel(view)),
         h('button', { type: 'button', 'aria-label': 'Next month', class: NAV, onclick: () => ((view = addMonths(view, 1)), render()) }, caret(false))
       ),
-      h('div', { class: 'grid grid-cols-7 gap-2 text-center text-xs text-ink-soft' }, ...WEEKDAYS.map((name) => h('span', { class: 'py-1' }, name))),
+      h('div', { class: `${WEEK_ROW} text-center text-xs text-ink-soft` }, ...WEEKDAYS.map((name) => h('span', { class: 'py-1' }, name))),
       h(
         'div',
-        { class: 'grid grid-cols-7 gap-2' },
+        { class: WEEK_ROW },
         ...weeks.flat().map((day) => {
           const selected = day.day === chosen;
           const dots = tones(day.day);
