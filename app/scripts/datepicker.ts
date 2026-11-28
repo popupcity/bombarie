@@ -1,4 +1,4 @@
-import { CARD_HEADING, OUTLINE, PANEL, QUIET, WEEK_ROW } from '../lib/ui.ts';
+import { CARD_HEADING, OUTLINE, OUTLINE_FIT, PANEL, QUIET, WEEK_ROW } from '../lib/ui.ts';
 import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addDays, addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
@@ -167,6 +167,34 @@ function open(button: HTMLElement, input: HTMLInputElement) {
       button.focus();
     });
 
+    const suggested: { value: string; label: string }[] = JSON.parse(input.dataset.suggest ?? '[]');
+    const suggestions = suggested.length > 0 && h(
+      'div',
+      { class: 'flex flex-col gap-2' },
+      h('span', { class: 'text-xs text-ink-soft' }, 'Suggested'),
+      h(
+        'div',
+        { class: 'grid grid-cols-3 gap-3' },
+        ...suggested.map((moment) =>
+          h(
+            'button',
+            {
+              type: 'button',
+              class: `${OUTLINE_FIT} flex flex-col items-center justify-center`, 'data-tone': 'ink',
+              onclick: () => {
+                [date = date, time = time] = moment.value.split('T');
+                commit();
+                panel.hidePopover();
+                button.focus();
+              }
+            },
+            h('span', { class: 'text-sm leading-4' }, moment.label),
+            h('span', { class: 'text-xs text-ink-soft tabular-nums' }, moment.value.slice(11))
+          )
+        )
+      )
+    );
+
     panel.replaceChildren(
       h(
         'div',
@@ -176,6 +204,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
         h('button', { type: 'button', 'aria-label': 'Next month', class: NAV, onclick: () => ((view = addMonths(view, 1)), render()) }, icon('caret-right'))
       ),
       grid,
+      ...(suggestions ? [suggestions] : []),
       h(
         'div',
         { class: '-mx-4 flex items-center justify-between gap-3 border-t border-line px-4 pt-4' },

@@ -28,6 +28,9 @@ import Hint from '../../components/Hint.astro';
 import { toEdit } from '../../../src/mentions.ts';
 import { sentence } from '../../../src/text.ts';
 import { channelInfos, loadChannels } from '../../../src/channels.ts';
+import { bestHour, freeMoments } from '../../../src/online.ts';
+import { readStats } from '../../../src/stats.ts';
+import { readPosts } from '../../../src/posts.ts';
 import { addVariant, deletePost, deleteVariant, loadCampaign } from '../../../src/campaign.ts';
 import ConfirmDialog from '../../components/ConfirmDialog.astro';
 import DialogShell from '../../components/DialogShell.astro';
@@ -133,6 +136,11 @@ const planned = fields.ok && fields.status === 'planned';
 const statusBy = recorded
   ? byWhom(recorded.status === 'posted' || recorded.status === 'posting' ? recorded.by : undefined, 'Posted')
   : byWhom(fields.ok ? fields.by : undefined, planned ? 'Planned' : 'Draft');
+const suggestedDay = (day: string): string => (day === ymd(new Date()) ? 'Today' : new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', timeZone: 'UTC' }));
+const best = bestHour(readStats(root, variant.channel, 'online'));
+const ownName = (id: string): string => id.replace(/\.md$/, '');
+const booked = new Set(readPosts(root, loadChannels(root)).posts.filter((post) => post.channel === variant.channel && ownName(post.id) !== ownName(`${campaign.folder}/${variant.base}`)).map((post) => ymd(post.date)));
+const suggestions = best !== null ? freeMoments(best, booked, new Date()).map((moment) => ({ value: moment, label: suggestedDay(moment.slice(0, 10)) })) : [];
 const manualNow = !isAutomatic(variant.platform) || (fields.ok && (fields.manual || (!planned && Boolean(connections[variant.channel]))));
 const IMAGES = 'image/jpeg,image/png,image/gif,image/webp';
 const pdfOk = takesMedia(variant.platform, 'a.pdf');
@@ -368,7 +376,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
               <ActionRow label="Date">
                 <div class="relative">
                   <ValueButton id="date-open" data-date-open>{fields.ok && fields.date ? dateLabel(fields.date, planned || recorded !== null, new Date()) : 'Pick a date'}</ValueButton>
-                  <input id="date" data-date-input type="datetime-local" step="60" value={fields.ok ? fields.date : ''} tabindex="-1" aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-0" />
+                  <input id="date" data-date-input data-suggest={suggestions.length > 0 ? JSON.stringify(suggestions) : undefined} type="datetime-local" step="60" value={fields.ok ? fields.date : ''} tabindex="-1" aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-0" />
                 </div>
               </ActionRow>
               <input id="manual" type="checkbox" checked={fields.ok && fields.manual} class="sr-only" tabindex="-1" aria-hidden="true" />

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fromCsv, toCsv } from './csv.ts';
-import { collectFacebook, collectInstagram, collectTags, collectStats, collectStories, collectThreads, readStats, statsFile } from './stats.ts';
+import { collectFacebook, collectInstagram, collectTags, collectStats, collectStories, collectThreads, readStats, statsFile, writeStats } from './stats.ts';
 
 const fresh = () => mkdtempSync(join(tmpdir(), 'social-stats-'));
 const credentials = { accessToken: 'tok', accountId: '178' };
@@ -219,4 +219,19 @@ test('who tags a channel is kept by address, also after the platform lists it no
   assert.deepEqual(readStats(root, 'ig', 'tags').map((row) => [row.url, row.by]), [['https://i.test/a', 'friend'], ['https://i.test/b', 'other']]);
   assert.deepEqual(readStats(root, 'fb', 'tags').map((row) => [row.date, row.by]), [['2026-11-01T10:00:00+0000', 'A Page']]);
   assert.deepEqual(readStats(root, 'none', 'tags'), []);
+});
+
+test('days kept before the split of reach was asked get it for the last 30 days, not only the last few', async () => {
+  const root = fresh();
+  await writeStats(statsFile(root, 'ig', 'days'), ['date', 'followers', 'views', 'reach'], [{ date: '2026-11-20', followers: '1', views: '2', reach: '3' }]);
+  const windows: string[] = [];
+  const base = instagram();
+  const spy = (async (url: string) => {
+    const query = new URL(url).searchParams;
+    if (query.get('metric') === 'reach' && !query.has('metric_type')) windows.push(query.get('since')!);
+    return base.fetchImpl(url);
+  }) as unknown as typeof fetch;
+  await collectInstagram(root, 'ig', credentials99, spy, new Date('2026-11-27T12:00:00Z'));
+  await collectInstagram(root, 'ig', credentials99, spy, new Date('2026-11-28T12:00:00Z'));
+  assert.equal(windows.length, 4);
 });

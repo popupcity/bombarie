@@ -105,7 +105,8 @@ export const dotTones = (tones: string[]): string[] =>
 
 export const dotClass = (tone: string): string => `size-1 rounded-full ${tone === 'feed' ? 'bg-ink-faint' : 'bg-(--tone)'}`;
 
-export const OUTLINE = `transition h-10 cursor-pointer rounded-lg px-6 ${looks.outline} ${focus}`;
+export const OUTLINE_FIT = `transition h-10 cursor-pointer rounded-lg ${looks.outline} ${focus}`;
+export const OUTLINE = `${OUTLINE_FIT} px-6`;
 
 export const CARD_HEADING = `text-lg ${cardFace}`;
 

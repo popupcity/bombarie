@@ -6,6 +6,8 @@ import { fromCsv, toCsv } from './csv.ts';
 import { postUrl } from './facebook.ts';
 import type { Row } from './csv.ts';
 import { GRAPH, THREADS_GRAPH, graph } from './graph.ts';
+import { hoursOf } from './online.ts';
+import type { OnlineDay } from './online.ts';
 import { ymd } from './time.ts';
 import { ProviderError } from './types.ts';
 import type { Credentials, Platform, SendContext } from './types.ts';
@@ -45,7 +47,7 @@ const STORY_MS = 2 * 60 * 60_000;
 const TEXT_LENGTH = 100;
 const BATCH = 60;
 
-type Name = 'days' | 'posts' | 'stories' | 'audience' | 'tags';
+type Name = 'days' | 'posts' | 'stories' | 'audience' | 'tags' | 'online';
 
 export const statsFile = (root: string, channel: string, name: Name): string => join(root, 'channels', channel, `${name}.csv`);
 
@@ -127,7 +129,7 @@ function client(credentials: Credentials, fetchImpl: typeof fetch, base: string,
   return { user, read, metrics, list };
 }
 
-function daysOf(root: string, channel: string, history: 'views' | 'reach') {
+function daysOf(root: string, channel: string, history: 'views' | 'reach_others') {
   const days = new Map(readStats(root, channel, 'days').map((row) => [row.date!, row]));
   return {
     first: ![...days.values()].some((row) => row[history]),
@@ -192,7 +194,7 @@ export async function collectThreads(root: string, channel: string, credentials:
 
 export async function collectInstagram(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date, batch = BATCH): Promise<number> {
   const { user, read, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Instagram statistics');
-  const days = daysOf(root, channel, 'reach');
+  const days = daysOf(root, channel, 'reach_others');
   const today = days.day(ymd(now));
   const followers = (await read(user, { fields: 'followers_count' })).followers_count;
   if (typeof followers === 'number' && !today.followers) today.followers = String(followers);
@@ -365,6 +367,15 @@ export async function collectFacebookAudience(root: string, channel: string, cre
   if (rows.length > 0) await saveAudience(root, channel, rows);
 }
 
+const ONLINE_DAYS = 30;
+
+export async function collectOnline(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date): Promise<void> {
+  const { user, metrics } = client(credentials, fetchImpl, GRAPH, 'Instagram online followers');
+  const [found] = await metrics(`${user}/insights`, { metric: 'online_followers', period: 'lifetime', since: seconds(now.getTime() - ONLINE_DAYS * DAY_MS), until: seconds(now.getTime()) });
+  const hours = hoursOf((found?.values ?? []) as unknown as OnlineDay[]);
+  if (hours.length > 0) await writeStats(statsFile(root, channel, 'online'), ['hour', 'followers'], hours);
+}
+
 const TAG_COLUMNS = ['date', 'url', 'by'];
 const TAGS: Partial<Record<Platform, { path: string; fields: string }>> = {
   instagram: { path: 'tags', fields: 'id,timestamp,permalink,username' },
@@ -413,7 +424,7 @@ interface Job {
 const JOBS: Partial<Record<Platform, Record<string, Job>>> = {
   facebook: { statistics: { every: 'day', run: collectFacebook }, tags: { every: 'day', run: (root, channel, credentials, fetchImpl) => collectTags('facebook', root, channel, credentials, fetchImpl) }, audience: { every: 'day', run: collectFacebookAudience } },
   threads: { statistics: { every: 'day', run: collectThreads }, audience: { every: 'day', run: collectThreadsAudience } },
-  instagram: { statistics: { every: 'day', run: collectInstagram }, tags: { every: 'day', run: (root, channel, credentials, fetchImpl) => collectTags('instagram', root, channel, credentials, fetchImpl) }, stories: { every: STORY_MS, run: collectStories }, audience: { every: 'day', run: collectAudience } }
+  instagram: { statistics: { every: 'day', run: collectInstagram }, online: { every: 'day', run: collectOnline }, tags: { every: 'day', run: (root, channel, credentials, fetchImpl) => collectTags('instagram', root, channel, credentials, fetchImpl) }, stories: { every: STORY_MS, run: collectStories }, audience: { every: 'day', run: collectAudience } }
 };
 
 const next = new Map<string, number | string>();
