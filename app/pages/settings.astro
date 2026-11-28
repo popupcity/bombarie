@@ -62,49 +62,51 @@ const roles: [Role, string][] = [['admin', 'Can add and remove users.'], ['membe
     <PageHeader title="Settings" />
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
     {error && <Alert>{error}</Alert>}
-    <Section title="Users">
-      <div class="grid gap-4 md:gap-8 lg:grid-cols-3">
-        <div class="flex flex-col gap-4 lg:col-span-2">
-        <ul class="flex flex-col gap-4">
-          {
-            list.map(([name, role]) => (
-              <Card as="li" class="flex items-center gap-4">
-                <img src={githubAvatar(name)} alt="" class="size-8 rounded-lg" />
-                <Text class="min-w-0 flex-1 truncate">{name}</Text>
-                <form method="post" class="flex items-center gap-3">
-                  <input type="hidden" name="name" value={name} />
-                  <ChoiceMenu id={`role-${name}`} submit disableActive label={cap(role)} tone={tone[role] ?? 'ink'} options={[...roles.map(([value, text]) => ({ label: cap(value), text, active: role === value, attrs: { name: 'role', value } }))]} />
-                  <TrashButton type="submit" name="remove" value="1" label={`Remove ${name}`} title="Remove" />
-                </form>
-              </Card>
-            ))
-          }
-        </ul>
-        <Card as="form" id="add-user" method="post" hidden class="flex items-center gap-3 data-[open]:flex">
-          <input type="hidden" name="add" value="1" />
-          <Input id="name" name="name" label="GitHub username" placeholder="GitHub username" required autocomplete="off" />
-          <Button type="submit">Add</Button>
-        </Card>
-        <div><Button id="add-user-open" type="button" variant="outline"><Icon name="plus" weight="bold" />Add user</Button></div>
+    <div class="flex flex-col gap-8">
+      <Section title="Users">
+        <div class="grid gap-4 md:gap-8 lg:grid-cols-3">
+          <div class="flex flex-col gap-4 lg:col-span-2">
+          <ul class="flex flex-col gap-4">
+            {
+              list.map(([name, role]) => (
+                <Card as="li" class="flex items-center gap-4">
+                  <img src={githubAvatar(name)} alt="" class="size-8 rounded-lg" />
+                  <Text class="min-w-0 flex-1 truncate">{name}</Text>
+                  <form method="post" class="flex items-center gap-3">
+                    <input type="hidden" name="name" value={name} />
+                    <ChoiceMenu id={`role-${name}`} submit disableActive label={cap(role)} tone={tone[role] ?? 'ink'} options={[...roles.map(([value, text]) => ({ label: cap(value), text, active: role === value, attrs: { name: 'role', value } }))]} />
+                    <TrashButton type="submit" name="remove" value="1" label={`Remove ${name}`} title="Remove" />
+                  </form>
+                </Card>
+              ))
+            }
+          </ul>
+          <Card as="form" id="add-user" method="post" hidden class="flex items-center gap-3 data-[open]:flex">
+            <input type="hidden" name="add" value="1" />
+            <Input id="name" name="name" label="GitHub username" placeholder="GitHub username" required autocomplete="off" />
+            <Button type="submit">Add</Button>
+          </Card>
+          <div><Button id="add-user-open" type="button" variant="outline"><Icon name="plus" weight="bold" />Add user</Button></div>
+          </div>
         </div>
-      </div>
-    </Section>
-    <Section title="Telegram">
-      <div class="grid gap-4 md:gap-8 lg:grid-cols-3">
-        <div class="lg:col-span-2">
-        <Form id="telegram-form">
-          <input type="hidden" name="part" value="telegram" />
-          <Field label="Bot token" for="token" hint="Reminders and ideas by message. Make a bot with @BotFather and paste its token. Leave both fields empty to turn Telegram off.">
-            <Input id="token" name="token" type="password" label="Bot token" value={token} autocomplete="off" />
-          </Field>
-          <Field label="Chat ID" for="chat" hint="Only this chat is answered. Send a message to @userinfobot to see your ID.">
-            <Input id="chat" name="chat" label="Chat ID" value={chat} autocomplete="off" />
-          </Field>
-          <Button slot="actions" type="submit" data-pending="Saving…">Save</Button>
-        </Form>
+      </Section>
+      <Section title="Telegram">
+        <div class="grid gap-4 md:gap-8 lg:grid-cols-3">
+          <div class="lg:col-span-2">
+          <Form id="telegram-form">
+            <input type="hidden" name="part" value="telegram" />
+            <Field label="Bot token" for="token" hint="Reminders and ideas by message. Make a bot with @BotFather and paste its token. Leave both fields empty to turn Telegram off.">
+              <Input id="token" name="token" type="password" label="Bot token" value={token} autocomplete="off" />
+            </Field>
+            <Field label="Chat ID" for="chat" hint="Only this chat is answered. Send a message to @userinfobot to see your ID.">
+              <Input id="chat" name="chat" label="Chat ID" value={chat} autocomplete="off" />
+            </Field>
+            <Button slot="actions" type="submit" data-pending="Saving…">Save</Button>
+          </Form>
+          </div>
         </div>
-      </div>
-    </Section>
+      </Section>
+    </div>
   </div>
   <Fragment slot="after">
     <script>

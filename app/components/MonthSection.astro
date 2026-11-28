@@ -8,7 +8,7 @@ interface Props {
 const { month } = Astro.props;
 ---
 
-<section data-month-section class="flex flex-col gap-4 md:gap-8">
-  <Heading variant="page" as="h2" class="pointer-events-none sticky top-0 z-20 max-md:top-16 max-md:bg-page flex h-12 md:h-20 items-center">{monthLabel(month)}</Heading>
+<section data-month-section class="flex flex-col md:gap-8">
+  <Heading variant="page" as="h2" class="pointer-events-none sticky top-0 z-20 max-md:top-16 max-md:bg-page max-md:items-start max-md:pt-2 flex h-16 md:h-20 items-center">{monthLabel(month)}</Heading>
   <slot />
 </section>

@@ -168,7 +168,7 @@ const split = (point: { date: string; value: number }): string =>
                 </ul>
               </div>
               <div class="grid items-start gap-x-8 gap-y-8 md:gap-y-12 xl:grid-cols-3">
-                <section aria-label="Audience" class="flex min-w-0 flex-col gap-4 md:gap-8 xl:col-span-2">
+                <section aria-label="Audience" class="flex min-w-0 flex-col gap-8 xl:col-span-2">
                   <div class="flex flex-col gap-4">
                     <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
                       <Heading variant="block" as="h2">{metric === 'followers' ? 'Followers' : `${METRIC_LABELS[metric]} per ${unit}`}</Heading>

@@ -39,7 +39,7 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
 <NewPostMenu idea />
 
 <aside id="sidebar" class="group/sidebar [view-transition-name:sidebar] max-md:fixed max-md:inset-x-0 max-md:top-16 max-md:bottom-0 max-md:z-30 max-md:hidden max-md:-translate-y-1 max-md:overflow-y-auto max-md:bg-page max-md:opacity-0 max-md:ease-leave max-md:data-open:ease-pop max-md:transition-[opacity,translate,display] max-md:transition-discrete max-md:data-open:block max-md:data-open:translate-y-0 max-md:data-open:opacity-100 max-md:starting:data-open:-translate-y-1 max-md:starting:data-open:opacity-0 md:sticky md:top-0 md:h-screen">
-  <div class="flex min-h-full flex-col gap-4 md:gap-8 px-4 max-md:pt-5 md:h-full md:overflow-y-auto md:in-data-rail:items-center md:in-data-rail:px-3">
+  <div class="flex min-h-full flex-col gap-8 px-4 max-md:pt-5 md:h-full md:overflow-y-auto md:in-data-rail:items-center md:in-data-rail:px-3">
     <div class:list={[FADE_BELOW, 'z-10 flex h-20 shrink-0 items-center justify-between gap-2 bg-page pl-1 max-md:hidden md:sticky md:top-0 md:in-data-rail:justify-center md:in-data-rail:pl-0']}>
       <a href="/" aria-label={brandName} class:list={[BRAND, 'min-w-0 md:in-data-rail:hidden']}><Logo class="size-8" /><span class="truncate"><Wordmark /></span></a>
       <button type="button" data-rail-toggle aria-expanded={railed ? 'false' : 'true'} aria-controls="sidebar" aria-label={railed ? 'Open the sidebar' : 'Close the sidebar'} title={railed ? 'Open the sidebar' : 'Close the sidebar'} class:list={[QUIET, 'group relative size-10 text-lg pointer-fine:not-in-data-rail:opacity-0 pointer-fine:group-hover/sidebar:opacity-100 focus-visible:opacity-100']}>

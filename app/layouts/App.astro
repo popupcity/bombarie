@@ -14,7 +14,7 @@ const { data, view, title } = Astro.props;
 
 <Shell title={title}>
   <Toolbar view={view} notices={data.notices} />
-  <div data-view={view} class="md:-mt-20 flex flex-col gap-4 md:gap-8">
+  <div data-view={view} class="md:-mt-20 flex flex-col gap-8">
     <slot />
   </div>
   <script is:inline>
