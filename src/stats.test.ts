@@ -221,17 +221,22 @@ test('who tags a channel is kept by address, also after the platform lists it no
   assert.deepEqual(readStats(root, 'none', 'tags'), []);
 });
 
-test('days kept before the split of reach was asked get it for the last 30 days, not only the last few', async () => {
+test('a day of the last month without the split of reach has the month asked again, also when later days have it', async () => {
   const root = fresh();
-  await writeStats(statsFile(root, 'ig', 'days'), ['date', 'followers', 'views', 'reach'], [{ date: '2026-11-20', followers: '1', views: '2', reach: '3' }]);
-  const windows: string[] = [];
-  const base = instagram();
-  const spy = (async (url: string) => {
-    const query = new URL(url).searchParams;
-    if (query.get('metric') === 'reach' && !query.has('metric_type')) windows.push(query.get('since')!);
-    return base.fetchImpl(url);
-  }) as unknown as typeof fetch;
-  await collectInstagram(root, 'ig', credentials99, spy, new Date('2026-11-27T12:00:00Z'));
-  await collectInstagram(root, 'ig', credentials99, spy, new Date('2026-11-28T12:00:00Z'));
-  assert.equal(windows.length, 4);
+  const columns = ['date', 'followers', 'views', 'reach', 'reach_followers', 'reach_others'];
+  const asked = async (rows: Record<string, string>[]) => {
+    await writeStats(statsFile(root, 'ig', 'days'), columns, rows);
+    let windows = 0;
+    const base = instagram();
+    const spy = (async (url: string) => {
+      const query = new URL(url).searchParams;
+      if (query.get('metric') === 'reach' && !query.has('metric_type')) windows += 1;
+      return base.fetchImpl(url);
+    }) as unknown as typeof fetch;
+    await collectInstagram(root, 'ig', credentials99, spy, new Date('2026-11-28T12:00:00Z'));
+    return windows;
+  };
+  const whole = { reach: '3', reach_followers: '1', reach_others: '2' };
+  assert.equal(await asked([{ date: '2026-11-10', reach: '3' }, { date: '2026-11-27', ...whole }]), 3);
+  assert.equal(await asked([{ date: '2026-09-01', reach: '3' }, { date: '2026-11-27', ...whole }]), 1);
 });

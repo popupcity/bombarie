@@ -129,11 +129,12 @@ function client(credentials: Credentials, fetchImpl: typeof fetch, base: string,
   return { user, read, metrics, list };
 }
 
-function daysOf(root: string, channel: string, history: 'views' | 'reach_others') {
+function daysOf(root: string, channel: string, history: 'views' | 'reach') {
   const days = new Map(readStats(root, channel, 'days').map((row) => [row.date!, row]));
   return {
     first: ![...days.values()].some((row) => row[history]),
     day: (date: string): Row => days.get(date) ?? days.set(date, { date }).get(date)!,
+    some: (found: (row: Row) => boolean): boolean => [...days.values()].some(found),
     save: (columns: string[]) => writeStats(statsFile(root, channel, 'days'), columns, [...days.values()].sort(byDate))
   };
 }
@@ -194,7 +195,9 @@ export async function collectThreads(root: string, channel: string, credentials:
 
 export async function collectInstagram(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date, batch = BATCH): Promise<number> {
   const { user, read, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Instagram statistics');
-  const days = daysOf(root, channel, 'reach_others');
+  const days = daysOf(root, channel, 'reach');
+  const since = ymd(new Date(now.getTime() - (WINDOW_DAYS - 2) * DAY_MS));
+  const unsplit = days.some((row) => row.date! >= since && Boolean(row.reach) && !row.reach_others);
   const today = days.day(ymd(now));
   const followers = (await read(user, { fields: 'followers_count' })).followers_count;
   if (typeof followers === 'number' && !today.followers) today.followers = String(followers);
@@ -209,7 +212,7 @@ export async function collectInstagram(root: string, channel: string, credential
     }
   };
   const reached: { value?: number; end_time?: string }[] = [];
-  for (const span of spansOf(now, days.first)) reached.push(...((await optional({ metric: 'reach', period: 'day', ...span }))[0]?.values ?? []));
+  for (const span of spansOf(now, days.first || unsplit)) reached.push(...((await optional({ metric: 'reach', period: 'day', ...span }))[0]?.values ?? []));
   const ends = [...new Set(reached.flatMap((entry) => (entry.end_time ? [entry.end_time] : [])))].sort();
   for (const entry of reached) if (entry.end_time && entry.value !== undefined) days.day(entry.end_time.slice(0, 10)).reach = String(entry.value);
   const gained = await optional({ metric: 'follower_count', period: 'day', ...window(now, days.first ? WINDOW_DAYS - 1 : OVERLAP_DAYS, 0) });
