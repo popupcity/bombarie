@@ -29,7 +29,7 @@ if (Astro.request.method === 'POST') {
 }
 
 const ideas = listIdeas(root);
-const grid = 'columns-1 gap-x-8 sm:columns-2 lg:columns-3 [&>*]:mb-8 [&>*]:break-inside-avoid';
+const grid = 'columns-1 gap-x-4 md:gap-x-8 sm:columns-2 lg:columns-3 [&>*]:mb-4 md:[&>*]:mb-8 [&>*]:break-inside-avoid';
 const count = (statuses: string[]) => ideas.filter((idea) => statuses.includes(idea.status)).length;
 const filters = [
   { value: 'open', name: 'Open', tone: 'ink', dim: false, total: count(['new', 'approved']) },
@@ -39,7 +39,7 @@ const filters = [
 ---
 
 <Shell title="Ideas">
-  <div data-view="ideas" class="flex flex-col gap-8">
+  <div data-view="ideas" class="flex flex-col gap-4 md:gap-8">
     <PageHeader title="Ideas" />
     {error && <Alert>{error}</Alert>}
     <div class="flex flex-wrap items-center justify-between gap-3">

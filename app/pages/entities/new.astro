@@ -25,8 +25,8 @@ if (Astro.request.method === 'POST') {
 ---
 
 <Shell title="Add entity">
-  <div class="flex flex-col gap-8">
-    <header class="flex h-20 items-center">
+  <div class="flex flex-col gap-4 md:gap-8">
+    <header class="flex h-12 md:h-20 items-center">
       <Heading variant="page" as="h1" class="sr-only">Add entity</Heading>
       <div class="min-w-0 flex-1">
         <TitleField form="entity-form" name="name" value={values.name} placeholder="Name" aria-label="Name" required autofocus {...quiet} />

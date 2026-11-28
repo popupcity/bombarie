@@ -12,9 +12,9 @@ import Shell from '../../layouts/Shell.astro';
 ---
 
 <Shell title="Add channel">
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-4 md:gap-8">
     <PageHeader title="Add channel" />
-    <div class="grid gap-8 sm:auto-rows-fr sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-4 md:gap-8 sm:auto-rows-fr sm:grid-cols-2 lg:grid-cols-3">
         {
           PLATFORMS.map((candidate) => (
             <Card href={`/channels/new/${candidate}`} class="flex flex-col gap-4">

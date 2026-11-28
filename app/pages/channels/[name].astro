@@ -139,8 +139,8 @@ const EXPORTS = 'Download these in the statistics of your Substack and drop them
 ---
 
 <Shell title={info.label}>
-  <div class="flex flex-col gap-8">
-    <header class="flex h-20 items-center">
+  <div class="flex flex-col gap-4 md:gap-8">
+    <header class="flex h-12 md:h-20 items-center">
       <Heading variant="page" as="h1" class="sr-only">{info.label}</Heading>
       <div class="min-w-0 flex-1">
         <TitleField form="channel-form" name="name" value={info.label} required pattern=".*[A-Za-z0-9À-ÿ].*" />

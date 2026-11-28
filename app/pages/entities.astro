@@ -18,7 +18,7 @@ const toast = outcome && outcome.name === 'entity' ? { tone: outcome.ok ? 'ok' :
 ---
 
 <Shell title="Entities">
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-4 md:gap-8">
     <PageHeader title="Entities" />
     {toast && <div hidden data-toast={toast.text} data-tone={toast.tone} />}
     {
@@ -28,7 +28,7 @@ const toast = outcome && outcome.name === 'entity' ? { tone: outcome.ok ? 'ok' :
         </Card>
       )
     }
-    <ul class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+    <ul class="grid gap-4 md:gap-8 sm:grid-cols-2 lg:grid-cols-3">
       {
         list.map((entity) => (
           <li>

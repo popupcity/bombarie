@@ -69,18 +69,18 @@ const statusBy = byWhom(idea.by, label[idea.status]);
 ---
 
 <Shell title={idea.title || 'Untitled idea'}>
-  <div class="flex flex-col gap-8" data-idea={folder}>
-    <header class="flex h-20 items-center">
+  <div class="flex flex-col gap-4 md:gap-8" data-idea={folder}>
+    <header class="flex h-12 md:h-20 items-center">
       <Heading variant="page" as="h1" class="sr-only">{idea.title || 'Untitled idea'}</Heading>
       <div class="min-w-0 flex-1">
         <TitleField form="idea-form" name="title" value={idea.title} autofocus={idea.title === '' && idea.text === ''} />
       </div>
     </header>
     {error && <Alert>{error}</Alert>}
-    <form id="idea-form" method="post" class="grid gap-x-8 gap-y-12 lg:grid-cols-3">
-      <div class="flex flex-col gap-12 lg:col-span-2">
+    <form id="idea-form" method="post" class="grid gap-x-8 gap-y-8 md:gap-y-12 lg:grid-cols-3">
+      <div class="flex flex-col gap-8 md:gap-12 lg:col-span-2">
         <Section>
-          <div class="flex flex-col gap-8">
+          <div class="flex flex-col gap-4 md:gap-8">
             <div class="flex flex-col gap-4">
             <Field label="Link" for="link">
               <Input id="link" name="link" label="Link" type="url" placeholder="https://" value={idea.link ?? ''} autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" />

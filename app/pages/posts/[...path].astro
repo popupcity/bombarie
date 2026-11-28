@@ -148,10 +148,10 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
 ---
 
 <Shell title={campaign.title}>
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-4 md:gap-8">
     <header class="flex flex-col gap-4">
       <Heading variant="page" as="h1" id="heading" class="sr-only">{(fields.ok && fields.title) || campaign.title}</Heading>
-      <div class="sticky top-0 z-10 flex h-20 items-center gap-4 bg-page">
+      <div class="sticky top-0 z-10 flex h-12 md:h-20 items-center gap-4 bg-page">
         <div class="min-w-0 flex-1">
           <TitleField id="title" value={(fields.ok && fields.title) || campaign.title} data-fallback={campaign.title} />
         </div>
@@ -165,9 +165,9 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
       {variant.error && <Text variant="body">{sentence(variant.error)}</Text>}
     </Card>
 
-    <div class="grid gap-x-8 gap-y-12 lg:grid-cols-3">
+    <div class="grid gap-x-8 gap-y-8 md:gap-y-12 lg:grid-cols-3">
       <section
-        class="relative flex flex-col gap-8 lg:col-span-2"
+        class="relative flex flex-col gap-4 md:gap-8 lg:col-span-2"
         data-editor
         data-folder={campaign.folder}
         data-variant={variant.base}
@@ -236,9 +236,9 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
               <button type="button" id="mode-source" aria-pressed="false" class={SEGMENT}>Source</button>
             </div>
           </div>
-          <div id="edit-view" class="flex flex-col gap-12">
+          <div id="edit-view" class="flex flex-col gap-8 md:gap-12">
             <label for="body" class="sr-only">Text</label>
-            <div class="flex flex-col gap-8">
+            <div class="flex flex-col gap-4 md:gap-8">
               <div class="flex flex-col gap-2">
                 {threaded && <Text variant="small" class="text-ink-soft">Post</Text>}
               <div data-box class:list={[BOX, 'relative']}>
@@ -257,7 +257,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
               {
                 threaded && (
                   <div class="flex flex-col gap-4">
-                    <div id="replies" class="peer flex flex-col gap-8 empty:hidden"></div>
+                    <div id="replies" class="peer flex flex-col gap-4 md:gap-8 empty:hidden"></div>
                     <ReplyTemplate />
                     {variant.platform === 'threads' && (
                       <template id="reply-media">
@@ -324,7 +324,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
         <script type="application/json" id="raw" set:html={jsonForScript(variant.raw)} />
       </section>
 
-      <div class="flex flex-col gap-12">
+      <div class="flex flex-col gap-8 md:gap-12">
           <ActionPanel id="fields" remove={recorded?.status === 'posted' ? 'delete-posted' : campaign.variants.length > 1 ? 'delete-variant' : 'delete-post'} actions={{ id: 'actions', 'data-planned': planned ? '' : undefined }}>
               <Alert tone="warn" role="note" id="hint" hidden></Alert>
               <ActionRow label="Status">

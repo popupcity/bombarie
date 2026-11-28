@@ -37,8 +37,8 @@ const toast = failure ? { tone: 'bad', text: failure } : outcome && outcome.name
 ---
 
 <Shell title={entity.name}>
-  <div class="flex flex-col gap-8">
-    <header class="flex h-20 items-center">
+  <div class="flex flex-col gap-4 md:gap-8">
+    <header class="flex h-12 md:h-20 items-center">
       <Heading variant="page" as="h1" class="sr-only">{entity.name}</Heading>
       <div class="min-w-0 flex-1">
         <TitleField form="entity-form" name="name" value={entity.name} />

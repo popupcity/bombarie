@@ -47,7 +47,7 @@ const steps: Record<string, Step[]> = {
 const list = steps[platform] ?? [];
 ---
 
-<ol class="flex flex-col gap-8">
+<ol class="flex flex-col gap-4 md:gap-8">
   {
     list.map((step, index) => (
       <li class="flex gap-4">
