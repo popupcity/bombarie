@@ -12,7 +12,9 @@ const POSTS_HEADER = 'title,post_date,audience,views,engagement_rate,signups,sub
 
 const COUNTRIES_HEADER = 'location,free signups';
 
-export type Export = { kind: 'followers' | 'views' | 'posts' | 'countries'; rows: Row[] };
+export const EXPORT_NAMES = { followers: 'Subscribers', views: 'Views', posts: 'Posts', countries: 'Countries' } as const;
+
+export type Export = { kind: keyof typeof EXPORT_NAMES; rows: Row[] };
 
 function parseCountries(lines: string[]): Row[] {
   if (lines.length === 0) throw new Error(NOT_THIS);

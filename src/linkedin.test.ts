@@ -179,7 +179,7 @@ test('validate reports channel, text, image and mention problems', () => {
 
 test('a PDF is uploaded as a document, checked until it is available and posted with the title', async () => {
   let checks = 0;
-  const { calls, context } = setup((url, init) => {
+  const { calls, context } = setup((url) => {
     if (url.includes('/rest/documents?action=initializeUpload')) return Response.json({ value: { uploadUrl: 'https://upload.example/d', document: 'urn:li:document:9' } });
     if (url === 'https://upload.example/d') return new Response(null, { status: 201 });
     if (url.includes('/rest/documents/')) return Response.json({ status: (checks += 1) < 2 ? 'PROCESSING' : 'AVAILABLE' });

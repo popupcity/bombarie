@@ -49,7 +49,7 @@ async function download(intake: Intake, photo: Photo): Promise<Uint8Array> {
 
 const SHOWN = 5;
 
-export const COMMANDS = [{ command: 'planned', description: 'The next planned posts' }];
+const COMMANDS = [{ command: 'planned', description: 'The next planned posts' }];
 
 const HELP = `Send a text, a link or a photo and it is saved as an idea.\n${COMMANDS.map(({ command, description }) => `/${command}: ${description.toLowerCase()}`).join('\n')}`;
 

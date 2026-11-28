@@ -56,3 +56,15 @@ export function sharesOf(accounts: Row[][], kind: PlaceKind, from: string): Shar
     })
     .sort((a, b) => b.count - a.count || a.place.localeCompare(b.place));
 }
+
+export function historiesOf(accounts: Row[][], kind: PlaceKind, place: string, from: string): Point[][] {
+  return accounts.map((rows) => {
+    const line = measurements(rows, kind);
+    const within = line.filter((found) => found.date >= from);
+    const standing = line.findLast((found) => found.date < from);
+    return [...(standing && within[0]?.date !== from ? [{ ...standing, date: from }] : []), ...within].map(({ date, places }) => {
+      const total = [...places.values()].reduce((sum, count) => sum + count, 0);
+      return { date, value: total === 0 ? 0 : (100 * (places.get(place) ?? 0)) / total };
+    });
+  });
+}

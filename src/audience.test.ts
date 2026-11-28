@@ -3,7 +3,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { placeName, sharesOf } from './audience.ts';
+import { historiesOf, placeName, sharesOf } from './audience.ts';
 import { collectAudience, collectFacebookAudience, collectThreadsAudience, readStats, saveAudience } from './stats.ts';
 
 const fresh = () => mkdtempSync(join(tmpdir(), 'social-audience-'));
@@ -71,4 +71,12 @@ test('Facebook is filled in two years back, one measurement a week, each a day b
   assert.equal(dates[0], '2024-11-27');
   assert.ok(dates.length >= 104 && dates.length <= 105);
   assert.ok(dates.slice(1).every((date, i) => Date.parse(date) - Date.parse(dates[i]!) === 7 * 86_400_000));
+});
+
+test('each channel has its own course of one place, from its own first measurement, and what stood when the period began', () => {
+  const long = [row('2025-01-01', 'country', 'NL', 1), row('2025-01-01', 'country', 'US', 3), row('2026-11-01', 'country', 'NL', 1), row('2026-11-01', 'country', 'US', 1)];
+  const short = [row('2026-11-27', 'country', 'US', 5)];
+  const values = (from: string) => historiesOf([long, short, []], 'country', 'NL', from).map((line) => line.map((point) => [point.date, point.value]));
+  assert.deepEqual(values(''), [[['2025-01-01', 25], ['2026-11-01', 50]], [['2026-11-27', 0]], []]);
+  assert.deepEqual(values('2026-10-01'), [[['2026-10-01', 25], ['2026-11-01', 50]], [['2026-11-27', 0]], []]);
 });

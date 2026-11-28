@@ -23,12 +23,10 @@ import plusBold from '@phosphor-icons/core/assets/bold/plus-bold.svg?raw';
 import xBold from '@phosphor-icons/core/assets/bold/x-bold.svg?raw';
 import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
 import plus from '@phosphor-icons/core/assets/regular/plus.svg?raw';
-import eyeSlash from '@phosphor-icons/core/assets/regular/eye-slash.svg?raw';
 import warning from '@phosphor-icons/core/assets/regular/warning.svg?raw';
 import x from '@phosphor-icons/core/assets/regular/x.svg?raw';
 import at from '@phosphor-icons/core/assets/regular/at.svg?raw';
 import slidersHorizontal from '@phosphor-icons/core/assets/regular/sliders-horizontal.svg?raw';
-import broadcast from '@phosphor-icons/core/assets/regular/broadcast.svg?raw';
 import arrowSquareOut from '@phosphor-icons/core/assets/regular/arrow-square-out.svg?raw';
 import calendarBlank from '@phosphor-icons/core/assets/regular/calendar-blank.svg?raw';
 import calendarCheck from '@phosphor-icons/core/assets/regular/calendar-check.svg?raw';
@@ -86,14 +84,12 @@ export const icons = {
     'image': image,
     at,
     'sliders-horizontal': slidersHorizontal,
-    broadcast,
     'calendar-blank': calendarBlank,
     'calendar-check': calendarCheck,
     'caret-down': caretDown,
     'caret-right': caretRight,
     check,
     warning,
-    'eye-slash': eyeSlash,
     clock,
     'dots-three': dotsThree,
     gear,

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fromCsv, toCsv } from './csv.ts';
-import { collectFacebook, collectInstagram, collectStats, collectStories, collectThreads, readStats, statsFile } from './stats.ts';
+import { collectFacebook, collectInstagram, collectTags, collectStats, collectStories, collectThreads, readStats, statsFile } from './stats.ts';
 
 const fresh = () => mkdtempSync(join(tmpdir(), 'social-stats-'));
 const credentials = { accessToken: 'tok', accountId: '178' };
@@ -86,6 +86,7 @@ function instagram(options: { limitAfter?: number; stories?: boolean; refuses?: 
     const answer = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
     if (path === '99') return answer({ followers_count: 6373 });
     if (path === '99/insights') {
+      if (searchParams.get('breakdown') === 'follow_type') return answer({ data: [{ name: 'reach', total_value: { breakdowns: [{ results: [{ dimension_values: ['FOLLOWER'], value: 50 }, { dimension_values: ['NON_FOLLOWER'], value: 30 }] }] } }] });
       if (metric === 'views') return answer({ data: [{ name: 'views', total_value: { value: 19 } }] });
       return answer({ data: [{ name: metric, values: [{ value: metric === 'reach' ? 156 : 2, end_time: '2026-11-27T08:00:00+0000' }] }] });
     }
@@ -106,7 +107,7 @@ test('Instagram keeps followers, reach and views per day, and gets post numbers 
   const now = new Date('2026-11-27T12:00:00Z');
   const first = instagram();
   assert.equal(await collectInstagram(root, 'ig', credentials99, first.fetchImpl, now, 2), 1);
-  assert.equal(readFileSync(statsFile(root, 'ig', 'days'), 'utf8'), 'date,followers,new_followers,views,reach\n2026-11-27,6373,2,19,156\n');
+  assert.equal(readFileSync(statsFile(root, 'ig', 'days'), 'utf8'), 'date,followers,new_followers,views,reach,reach_followers,reach_others\n2026-11-27,6373,2,19,156,50,30\n');
   assert.deepEqual(readStats(root, 'ig', 'posts').map((row) => [row.url, row.type, row.text, row.likes, row.views, row.interactions, row.updated]), [
     ['https://i.test/1', 'VIDEO', 'Post 1', '1', '', '', ''],
     ['https://i.test/2', 'VIDEO', 'Post 2', '2', '330', '10', '2026-11-27'],
@@ -179,4 +180,43 @@ test('Facebook counts a value for the day that ends at its end time, and keeps p
   assert.equal(await collectFacebook(root, 'fb', credentials99, fake, new Date('2026-11-27T12:00:00Z')), 0);
   assert.equal(readFileSync(statsFile(root, 'fb', 'days'), 'utf8'), 'date,followers,new_followers,views,reach\n2026-11-25,52620,,8,\n2026-11-27,52616,,,\n');
   assert.deepEqual(readStats(root, 'fb', 'posts').map((row) => [row.url, row.type, row.text, row.views, row.reach, row.likes, row.comments, row.shares, row.clicks]), [['https://www.facebook.com/99_1', 'CAROUSEL_ALBUM', 'Hello', '629', '489', '4', '2', '0', '2']]);
+});
+
+test('a first run that stops halfway fills the history in the next one', async () => {
+  const root = fresh();
+  const now = new Date('2026-11-27T12:00:00Z');
+  const stopped = (async (url: string) => (new URL(url).pathname.endsWith('/insights') ? new Response('{"error":{"message":"limit","code":4}}', { status: 400 }) : instagram().fetchImpl(url))) as unknown as typeof fetch;
+  await assert.rejects(collectInstagram(root, 'ig', credentials99, stopped, now), /limit|rate/i);
+  assert.equal(readStats(root, 'ig', 'days')[0]?.followers, '6373');
+  const windows: string[] = [];
+  const base = instagram();
+  const spy = (async (url: string) => {
+    const query = new URL(url).searchParams;
+    if (query.get('metric') === 'reach' && query.get('period') === 'day' && !query.has('metric_type')) windows.push(query.get('since')!);
+    return base.fetchImpl(url);
+  }) as unknown as typeof fetch;
+  await collectInstagram(root, 'ig', credentials99, spy, now);
+  assert.equal(windows.length, 3);
+});
+
+test('an answer without any post leaves the posts on file as they are', async () => {
+  const root = fresh();
+  const now = new Date('2026-11-27T12:00:00Z');
+  await collectInstagram(root, 'ig', credentials99, instagram().fetchImpl, now);
+  const kept = readFileSync(statsFile(root, 'ig', 'posts'), 'utf8');
+  const empty = (async (url: string) => (new URL(url).pathname.endsWith('/media') ? new Response('{"data":[]}') : instagram().fetchImpl(url))) as unknown as typeof fetch;
+  await collectInstagram(root, 'ig', credentials99, empty, new Date('2026-11-28T12:00:00Z'));
+  assert.equal(readFileSync(statsFile(root, 'ig', 'posts'), 'utf8'), kept);
+});
+
+test('who tags a channel is kept by address, also after the platform lists it no more', async () => {
+  const root = fresh();
+  const tagged = (data: unknown[]) => (async () => new Response(JSON.stringify({ data }))) as unknown as typeof fetch;
+  await collectTags('instagram', root, 'ig', credentials99, tagged([{ id: '1', timestamp: '2026-11-20T10:00:00+0000', permalink: 'https://i.test/a', username: 'friend' }]));
+  await collectTags('instagram', root, 'ig', credentials99, tagged([{ id: '2', timestamp: '2026-11-24T10:00:00+0000', permalink: 'https://i.test/b', username: 'other' }]));
+  await collectTags('facebook', root, 'fb', credentials99, tagged([{ id: '3', created_time: '2026-11-01T10:00:00+0000', permalink_url: 'https://f.test/c', from: { name: 'A Page' } }]));
+  await collectTags('facebook', root, 'none', credentials99, tagged([]));
+  assert.deepEqual(readStats(root, 'ig', 'tags').map((row) => [row.url, row.by]), [['https://i.test/a', 'friend'], ['https://i.test/b', 'other']]);
+  assert.deepEqual(readStats(root, 'fb', 'tags').map((row) => [row.date, row.by]), [['2026-11-01T10:00:00+0000', 'A Page']]);
+  assert.deepEqual(readStats(root, 'none', 'tags'), []);
 });

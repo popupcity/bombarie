@@ -56,3 +56,6 @@ export function parseDate(value: string): Date {
   const first = guess - offsetMs(guess);
   return new Date(guess - offsetMs(first));
 }
+
+export const shortDay = (day: string, now: Date): string =>
+  new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(day.slice(0, 4) !== ymd(now).slice(0, 4) && { year: 'numeric' }), timeZone: 'UTC' });

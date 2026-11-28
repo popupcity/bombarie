@@ -7,14 +7,15 @@ interface Props {
   label: string;
   said: (point: Point) => string;
   time: Axis;
-  grid?: Scale | undefined;
-  number?: (value: number) => string;
-  parts?: { fill: string; points: Point[] }[] | undefined;
+  grid: Scale;
+  number: (value: number) => string;
+  parts?: { fill: string; stroke?: string; points: Point[] }[] | undefined;
   class?: string;
 }
-const { points, kind, label, said, time, grid, number = String, parts, class: className = 'h-8' } = Astro.props;
-const low = grid?.low ?? 0;
-const high = grid?.high ?? Math.max(...points.map((point) => point.value), 1);
+const { points, kind, label, said, time, grid, number, parts, class: className } = Astro.props;
+const { low, high } = grid;
+const longest = Math.max(...grid.lines.map((value) => number(value).length));
+const columns = longest <= 3 ? 'grid-cols-[24px_minmax(0,1fr)]' : longest <= 4 ? 'grid-cols-[32px_minmax(0,1fr)]' : 'grid-cols-[40px_minmax(0,1fr)]';
 const y = (value: number): number => 96 - ((value - low) / (high - low || 1)) * 92;
 const step = 100 / time.days;
 const layers = (point: Point): { fill: string; top: number }[] => {
@@ -26,38 +27,34 @@ const layers = (point: Point): { fill: string; top: number }[] => {
     return value > 0 ? [{ fill: part.fill, top }] : [];
   }).reverse();
 };
+const courses = kind !== 'line' ? [] : parts ? parts.map((part) => ({ points: part.points, stroke: part.stroke!, dot: part.fill })) : [{ points, stroke: 'stroke-current', dot: 'fill-current' }];
 const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 4 ? 'start' : at > 96 ? 'end' : 'middle');
 ---
 
-<div class:list={['grid min-w-0 gap-x-2 gap-y-1', grid && 'grid-cols-[48px_minmax(0,1fr)]']}>
-  {
-    grid && (
-      <svg aria-hidden="true" class:list={['w-full text-xs tabular-nums', className]}>
-        {grid.lines.map((value) => (
-          <text x="100%" y={`${y(value)}%`} dy="3" text-anchor="end" class="fill-ink-soft">{number(value)}</text>
-        ))}
-      </svg>
-    )
-  }
+<div class:list={['grid min-w-0 gap-x-2 gap-y-1', columns]}>
+  <svg aria-hidden="true" class:list={['w-full text-xs tabular-nums', className]}>
+    {grid.lines.map((value) => <text x="0" y={`${y(value)}%`} dy="3" class="fill-ink-soft">{number(value)}</text>)}
+  </svg>
   <svg role="img" aria-label={label} class:list={['block w-full text-ink', className]}>
-    {grid?.lines.map((value) => <line x1="0" x2="100%" y1={`${y(value)}%`} y2={`${y(value)}%`} class="stroke-line" />)}
-    {kind === 'line' && points.slice(1).map((point, index) => <line x1={`${time.at(points[index]!.date)}%`} y1={`${y(points[index]!.value)}%`} x2={`${time.at(point.date)}%`} y2={`${y(point.value)}%`} stroke="currentColor" stroke-width="2" stroke-linecap="round" />)}
+    {grid.lines.map((value) => <line x1="0" x2="100%" y1={`${y(value)}%`} y2={`${y(value)}%`} class="stroke-line" />)}
+    {courses.map((course) => (
+      <g>
+        {course.points.length === 1 && <circle cx={`${time.at(course.points[0]!.date)}%`} cy={`${y(course.points[0]!.value)}%`} r="4" class={course.dot} />}
+        {course.points.slice(1).map((point, index) => <line x1={`${time.at(course.points[index]!.date)}%`} y1={`${y(course.points[index]!.value)}%`} x2={`${time.at(point.date)}%`} y2={`${y(point.value)}%`} class={course.stroke} stroke-width="2" stroke-linecap="round" />)}
+      </g>
+    ))}
     {
       points.map((point) => (
-        <g class="group/point">
+        <g>
           {kind === 'bars' && layers(point).map((layer) => layer.top > low && <rect x={`${time.at(point.date) - step * 0.35}%`} y={`${y(layer.top)}%`} width={`${step * 0.7}%`} height={`${y(low) - y(layer.top)}%`} rx="2" class={layer.fill} />)}
           <rect x={`${time.at(point.date) - step / 2}%`} y="0" width={`${step}%`} height="100%" fill="transparent" data-tip={said(point)} />
         </g>
       ))
     }
   </svg>
-  {
-    grid && (
-      <svg aria-hidden="true" class="col-start-2 block h-4 w-full text-xs">
-        {time.ticks.map((tick) => (
-          <text x={`${anchor(tick.at) === 'start' ? 0 : anchor(tick.at) === 'end' ? 100 : tick.at}%`} y="12" text-anchor={anchor(tick.at)} class="fill-ink-soft">{tick.label}</text>
-        ))}
-      </svg>
-    )
-  }
+  <svg aria-hidden="true" class="col-start-2 block h-4 w-full overflow-visible text-xs">
+    {time.ticks.map((tick) => (
+      <text x={`${anchor(tick.at) === 'start' ? 0 : anchor(tick.at) === 'end' ? 100 : tick.at}%`} y="12" text-anchor={anchor(tick.at)} class="fill-ink-soft">{tick.label}</text>
+    ))}
+  </svg>
 </div>

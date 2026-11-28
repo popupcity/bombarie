@@ -21,7 +21,7 @@ const STORY_NUMBERS: Record<string, string> = { views: 'views', reach: 'reach', 
 
 export const DAY_COLUMNS = {
   threads: ['date', 'followers', 'views'],
-  instagram: ['date', 'followers', 'new_followers', 'views', 'reach'],
+  instagram: ['date', 'followers', 'new_followers', 'views', 'reach', 'reach_followers', 'reach_others'],
   facebook: ['date', 'followers', 'new_followers', 'views', 'reach'],
   substack: ['date', 'followers', 'views']
 };
@@ -31,7 +31,7 @@ export const POST_COLUMNS = {
   facebook: ['date', 'url', 'type', 'text', 'views', 'reach', 'likes', 'comments', 'shares', 'clicks', 'updated'],
   substack: ['date', 'url', 'type', 'text', 'views', 'follows', 'signups', 'subscribes', 'engagement_rate', 'open_rate']
 };
-export const STORY_COLUMNS = ['date', 'url', 'type', ...Object.values(STORY_NUMBERS), 'updated'];
+const STORY_COLUMNS = ['date', 'url', 'type', ...Object.values(STORY_NUMBERS), 'updated'];
 
 const DAY_MS = 86_400_000;
 const INSIDE_MS = 60 * 60_000;
@@ -43,9 +43,9 @@ const MAX_PAGES = 100;
 const RETRY_MS = 60 * 60_000;
 const STORY_MS = 2 * 60 * 60_000;
 const TEXT_LENGTH = 100;
-export const BATCH = 60;
+const BATCH = 60;
 
-type Name = 'days' | 'posts' | 'stories' | 'audience';
+type Name = 'days' | 'posts' | 'stories' | 'audience' | 'tags';
 
 export const statsFile = (root: string, channel: string, name: Name): string => join(root, 'channels', channel, `${name}.csv`);
 
@@ -87,9 +87,22 @@ interface Listed {
   reactions?: { summary?: { total_count?: number } };
   comments?: { summary?: { total_count?: number } };
   attachments?: { data?: { media_type?: string }[] };
+  username?: string;
+  permalink_url?: string;
+  from?: { name?: string };
 }
 
 const seconds = (time: number): string => String(Math.floor(time / 1000));
+const window = (now: Date, from: number, to: number) => ({ since: seconds(now.getTime() - from * DAY_MS), until: seconds(now.getTime() - to * DAY_MS) });
+const spansOf = (now: Date, first: boolean) => (first ? Array.from({ length: BACKFILL_DAYS / WINDOW_DAYS }, (_, i) => window(now, BACKFILL_DAYS - i * WINDOW_DAYS, BACKFILL_DAYS - (i + 1) * WINDOW_DAYS)) : [window(now, OVERLAP_DAYS, 0)]);
+const named = (numbers: string[]): Record<string, string> => Object.fromEntries(numbers.map((name) => [name, name]));
+function put(row: Row, metrics: Metric[], columns: Record<string, string>): void {
+  for (const metric of metrics) {
+    const column = columns[metric.name];
+    const value = numberOf(metric);
+    if (column && value !== undefined) row[column] = String(value);
+  }
+}
 const stops = (err: unknown): boolean => !(err instanceof ProviderError) || err.code !== 'invalid' || /permission/i.test(err.message);
 const numberOf = (metric: Metric): number | undefined => metric.values?.[0]?.value ?? metric.total_value?.value;
 const firstLine = (text: string | undefined): string => (text ?? '').split('\n')[0]!.slice(0, TEXT_LENGTH);
@@ -114,10 +127,10 @@ function client(credentials: Credentials, fetchImpl: typeof fetch, base: string,
   return { user, read, metrics, list };
 }
 
-function daysOf(root: string, channel: string) {
+function daysOf(root: string, channel: string, history: 'views' | 'reach') {
   const days = new Map(readStats(root, channel, 'days').map((row) => [row.date!, row]));
   return {
-    first: days.size === 0,
+    first: ![...days.values()].some((row) => row[history]),
     day: (date: string): Row => days.get(date) ?? days.set(date, { date }).get(date)!,
     save: (columns: string[]) => writeStats(statsFile(root, channel, 'days'), columns, [...days.values()].sort(byDate))
   };
@@ -129,6 +142,7 @@ interface Due {
 }
 
 async function refresh(root: string, channel: string, columns: string[], posts: { listed: Listed; row: Row }[], now: Date, slowDays: number, batch: number, numbers: (id: string, row: Row) => Promise<void>): Promise<number> {
+  if (posts.length === 0) return 0;
   const today = ymd(now);
   const due: Due[] = posts
     .filter(({ row }) => {
@@ -158,7 +172,7 @@ const kept = (root: string, channel: string): Map<string, Row> => new Map(readSt
 
 export async function collectThreads(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date): Promise<number> {
   const { user, metrics, list } = client(credentials, fetchImpl, THREADS_GRAPH, 'Threads statistics');
-  const days = daysOf(root, channel);
+  const days = daysOf(root, channel, 'views');
   const today = days.day(ymd(now));
   const followers = (await metrics(`${user}/threads_insights`, { metric: 'followers_count' }))[0]?.total_value?.value;
   if (followers !== undefined && !today.followers) today.followers = String(followers);
@@ -172,16 +186,13 @@ export async function collectThreads(root: string, channel: string, credentials:
     .filter((post) => post.permalink && post.media_type !== 'REPOST_FACADE')
     .map((listed) => ({ listed, row: { ...before.get(listed.permalink!), date: listed.timestamp, url: listed.permalink!, type: listed.media_type ?? '', text: firstLine(listed.text) } as Row }));
   return refresh(root, channel, POST_COLUMNS.threads, posts, now, 7, Number.POSITIVE_INFINITY, async (id, row) => {
-    for (const metric of await metrics(`${id}/insights`, { metric: THREADS_NUMBERS.join(',') })) {
-      const value = numberOf(metric);
-      if (value !== undefined) row[metric.name] = String(value);
-    }
+    put(row, await metrics(`${id}/insights`, { metric: THREADS_NUMBERS.join(',') }), named(THREADS_NUMBERS));
   });
 }
 
 export async function collectInstagram(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date, batch = BATCH): Promise<number> {
   const { user, read, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Instagram statistics');
-  const days = daysOf(root, channel);
+  const days = daysOf(root, channel, 'reach');
   const today = days.day(ymd(now));
   const followers = (await read(user, { fields: 'followers_count' })).followers_count;
   if (typeof followers === 'number' && !today.followers) today.followers = String(followers);
@@ -195,20 +206,29 @@ export async function collectInstagram(root: string, channel: string, credential
       return [];
     }
   };
-  const window = (from: number, to: number) => ({ since: seconds(now.getTime() - from * DAY_MS), until: seconds(now.getTime() - to * DAY_MS) });
   const reached: { value?: number; end_time?: string }[] = [];
-  const spans = days.first ? Array.from({ length: BACKFILL_DAYS / WINDOW_DAYS }, (_, i) => window(BACKFILL_DAYS - i * WINDOW_DAYS, BACKFILL_DAYS - (i + 1) * WINDOW_DAYS)) : [window(OVERLAP_DAYS, 0)];
-  for (const span of spans) reached.push(...((await optional({ metric: 'reach', period: 'day', ...span }))[0]?.values ?? []));
+  for (const span of spansOf(now, days.first)) reached.push(...((await optional({ metric: 'reach', period: 'day', ...span }))[0]?.values ?? []));
   const ends = [...new Set(reached.flatMap((entry) => (entry.end_time ? [entry.end_time] : [])))].sort();
   for (const entry of reached) if (entry.end_time && entry.value !== undefined) days.day(entry.end_time.slice(0, 10)).reach = String(entry.value);
-  const gained = await optional({ metric: 'follower_count', period: 'day', ...window(days.first ? WINDOW_DAYS - 1 : OVERLAP_DAYS, 0) });
+  const gained = await optional({ metric: 'follower_count', period: 'day', ...window(now, days.first ? WINDOW_DAYS - 1 : OVERLAP_DAYS, 0) });
   for (const entry of gained[0]?.values ?? []) if (entry.end_time && entry.value !== undefined) days.day(entry.end_time.slice(0, 10)).new_followers = String(entry.value);
   for (const [index, end] of ends.entries()) {
+    if (index < ends.length - WINDOW_DAYS) continue;
     const row = days.day(end.slice(0, 10));
-    if (index < ends.length - WINDOW_DAYS || (row.views && index < ends.length - OVERLAP_DAYS)) continue;
+    const again = index >= ends.length - OVERLAP_DAYS;
     const stamp = Date.parse(end);
-    const value = (await optional({ metric: 'views', metric_type: 'total_value', period: 'day', since: seconds(stamp - DAY_MS + INSIDE_MS), until: seconds(stamp) }))[0]?.total_value?.value;
-    if (value !== undefined) row.views = String(value);
+    const ofDay = async (query: Record<string, string>) => (await optional({ ...query, metric_type: 'total_value', period: 'day', since: seconds(stamp - DAY_MS + INSIDE_MS), until: seconds(stamp) }))[0]?.total_value;
+    if (!row.views || again) {
+      const value = (await ofDay({ metric: 'views' }))?.value;
+      if (value !== undefined) row.views = String(value);
+    }
+    if (!row.reach_others || again) {
+      const parts = (await ofDay({ metric: 'reach', breakdown: 'follow_type' }))?.breakdowns?.[0]?.results;
+      if (!parts) continue;
+      const part = (kind: string): string => String(parts.find((found) => found.dimension_values?.[0] === kind)?.value ?? 0);
+      row.reach_followers = part('FOLLOWER');
+      row.reach_others = part('NON_FOLLOWER');
+    }
   }
   await days.save(DAY_COLUMNS.instagram);
 
@@ -233,23 +253,17 @@ export async function collectInstagram(root: string, channel: string, credential
     }
   };
   return refresh(root, channel, POST_COLUMNS.instagram, posts, now, 28, batch, async (id, row) => {
-    for (const metric of await postInsights(id, row.type)) {
-      const value = numberOf(metric);
-      const column = FOLLOW_NUMBERS.includes(metric.name) ? metric.name : INSTAGRAM_NUMBERS[metric.name];
-      if (column && value !== undefined) row[column] = String(value);
-    }
+    put(row, await postInsights(id, row.type), { ...INSTAGRAM_NUMBERS, ...named(FOLLOW_NUMBERS) });
   });
 }
 
 export async function collectFacebook(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date, batch = BATCH): Promise<number> {
   const { user, read, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Facebook statistics');
-  const days = daysOf(root, channel);
+  const days = daysOf(root, channel, 'views');
   const today = days.day(ymd(now));
   const followers = (await read(user, { fields: 'followers_count' })).followers_count;
   if (typeof followers === 'number' && !today.followers) today.followers = String(followers);
-  const window = (from: number, to: number) => ({ since: seconds(now.getTime() - from * DAY_MS), until: seconds(now.getTime() - to * DAY_MS) });
-  const spans = days.first ? Array.from({ length: BACKFILL_DAYS / WINDOW_DAYS }, (_, i) => window(BACKFILL_DAYS - i * WINDOW_DAYS, BACKFILL_DAYS - (i + 1) * WINDOW_DAYS)) : [window(OVERLAP_DAYS, 0)];
-  for (const span of spans) {
+  for (const span of spansOf(now, days.first)) {
     for (const metric of await metrics(`${user}/insights`, { metric: Object.keys(FACEBOOK_DAYS).join(','), period: 'day', ...span })) {
       const column = FACEBOOK_DAYS[metric.name];
       for (const { value, end_time: end } of metric.values ?? []) {
@@ -270,17 +284,13 @@ export async function collectFacebook(root: string, channel: string, credentials
     return { listed, row };
   });
   return refresh(root, channel, POST_COLUMNS.facebook, posts, now, 28, batch, async (id, row) => {
-    for (const metric of await metrics(`${id}/insights`, { metric: Object.keys(FACEBOOK_NUMBERS).join(',') })) {
-      if (metric.period && metric.period !== 'lifetime') continue;
-      const value = numberOf(metric);
-      const column = FACEBOOK_NUMBERS[metric.name];
-      if (column && value !== undefined) row[column] = String(value);
-    }
+    const found = await metrics(`${id}/insights`, { metric: Object.keys(FACEBOOK_NUMBERS).join(',') });
+    put(row, found.filter((metric) => !metric.period || metric.period === 'lifetime'), FACEBOOK_NUMBERS);
   });
 }
 
 const AUDIENCE_DAYS = 7;
-export const AUDIENCE_COLUMNS = ['date', 'kind', 'place', 'count'];
+const AUDIENCE_COLUMNS = ['date', 'kind', 'place', 'count'];
 export const PLACE_KINDS = ['country', 'city'] as const;
 export type PlaceKind = (typeof PLACE_KINDS)[number];
 
@@ -355,6 +365,24 @@ export async function collectFacebookAudience(root: string, channel: string, cre
   if (rows.length > 0) await saveAudience(root, channel, rows);
 }
 
+const TAG_COLUMNS = ['date', 'url', 'by'];
+const TAGS: Partial<Record<Platform, { path: string; fields: string }>> = {
+  instagram: { path: 'tags', fields: 'id,timestamp,permalink,username' },
+  facebook: { path: 'tagged', fields: 'id,created_time,permalink_url,from' }
+};
+
+export async function collectTags(platform: Platform, root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch): Promise<void> {
+  const asked = TAGS[platform]!;
+  const { user, list } = client(credentials, fetchImpl, GRAPH, 'Tag statistics');
+  const tags = new Map(readStats(root, channel, 'tags').map((row) => [row.url!, row]));
+  for (const found of await list(`${user}/${asked.path}`, asked.fields)) {
+    const url = found.permalink ?? found.permalink_url;
+    const date = found.timestamp ?? found.created_time;
+    if (url && date) tags.set(url, { date, url, by: found.username ?? found.from?.name ?? tags.get(url)?.by ?? '' });
+  }
+  if (tags.size > 0) await writeStats(statsFile(root, channel, 'tags'), TAG_COLUMNS, [...tags.values()].sort(byDate));
+}
+
 export async function collectStories(root: string, channel: string, credentials: Credentials, fetchImpl: typeof fetch, now: Date): Promise<void> {
   const { user, metrics, list } = client(credentials, fetchImpl, GRAPH, 'Instagram story statistics');
   const live = await list(`${user}/stories`, 'id,timestamp,permalink,media_type');
@@ -365,11 +393,7 @@ export async function collectStories(root: string, channel: string, credentials:
       const url = story.permalink ?? story.id;
       const row: Row = { ...rows.get(url), date: story.timestamp, url, type: story.media_type ?? '' };
       try {
-        for (const metric of await metrics(`${story.id}/insights`, { metric: Object.keys(STORY_NUMBERS).join(',') })) {
-          const value = numberOf(metric);
-          const column = STORY_NUMBERS[metric.name];
-          if (column && value !== undefined) row[column] = String(value);
-        }
+        put(row, await metrics(`${story.id}/insights`, { metric: Object.keys(STORY_NUMBERS).join(',') }), STORY_NUMBERS);
         row.updated = now.toISOString();
       } catch (err) {
         if (stops(err)) throw err;
@@ -387,9 +411,9 @@ interface Job {
 }
 
 const JOBS: Partial<Record<Platform, Record<string, Job>>> = {
-  facebook: { statistics: { every: 'day', run: (root, channel, credentials, fetchImpl, now) => collectFacebook(root, channel, credentials, fetchImpl, now) }, audience: { every: 'day', run: collectFacebookAudience } },
+  facebook: { statistics: { every: 'day', run: collectFacebook }, tags: { every: 'day', run: (root, channel, credentials, fetchImpl) => collectTags('facebook', root, channel, credentials, fetchImpl) }, audience: { every: 'day', run: collectFacebookAudience } },
   threads: { statistics: { every: 'day', run: collectThreads }, audience: { every: 'day', run: collectThreadsAudience } },
-  instagram: { statistics: { every: 'day', run: (root, channel, credentials, fetchImpl, now) => collectInstagram(root, channel, credentials, fetchImpl, now) }, stories: { every: STORY_MS, run: collectStories }, audience: { every: 'day', run: collectAudience } }
+  instagram: { statistics: { every: 'day', run: collectInstagram }, tags: { every: 'day', run: (root, channel, credentials, fetchImpl) => collectTags('instagram', root, channel, credentials, fetchImpl) }, stories: { every: STORY_MS, run: collectStories }, audience: { every: 'day', run: collectAudience } }
 };
 
 const next = new Map<string, number | string>();

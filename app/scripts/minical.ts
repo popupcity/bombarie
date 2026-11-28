@@ -59,40 +59,44 @@ function start() {
     grid!.replaceChildren(
       h(
         'div',
-        { class: 'flex items-center justify-between pb-2' },
+        { class: 'flex items-center justify-between' },
         h('button', { type: 'button', 'aria-label': 'Previous month', class: NAV, onclick: () => ((view = addMonths(view, -1)), render()) }, caret(true)),
         h('span', { 'aria-live': 'polite', class: CARD_HEADING }, monthLabel(view)),
         h('button', { type: 'button', 'aria-label': 'Next month', class: NAV, onclick: () => ((view = addMonths(view, 1)), render()) }, caret(false))
       ),
-      h('div', { class: `${WEEK_ROW} text-center text-xs text-ink-soft` }, ...WEEKDAYS.map((name) => h('span', { class: 'py-1' }, name))),
       h(
         'div',
-        { class: WEEK_ROW },
-        ...weeks.flat().map((day) => {
-          const selected = day.day === chosen;
-          const dots = tones(day.day);
-          return h(
-            'button',
-            {
-              type: 'button',
-              'data-day': day.day,
-              'data-plain': '',
-              'data-drop-day': day.day,
-              'aria-label': day.day,
-              'aria-current': day.today ? 'date' : undefined,
-              class: `relative grid h-8 cursor-pointer place-items-center rounded-lg pb-1 text-sm tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
-                day.today ? 'ring-1 ring-ink ring-inset' : ''
-              } ${
-                selected ? 'bg-track text-ink' : `transition hover:bg-(--tone-hover) ${day.inMonth ? (dots.length > 0 ? 'text-ink' : 'text-ink-soft') : 'text-ink-faint'}`
-              }`,
-              onclick: () => go(day.day)
-            },
-            String(day.date),
-            dots.length > 0
-              ? h('span', { 'aria-hidden': 'true', class: 'absolute bottom-1 flex gap-1' }, ...dots.map((tone) => h('span', { 'data-tone': tone, class: dotClass(tone) })))
-              : ''
-          );
-        })
+        { class: 'flex flex-col gap-2' },
+        h('div', { class: `${WEEK_ROW} text-center text-xs text-ink-soft` }, ...WEEKDAYS.map((name) => h('span', { class: 'py-1' }, name))),
+        h(
+          'div',
+          { class: WEEK_ROW },
+          ...weeks.flat().map((day) => {
+            const selected = day.day === chosen;
+            const dots = tones(day.day);
+            return h(
+              'button',
+              {
+                type: 'button',
+                'data-day': day.day,
+                'data-plain': '',
+                'data-drop-day': day.day,
+                'aria-label': day.day,
+                'aria-current': day.today ? 'date' : undefined,
+                class: `relative grid h-8 cursor-pointer place-items-center rounded-lg pb-1 text-sm tabular-nums focus-visible:outline-2 focus-visible:outline-ink ${
+                  day.today ? 'ring-1 ring-ink ring-inset' : ''
+                } ${
+                  selected ? 'bg-track text-ink' : `transition hover:bg-(--tone-hover) ${day.inMonth ? (dots.length > 0 ? 'text-ink' : 'text-ink-soft') : 'text-ink-faint'}`
+                }`,
+                onclick: () => go(day.day)
+              },
+              String(day.date),
+              dots.length > 0
+                ? h('span', { 'aria-hidden': 'true', class: 'absolute bottom-1 flex gap-1' }, ...dots.map((tone) => h('span', { 'data-tone': tone, class: dotClass(tone) })))
+                : ''
+            );
+          })
+        )
       )
     );
   }

@@ -5,13 +5,13 @@ import Heading from '@popupcity/ui/src/components/Heading.astro';
 import Icon from '@popupcity/ui/src/components/Icon.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
 import { channelInfos, loadChannels } from '../../src/channels.ts';
-import { METRICS, SORTS, UNITS, grouped, timeline, before, dailyOf, engagement, engagementLine, followerLine, followersOf, metricOf, rangeOf, scale, since, sortOf, summed, topPosts, viewTotal } from '../../src/insights.ts';
-import type { Metric, Range, Sort } from '../../src/insights.ts';
+import { METRICS, SORTS, UNITS, grouped, timeline, before, dailyOf, passedOn, passedOnLine, followerLine, followersOf, metricOf, othersShare, rangeOf, scale, since, sortOf, summed, topPosts, viewTotal } from '../../src/insights.ts';
+import type { Daily, Metric, Range, Sort } from '../../src/insights.ts';
 import { readPosts } from '../../src/posts.ts';
-import { placeKindOf, placeName, sharesOf } from '../../src/audience.ts';
+import { historiesOf, placeKindOf, placeName, sharesOf } from '../../src/audience.ts';
 import { PLACE_KINDS, readStats } from '../../src/stats.ts';
 import type { PlaceKind } from '../../src/stats.ts';
-import { ymd } from '../../src/time.ts';
+import { shortDay, ymd } from '../../src/time.ts';
 import { PLATFORM_LABEL, needsCover } from '../../src/types.ts';
 import ChannelChip from '../components/ChannelChip.astro';
 import Change from '../components/Change.astro';
@@ -20,13 +20,11 @@ import ChoiceMenu from '../components/ChoiceMenu.astro';
 import ChannelMark from '../components/ChannelMark.astro';
 import Spark from '../components/Spark.astro';
 import StatTile from '../components/StatTile.astro';
-import TopMark from '../components/TopMark.astro';
-import { standoutPosts } from '../../src/signs.ts';
 import PlatformMark from '../components/PlatformMark.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Shell from '../layouts/Shell.astro';
 import { root, states } from '../lib/data.ts';
-import { SEGMENT, SEGMENTS, SERIES, postHref } from '../lib/ui.ts';
+import { SEGMENT, SEGMENTS, SERIES, SERIES_LINES, postHref } from '../lib/ui.ts';
 
 const PAGE = 5;
 const RANGE_COOKIE = 'bombarie_stats_range';
@@ -40,7 +38,9 @@ const from = since(range, now);
 const earlier = before(range, now);
 const metric = metricOf(query.get('metric'));
 const where = placeKindOf(query.get('audience'));
+const opened = query.get('place') ?? '';
 const listed = Math.max(Number(query.get('places')) || PAGE, PAGE);
+const mentioned = Math.max(Number(query.get('tags')) || PAGE, PAGE);
 
 const channels = loadChannels(root);
 const measured = channelInfos(channels)
@@ -56,19 +56,21 @@ const followers = {
   change: counted.length > 0 && counted.every((found) => found.change !== null) ? counted.reduce((total, found) => total + found.change!, 0) : null
 };
 const views = viewTotal(accounts, from, earlier);
-const reactions = engagement(accounts, from, earlier);
-const trends = { followers: followerLine(accounts, from), views: summed(accounts, 'views', from), reactions: engagementLine(accounts, from, ymd(now)) };
+const spread = passedOn(accounts, from, earlier);
+const trends = { followers: followerLine(accounts, from), views: summed(accounts, 'views', from), spread: passedOnLine(accounts, from, ymd(now)) };
 const unit = UNITS[range];
 const take = metric === 'followers' ? 'last' : 'sum';
-const daily = metric === 'followers' ? followerLine(accounts, from) : summed(accounts, metric, from);
+const column: Daily = metric === 'new' ? 'reach_others' : metric === 'reach' ? 'reach' : 'views';
+const daily = metric === 'followers' ? followerLine(accounts, from) : summed(accounts, column, from);
 const points = grouped(daily, unit, take);
-const own = picked.map((channel, index) => (metric === 'followers' ? followerLine([accounts[index]!], from) : dailyOf(channel.days, metric, from)));
+const own = picked.map((channel, index) => (metric === 'followers' ? followerLine([accounts[index]!], from) : dailyOf(channel.days, column, from)));
 const rows = picked.map((channel, index) => ({
   info: channel.info,
   fill: SERIES[measured.indexOf(channel) % SERIES.length]!,
   daily: grouped(own[index]!, unit, take),
   value: metric === 'followers' ? people[index]!.followers : own[index]!.length > 0 ? own[index]!.reduce((total, point) => total + point.value, 0) : null,
-  change: metric === 'followers' ? people[index]!.change : null
+  change: metric === 'followers' ? people[index]!.change : null,
+  share: metric === 'new' ? othersShare(channel.days, from) : null
 }));
 const widest = Math.max(...rows.map((row) => row.value ?? 0), 1);
 const audienceRows = new Map(measured.map((channel) => [channel.info.name, readStats(root, channel.info.name, 'audience')]));
@@ -76,8 +78,34 @@ const located = [...audienceRows.values()].some((found) => found.length > 0);
 const places = sharesOf(picked.map((channel) => audienceRows.get(channel.info.name)!), where, from);
 const first = [daily[0]?.date, ...own.map((line) => line[0]?.date)].filter((date) => date !== undefined).sort()[0] ?? ymd(now);
 const time = timeline(first > from ? first : from, ymd(now), unit);
-const standing = new Map(measured.flatMap((channel) => [...standoutPosts(channel.posts, now)]));
 const top = topPosts(picked.map((channel) => ({ channel: channel.info.name, platform: channel.info.platform, posts: channel.posts })), sort, from);
+const ownNames = new Set(channelInfos(channels).flatMap((info) => [info.label, channels[info.name]?.handle ?? '']).map((name) => name.replace(/^@/, '').toLowerCase()).filter(Boolean));
+const tagFiles = measured.map((channel) => ({ info: channel.info, rows: readStats(root, channel.info.name, 'tags') }));
+const tagging = tagFiles.some((file) => file.rows.length > 0);
+const tags = tagFiles
+  .filter((file) => !hidden.has(file.info.name))
+  .flatMap((file) => file.rows.map((row) => ({ info: file.info, by: row.by ?? '', url: row.url!, day: ymd(new Date(row.date!)) })))
+  .filter((tag) => tag.day >= from && !ownNames.has(tag.by.toLowerCase()))
+  .sort((a, b) => b.day.localeCompare(a.day) || a.url.localeCompare(b.url));
+const percent = (value: number): string => `${value.toLocaleString('en-GB', { maximumFractionDigits: 1 })}%`;
+const courseOf = (place: string) => {
+  const histories = historiesOf(picked.map((channel) => audienceRows.get(channel.info.name)!), where, place, from);
+  const lines = picked.flatMap((channel, index) => {
+    const points = grouped(histories[index]!, unit, 'last');
+    const colour = measured.indexOf(channel) % SERIES.length;
+    return points.length > 0 ? [{ name: `${channel.info.label} on ${PLATFORM_LABEL[channel.info.platform]}`, fill: SERIES[colour]!, stroke: SERIES_LINES[colour]!, points }] : [];
+  });
+  const points = [...new Map(lines.flatMap((line) => line.points).map((point) => [point.date, point])).values()].sort((a, b) => a.date.localeCompare(b.date));
+  const values = lines.flatMap((line) => line.points.map((point) => point.value));
+  return {
+    lines,
+    points,
+    time: timeline(points[0]?.date ?? ymd(now), ymd(now), unit),
+    grid: scale(values, false),
+    said: (point: { date: string }): string =>
+      [bucketLabel(point.date), ...lines.flatMap((line) => line.points.filter((own) => own.date === point.date).map((own) => `${line.name}: ${percent(own.value)}`))].join('\n')
+  };
+};
 const infoOf = new Map(measured.map((channel) => [channel.info.name, channel.info]));
 
 const made = new Map<string, { href: string; image?: string }>();
@@ -89,8 +117,8 @@ for (const post of readPosts(root, channels).posts) {
   made.set(state.url, { href: postHref(post.id), ...(first && { image: `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(first) ? `${first}.cover.jpg` : first)}?size=96` }) });
 }
 
-const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: Sort; top?: number; audience?: PlaceKind; places?: number }): string => {
-  const next = { range, hide: [...hidden], metric, sort, top: 0, audience: where, places: 0, ...change };
+const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: Sort; top?: number; audience?: PlaceKind; places?: number; tags?: number; place?: string }): string => {
+  const next = { range, hide: [...hidden], metric, sort, top: 0, audience: where, places: 0, tags: 0, place: opened, ...change };
   const params = new URLSearchParams();
   params.set('range', next.range);
   if (next.hide.length > 0) params.set('hide', next.hide.join(','));
@@ -99,6 +127,8 @@ const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: 
   if (next.top > PAGE) params.set('top', String(next.top));
   if (next.audience !== 'country') params.set('audience', next.audience);
   if (next.places > PAGE) params.set('places', String(next.places));
+  if (next.tags > PAGE) params.set('tags', String(next.tags));
+  if (next.place) params.set('place', next.place);
   return `/stats?${params.toString().replaceAll('%2C', ',')}`;
 };
 
@@ -106,10 +136,11 @@ const RANGE_LABELS: Record<Range, string> = { week: 'Week', month: 'Month', quar
 const SORT_LABELS: Record<Sort, string> = { views: 'Views', likes: 'Likes', replies: 'Replies', follows: 'Follows' };
 const ONE: Record<Sort, string> = { views: 'view', likes: 'like', replies: 'reply', follows: 'follow' };
 const PLACE_LABELS: Record<PlaceKind, string> = { country: 'Countries', city: 'Cities' };
-const METRIC_LABELS: Record<Metric, string> = { views: 'Views', reach: 'Reach', followers: 'Followers' };
+const METRIC_LABELS: Record<Metric, string> = { views: 'Views', reach: 'Reach', new: 'New', followers: 'Followers' };
+const METRIC_NAMES: Record<Metric, string> = { views: 'Views', reach: 'Reach', new: 'New reach', followers: 'Followers' };
 const compact = (value: number): string => value.toLocaleString('en-GB', { notation: 'compact', maximumFractionDigits: 1 });
 const number = (value: number): string => value.toLocaleString('en-GB');
-const dayLabel = (day: string): string => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(day.slice(0, 4) !== ymd(now).slice(0, 4) && { year: 'numeric' }), timeZone: 'UTC' });
+const dayLabel = (day: string): string => shortDay(day, now);
 const bucketLabel = (day: string): string =>
   unit === 'month' ? new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : unit === 'week' ? `Week of ${dayLabel(day)}` : dayLabel(day);
 const split = (point: { date: string; value: number }): string =>
@@ -147,7 +178,7 @@ const split = (point: { date: string; value: number }): string =>
             {measured.map(({ info }) => {
             const off = hidden.has(info.name);
             const named = `${info.label} on ${PLATFORM_LABEL[info.platform]}`;
-            return <ChannelChip channel={info} href={href({ hide: off ? [...hidden].filter((name) => name !== info.name) : [...hidden, info.name] })} said={`${off ? 'Show' : 'Hide'} ${named}`} active={!off} current="true" named={false} />;
+            return <ChannelChip channel={info} href={href({ hide: off ? [...hidden].filter((name) => name !== info.name) : [...hidden, info.name] })} said={`${off ? 'Show' : 'Hide'} ${named}`} active={!off} current="true" named={false} grey={off} />;
             })}
           </nav>
           {picked.length === 0 ? (
@@ -163,7 +194,7 @@ const split = (point: { date: string; value: number }): string =>
                     <StatTile label="Views" trend={trends.views} value={number(views.value)} change={views.change ?? undefined} />
                   </li>
                   <li class="contents">
-                    <StatTile label="Likes and replies" trend={trends.reactions} value={number(reactions.value)} change={reactions.change ?? undefined} note={`from ${reactions.posts === 1 ? '1 post' : `${number(reactions.posts)} posts`}`} />
+                    <StatTile label="Shared and saved" trend={trends.spread} value={number(spread.value)} change={spread.change ?? undefined} note={`from ${spread.posts === 1 ? '1 post' : `${number(spread.posts)} posts`}`} />
                   </li>
                 </ul>
               </div>
@@ -171,16 +202,16 @@ const split = (point: { date: string; value: number }): string =>
                 <section aria-label="Audience" class="flex min-w-0 flex-col gap-8 xl:col-span-2">
                   <div class="flex flex-col gap-4">
                     <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
-                      <Heading variant="block" as="h2">{metric === 'followers' ? 'Followers' : `${METRIC_LABELS[metric]} per ${unit}`}</Heading>
+                      <Heading variant="block" as="h2">{metric === 'followers' ? 'Followers' : `${METRIC_NAMES[metric]} per ${unit}`}</Heading>
                       <nav aria-label="Show" class:list={[SEGMENTS, 'w-fit']}>
                         {METRICS.map((key) => (
-                          <a href={href({ metric: key })} aria-current={key === metric ? 'page' : undefined} class={SEGMENT}>{METRIC_LABELS[key]}</a>
+                          <a href={href({ metric: key })} aria-current={key === metric ? 'page' : undefined} aria-label={METRIC_NAMES[key]} class={`${SEGMENT} max-sm:px-3`}>{METRIC_LABELS[key]}</a>
                         ))}
                       </nav>
                     </div>
                     <Card class="flex flex-col gap-4">
                       {points.length > (metric === 'followers' ? 1 : 0) ? (
-                        <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={points} time={time} grid={scale(points.map((point) => point.value), metric !== 'followers')} number={compact} class="h-64" label={`${METRIC_LABELS[metric]} of the channels shown`} said={split} parts={metric === 'followers' ? undefined : rows.map((row) => ({ fill: row.fill, points: row.daily }))} />
+                        <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={points} time={time} grid={scale(points.map((point) => point.value), metric !== 'followers')} number={compact} class="h-64" label={`${METRIC_NAMES[metric]} of the channels shown`} said={split} parts={metric === 'followers' ? undefined : rows.map((row) => ({ fill: row.fill, points: row.daily }))} />
                       ) : (
                         <Text variant="body" class="flex h-64 items-center justify-center text-center text-ink-faint">No data yet.</Text>
                       )}
@@ -196,6 +227,7 @@ const split = (point: { date: string; value: number }): string =>
                             <span class="flex shrink-0 items-baseline gap-2 tabular-nums">
                               <span>{row.value === null ? '–' : number(row.value)}</span>
                               {row.change !== null && <Change value={row.change} class="text-xs" />}
+                              {row.share !== null && <span class="text-xs text-ink-soft">{Math.round(row.share)}%</span>}
                             </span>
                           </span>
                           <svg aria-hidden="true" class="block h-3 w-full">
@@ -211,7 +243,7 @@ const split = (point: { date: string; value: number }): string =>
                         <Heading variant="block" as="h2">Audience</Heading>
                         <nav aria-label="Audience by" class:list={[SEGMENTS, 'w-fit']}>
                           {PLACE_KINDS.map((key) => (
-                            <a href={href({ audience: key })} aria-current={key === where ? 'page' : undefined} class={SEGMENT}>{PLACE_LABELS[key]}</a>
+                            <a href={href({ audience: key, place: '', places: key === where ? listed : 0 })} aria-current={key === where ? 'page' : undefined} class={SEGMENT}>{PLACE_LABELS[key]}</a>
                           ))}
                         </nav>
                       </div>
@@ -222,22 +254,31 @@ const split = (point: { date: string; value: number }): string =>
                           {places.slice(0, listed).map((found) => {
                             const name = placeName(where, found.place);
                             const change = found.change === null ? null : Math.round(found.change * 10) / 10;
+                            const open = found.place === opened;
+                            const course = open ? courseOf(found.place) : null;
                             return (
-                              <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 p-4 md:p-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_128px]" data-tip={`${name}: ${number(found.count)} people`}>
-                                <span class="min-w-0 truncate text-sm">{name}</span>
-                                <span class="hidden min-w-0 sm:block">
-                                  <Spark points={found.points} fromZero={false} />
-                                </span>
-                                <span class="flex items-baseline justify-end gap-2 tabular-nums">
-                                  <span>{found.share.toLocaleString('en-GB', { maximumFractionDigits: 1, minimumFractionDigits: 1 })}%</span>
-                                  {change !== null && <Change value={change} unit=" pt" class="text-xs" />}
-                                </span>
+                              <li>
+                                <a href={href({ place: open ? '' : found.place, places: listed, top: shown, tags: mentioned })} data-place={found.place} aria-expanded={open ? 'true' : 'false'} class="transition grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 p-4 md:p-6 hover:bg-(--tone-hover) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_128px]" data-tip={`${name}: ${number(found.count)} people`}>
+                                  <span class="min-w-0 truncate text-sm">{name}</span>
+                                  <span class="hidden min-w-0 sm:block">
+                                    <Spark points={found.points} fromZero={false} />
+                                  </span>
+                                  <span class="flex items-baseline justify-end gap-2 tabular-nums">
+                                    <span>{found.share.toLocaleString('en-GB', { maximumFractionDigits: 1, minimumFractionDigits: 1 })}%</span>
+                                    {change !== null && <Change value={change} unit=" pt" class="text-xs" />}
+                                  </span>
+                                </a>
+                                {course && course.points.length > 0 && (
+                                  <div class="p-4 md:p-6">
+                                    <Chart kind="line" points={course.points} parts={course.lines} time={course.time} grid={course.grid} number={percent} class="h-48" label={`Share of ${name} per channel`} said={course.said} />
+                                  </div>
+                                )}
                               </li>
                             );
                           })}
                         </Card>
                       )}
-                      {places.length > listed && <div><Button href={href({ places: listed + PAGE })} data-more-places variant="outline">Show {Math.min(PAGE, places.length - listed)} more</Button></div>}
+                      {places.length > listed && <div><Button href={href({ places: listed + PAGE, top: shown, tags: mentioned })} data-more-places variant="outline">Show {Math.min(PAGE, places.length - listed)} more</Button></div>}
                     </div>
                   )}
                 </section>
@@ -270,7 +311,7 @@ const split = (point: { date: string; value: number }): string =>
                                 <span class:list={['line-clamp-2 text-sm break-words', !post.text && 'text-ink-faint']}>{post.text || 'No text.'}</span>
                                 <span class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
                                   <span class="flex min-w-0 items-center"><span class="truncate">{post.type}</span><Icon name="dot" weight="bold" /><span class="shrink-0">{dayLabel(post.day)}</span></span>
-                                  <span class="flex shrink-0 items-baseline gap-1 tabular-nums">{standing.has(post.url) && <TopMark views={standing.get(post.url)!} class="self-center text-ink" />}<span class="text-base leading-4 text-ink">{number(post.value)}</span> {post.value === 1 ? ONE[sort] : SORT_LABELS[sort].toLowerCase()}</span>
+                                  <span class="flex shrink-0 items-baseline gap-1 tabular-nums"><span class="text-base leading-4 text-ink">{number(post.value)}</span> {post.value === 1 ? ONE[sort] : SORT_LABELS[sort].toLowerCase()}</span>
                                 </span>
                               </span>
                             </a>
@@ -280,6 +321,30 @@ const split = (point: { date: string; value: number }): string =>
                     </Card>
                   )}
                   {top.length > shown && <div><Button href={href({ top: shown + PAGE })} data-more-posts variant="outline">Show {Math.min(PAGE, top.length - shown)} more</Button></div>}
+                  {tagging && (
+                    <div class="flex flex-col gap-4 pt-4">
+                      <div class="flex min-h-10 items-center justify-between gap-4">
+                        <Heading variant="block" as="h2">Tagged by</Heading>
+                        <span class="tabular-nums">{number(tags.length)}</span>
+                      </div>
+                      {tags.length === 0 ? (
+                        <Text variant="body" class="text-ink-faint">No tags in this period.</Text>
+                      ) : (
+                        <Card as="ul" variant="bare" class="divide-y divide-line overflow-hidden">
+                          {tags.slice(0, mentioned).map((tag) => (
+                            <li>
+                              <a href={tag.url} target="_blank" rel="noopener noreferrer" class="transition flex items-center gap-3 p-4 md:p-6 hover:bg-(--tone-hover) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink">
+                                <ChannelMark channel={tag.info} size="lg" on="surface" />
+                                <span class="min-w-0 flex-1 truncate text-sm">{tag.by || 'Unknown'}</span>
+                                <span class="shrink-0 text-xs text-ink-soft">{dayLabel(tag.day)}</span>
+                              </a>
+                            </li>
+                          ))}
+                        </Card>
+                      )}
+                      {tags.length > mentioned && <div><Button href={href({ tags: mentioned + PAGE })} data-more-tags variant="outline">Show {Math.min(PAGE, tags.length - mentioned)} more</Button></div>}
+                    </div>
+                  )}
                 </section>
               </div>
             </div>

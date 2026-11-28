@@ -166,7 +166,7 @@ export function takeFlash(): { text: string; tone: 'ok' | 'bad' } | null {
   return found;
 }
 
-export async function cardAction(action: string, id: string, value: string, by?: string): Promise<{ ok: boolean; text: string }> {
+async function cardAction(action: string, id: string, value: string, by?: string): Promise<{ ok: boolean; text: string }> {
   const [folder = '', file = ''] = id.split('/');
   const base = file.replace(/\.md$/, '');
   const path = `posts/${folder}/${base}.md`;

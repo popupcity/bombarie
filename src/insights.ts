@@ -2,7 +2,7 @@ import type { Row } from './csv.ts';
 import { ymd } from './time.ts';
 import type { Platform } from './types.ts';
 
-export const RANGES = { week: 7, month: 30, quarter: 90, year: 365, all: 0 } as const;
+const RANGES = { week: 7, month: 30, quarter: 90, year: 365, all: 0 } as const;
 export type Range = keyof typeof RANGES;
 export const SORTS = ['views', 'likes', 'replies', 'follows'] as const;
 export type Sort = (typeof SORTS)[number];
@@ -17,10 +17,15 @@ export interface Point {
 }
 
 const repliesColumn = (platform: Platform): string => (platform === 'threads' ? 'replies' : 'comments');
-const answered = (accounts: Account[]): Account[] => accounts.filter((account) => account.platform !== 'substack');
+const PASSED_ON: Partial<Record<Platform, string[]>> = { instagram: ['shares', 'saved'], facebook: ['shares'], threads: ['shares', 'reposts', 'quotes'] };
+const passedOf = (accounts: Account[]): { day: string; value: number }[] =>
+  accounts.flatMap((account) => {
+    const columns = PASSED_ON[account.platform] ?? [];
+    return account.posts.filter((row) => columns.some((column) => row[column])).map((row) => ({ day: ymd(new Date(row.date!)), value: columns.reduce((total, column) => total + Number(row[column] || 0), 0) }));
+  });
 const series = (rows: Row[], column: string): Point[] => rows.flatMap((row) => (row[column] === undefined || row[column] === '' ? [] : [{ date: row.date!, value: Number(row[column]) }])).sort((a, b) => a.date.localeCompare(b.date));
 
-export const METRICS = ['views', 'reach', 'followers'] as const;
+export const METRICS = ['views', 'reach', 'new', 'followers'] as const;
 export type Metric = (typeof METRICS)[number];
 export const metricOf = (value: string | null | undefined): Metric => METRICS.find((metric) => metric === value) ?? 'views';
 
@@ -44,12 +49,20 @@ export function followersOf(days: Row[], from: string): Followers {
   return { followers: all.at(-1)?.value ?? null, change: growth.length > 1 ? growth.at(-1)!.value - growth[0]!.value : null };
 }
 
-export const dailyOf = (days: Row[], column: 'views' | 'reach', from: string): Point[] => series(days, column).filter((point) => point.date >= from);
+export type Daily = 'views' | 'reach' | 'reach_others';
+export const dailyOf = (days: Row[], column: Daily, from: string): Point[] => series(days, column).filter((point) => point.date >= from);
 
-export function summed(accounts: Account[], column: 'views' | 'reach', from: string): Point[] {
+export function summed(accounts: Account[], column: Daily, from: string): Point[] {
   const found = new Map<string, number>();
   for (const account of accounts) for (const point of dailyOf(account.days, column, from)) found.set(point.date, (found.get(point.date) ?? 0) + point.value);
   return [...found].map(([date, value]) => ({ date, value })).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export function othersShare(days: Row[], from: string): number | null {
+  const measured = days.filter((row) => row.date! >= from && row.reach_others && row.reach_followers);
+  const others = measured.reduce((total, row) => total + Number(row.reach_others), 0);
+  const all = others + measured.reduce((total, row) => total + Number(row.reach_followers), 0);
+  return all === 0 ? null : (100 * others) / all;
 }
 
 export function followerLine(accounts: Account[], from: string): Point[] {
@@ -83,10 +96,10 @@ export function viewTotal(accounts: Account[], from: string, earlier: string): T
   return { value: now, change: comparable ? now - sum(summed(accounts, 'views', earlier).filter((point) => point.date < from)) : null };
 }
 
-export function engagement(accounts: Account[], from: string, earlier: string): Total & { posts: number } {
+export function passedOn(accounts: Account[], from: string, earlier: string): Total & { posts: number } {
   const of = (start: string, end?: string): { value: number; posts: number } => {
-    const rows = answered(accounts).flatMap((account) => account.posts.filter((row) => within(ymd(new Date(row.date!)), start, end)).map((row) => Number(row.likes || 0) + Number(row[repliesColumn(account.platform)] || 0)));
-    return { value: rows.reduce((total, value) => total + value, 0), posts: rows.length };
+    const found = passedOf(accounts).filter((post) => within(post.day, start, end));
+    return { value: found.reduce((total, post) => total + post.value, 0), posts: found.length };
   };
   const now = of(from);
   return { ...now, change: from === '' ? null : now.value - of(earlier, from).value };
@@ -134,7 +147,7 @@ export function topPosts(sources: { channel: string; platform: Platform; posts: 
 }
 
 const KINDS: Record<string, string> = { TEXT_POST: 'Text', LINK: 'Link', NEWSLETTER: 'Newsletter', IMAGE: 'Image', VIDEO: 'Video', REEL: 'Reel', CAROUSEL_ALBUM: 'Carousel', AUDIO: 'Audio' };
-export const kindOf = (type: string): string => KINDS[type] ?? 'Post';
+const kindOf = (type: string): string => KINDS[type] ?? 'Post';
 
 const DAY_MS = 86_400_000;
 const dayNumber = (day: string): number => Date.parse(`${day}T00:00:00Z`) / DAY_MS;
@@ -169,8 +182,8 @@ export function axis(start: string, end: string): Axis {
 const ROLLING_DAYS = 7;
 const MOST_POINTS = 180;
 
-export function engagementLine(accounts: Account[], from: string, today: string): Point[] {
-  const posts = answered(accounts).flatMap((account) => account.posts.map((row) => ({ day: dayNumber(ymd(new Date(row.date!))), value: Number(row.likes || 0) + Number(row[repliesColumn(account.platform)] || 0) })));
+export function passedOnLine(accounts: Account[], from: string, today: string): Point[] {
+  const posts = passedOf(accounts).map((post) => ({ day: dayNumber(post.day), value: post.value }));
   if (posts.length === 0) return [];
   const first = from ? dayNumber(from) : Math.min(...posts.map((post) => post.day));
   const last = dayNumber(today);
@@ -183,7 +196,7 @@ export function engagementLine(accounts: Account[], from: string, today: string)
 export const UNITS: Record<Range, 'day' | 'week' | 'month'> = { week: 'day', month: 'day', quarter: 'week', year: 'month', all: 'month' };
 export type Unit = (typeof UNITS)[Range];
 
-export function bucketOf(day: string, unit: Unit): string {
+function bucketOf(day: string, unit: Unit): string {
   if (unit === 'day') return day;
   if (unit === 'month') return `${day.slice(0, 7)}-01`;
   const number = dayNumber(day);

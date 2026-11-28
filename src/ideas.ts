@@ -60,7 +60,7 @@ function parseIdea(folder: string, raw: string): Idea {
   };
 }
 
-export function ideaFolders(root: string): string[] {
+function ideaFolders(root: string): string[] {
   const dir = join(root, 'ideas');
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true })

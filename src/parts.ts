@@ -17,9 +17,9 @@ function takeMedia(lines: string[]): { text: string; images: string[] } {
   return { text: kept.join('\n').replace(/\n{3,}/g, '\n\n').trim(), images };
 }
 
-export const mediaLines = (names: string[]): string => names.map((name) => `![](${/[\s()]/.test(name) ? `<${name}>` : name})`).join('\n');
+const mediaLines = (names: string[]): string => names.map((name) => `![](${/[\s()]/.test(name) ? `<${name}>` : name})`).join('\n');
 
-export const withMediaLines = (text: string, images: string[] = []): string => [text.trim(), mediaLines(images)].filter(Boolean).join('\n\n');
+const withMediaLines = (text: string, images: string[] = []): string => [text.trim(), mediaLines(images)].filter(Boolean).join('\n\n');
 
 export const splitMedia = (text: string): { text: string; images: string[] } => takeMedia(text.split('\n'));
 

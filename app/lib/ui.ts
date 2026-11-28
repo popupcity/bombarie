@@ -19,7 +19,6 @@ export const MENU_ITEM = `${ROW} transition hover:bg-(--tone-hover)`;
 
 export const NAV_ITEM = `${ROW} transition not-aria-[current=page]:hover:bg-(--tone-hover)`;
 
-
 export const jsonForScript = (value: unknown): string =>
   JSON.stringify(value)
     .replace(/</g, '\\u003c')
@@ -73,6 +72,7 @@ export const SCHEME_COOKIE = 'bombarie_scheme';
 export const RAIL_COOKIE = 'bombarie_rail';
 
 export const SERIES = ['fill-series-1', 'fill-series-2', 'fill-series-3', 'fill-series-4', 'fill-series-5'];
+export const SERIES_LINES = ['stroke-series-1', 'stroke-series-2', 'stroke-series-3', 'stroke-series-4', 'stroke-series-5'];
 
 export const schemeOf = (value: string | undefined): 'light' | 'dark' | undefined => (value === 'light' || value === 'dark' ? value : undefined);
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { axis, before, engagement, engagementLine, followerLine, followersOf, grouped, rangeOf, scale, since, sortOf, summed, timeline, topPosts, viewTotal } from './insights.ts';
+import { axis, before, passedOn, passedOnLine, followerLine, followersOf, grouped, othersShare, rangeOf, scale, since, sortOf, summed, timeline, topPosts, viewTotal } from './insights.ts';
 
 const now = new Date('2026-11-27T12:00:00Z');
 
@@ -17,8 +17,8 @@ test('followers show the latest number, and a change only with two measurements 
 
 const day = (date: string, views: string, reach = '', followers = '') => ({ date, views, reach, followers });
 const accounts = [
-  { platform: 'instagram' as const, days: [day('2026-10-29', '5', '3'), day('2026-11-26', '10', '4', '100'), day('2026-11-27', '20', '6', '101')], posts: [{ date: '2026-11-25T10:00:00+0000', likes: '3', comments: '2' }, { date: '2026-10-10T10:00:00+0000', likes: '1', comments: '0' }] },
-  { platform: 'threads' as const, days: [day('2026-09-20', '7'), day('2026-10-10', '2'), day('2026-11-27', '1', '', '50')], posts: [{ date: '2026-11-20T10:00:00+0000', likes: '4', replies: '1' }] }
+  { platform: 'instagram' as const, days: [day('2026-10-29', '5', '3'), day('2026-11-26', '10', '4', '100'), day('2026-11-27', '20', '6', '101')], posts: [{ date: '2026-11-25T10:00:00+0000', likes: '3', comments: '2', shares: '3', saved: '2' }, { date: '2026-10-10T10:00:00+0000', likes: '1', comments: '0', shares: '1', saved: '0' }] },
+  { platform: 'threads' as const, days: [day('2026-09-20', '7'), day('2026-10-10', '2'), day('2026-11-27', '1', '', '50')], posts: [{ date: '2026-11-20T10:00:00+0000', likes: '4', replies: '1', shares: '4', reposts: '1' }] }
 ];
 
 test('totals add up the days of the shown accounts, and compare only when every one goes back far enough', () => {
@@ -29,9 +29,15 @@ test('totals add up the days of the shown accounts, and compare only when every 
   assert.deepEqual(viewTotal(accounts.slice(1), from, before('month', now)), { value: 1, change: -1 });
 });
 
-test('likes and replies count the posts of the period against the one before', () => {
-  assert.deepEqual(engagement(accounts, since('month', now), before('month', now)), { value: 10, posts: 2, change: 9 });
-  assert.equal(engagement(accounts, '', '').change, null);
+test('shared and saved count the posts of the period that were passed on against the one before, each platform with its own numbers', () => {
+  const post = (date: string, numbers: Record<string, string>) => ({ date, ...numbers });
+  const spread = [
+    { platform: 'instagram' as const, days: [], posts: [post('2026-11-25T10:00:00+0000', { shares: '3', saved: '2', likes: '99' }), post('2026-10-10T10:00:00+0000', { shares: '1', saved: '0' }), post('2026-11-26T10:00:00+0000', { shares: '', saved: '' })] },
+    { platform: 'threads' as const, days: [], posts: [post('2026-11-20T10:00:00+0000', { shares: '1', reposts: '2', quotes: '1' })] },
+    { platform: 'substack' as const, days: [], posts: [post('2026-11-21T10:00:00+0000', { views: '5' })] }
+  ];
+  assert.deepEqual(passedOn(spread, since('month', now), before('month', now)), { value: 9, posts: 2, change: 8 });
+  assert.equal(passedOn(spread, '', '').change, null);
 });
 
 test('the follower line starts once every account was measured, and carries the last count of each on', () => {
@@ -72,11 +78,11 @@ test('the time axis puts a day where its date is, with dates by week, month or y
   assert.deepEqual(axis('2023-11-28', '2026-11-27').ticks.map((tick) => tick.label), ['2024', '2025', '2026']);
 });
 
-test('the likes line holds for every day what the posts of the week before it got', () => {
-  const line = engagementLine(accounts, '2026-11-24', '2026-11-27');
+test('the shared line holds for every day what the posts of the week before it got', () => {
+  const line = passedOnLine(accounts, '2026-11-24', '2026-11-27');
   assert.deepEqual(line.map((point) => [point.date, point.value]), [['2026-11-24', 5], ['2026-11-25', 10], ['2026-11-26', 10], ['2026-11-27', 5]]);
-  assert.ok(engagementLine(accounts, '2012-01-01', '2026-11-27').length <= 180);
-  assert.deepEqual(engagementLine([], '', '2026-11-27'), []);
+  assert.ok(passedOnLine(accounts, '2012-01-01', '2026-11-27').length <= 180);
+  assert.deepEqual(passedOnLine([], '', '2026-11-27'), []);
 });
 
 test('longer periods group the days: a quarter by week from Monday, a year by month', () => {
@@ -100,7 +106,8 @@ test('posts rank by the followers they brought, and a post without that number i
   assert.deepEqual(topPosts([{ channel: 'ig', platform: 'instagram', posts }, { channel: 't', platform: 'threads', posts: [{ url: 'c', date: '2026-11-22T10:00:00Z', views: '9' }] }], 'follows', '').map((post) => [post.url, post.value]), [['b', 26], ['a', 1]]);
 });
 
-test('newsletters have no likes or replies, so they are not counted among the posts that got them', () => {
-  const letters = { platform: 'substack' as const, days: [], posts: [{ url: 'n', date: '2026-11-20T10:00:00Z', views: '5' }] };
-  assert.deepEqual(engagement([...accounts, letters], since('month', now), before('month', now)), engagement(accounts, since('month', now), before('month', now)));
+test('the share of reach beyond the followers is taken over the days that have both parts', () => {
+  const days = [{ date: '2026-11-01', reach_others: '30', reach_followers: '70' }, { date: '2026-11-02', reach_others: '10', reach_followers: '90' }, { date: '2026-11-03', reach_others: '', reach_followers: '' }, { date: '2026-10-01', reach_others: '99', reach_followers: '1' }];
+  assert.equal(othersShare(days, '2026-11-01'), 20);
+  assert.equal(othersShare([], ''), null);
 });

@@ -12,13 +12,14 @@ interface Props {
   current?: 'page' | 'true';
   type?: string | null | undefined;
   named?: boolean;
+  grey?: boolean;
 }
-const { channel, href, said, title = said, active, current = 'page', type, named = true } = Astro.props;
+const { channel, href, said, title = said, active, current = 'page', type, named = true, grey = false } = Astro.props;
 const withName = named && active;
 ---
 
 <a href={href} aria-current={active ? current : undefined} aria-label={said} title={title} data-control class={`${CHIP} pl-1 ${withName ? 'pr-4' : type ? 'pr-2' : 'pr-1'}`}>
-  <ChannelMark channel={channel} size="chip" />
+  <span class:list={['inline-flex', grey && 'grayscale']}><ChannelMark channel={channel} size="chip" /></span>
   {withName && <span aria-hidden="true">{channel.label}</span>}
   {type && <span aria-hidden="true" class="rounded-sm bg-track px-2 py-1 text-xs text-ink-soft capitalize">{type}</span>}
 </a>

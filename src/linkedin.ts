@@ -67,7 +67,7 @@ function oldStyle(headers: Record<string, string>): Record<string, string> {
   return rest;
 }
 
-export function commentAttributes(text: string, mentions: Record<string, string>) {
+function commentAttributes(text: string, mentions: Record<string, string>) {
   let start = 0;
   return mentionSegments(text, mentions).flatMap((segment) => {
     const at = start;

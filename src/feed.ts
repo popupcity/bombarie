@@ -55,7 +55,8 @@ export function parseFeed(xml: string): FeedItem[] {
   const blocks = [...xml.matchAll(/<(item|entry)[\s>][\s\S]*?<\/\1>/gi)].map((match) => match[0]);
   for (const block of blocks) {
     const title = plain(inner(block, 'title') ?? '');
-    const url = (inner(block, 'link') ?? '').trim() || atomLink(block);
+    const link = (inner(block, 'link') ?? '').trim() || atomLink(block);
+    const url = /^https?:\/\//i.test(link) ? link : '';
     const guid = (inner(block, 'guid') ?? inner(block, 'id') ?? '').trim() || url;
     const stamp = inner(block, 'pubDate') ?? inner(block, 'published') ?? inner(block, 'updated') ?? '';
     const date = new Date(stamp.trim());

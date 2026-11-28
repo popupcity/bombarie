@@ -86,3 +86,8 @@ test('a new feed address starts from scratch', async () => {
   await refreshFeeds(root, channels, serve(RSS), new Date('2026-11-19T12:10:00Z'));
   assert.equal(readFeed(root, 'sub')?.items.length, 2);
 });
+
+test('a link from a feed is kept only when it is a web address', () => {
+  const item = (link: string) => `<item><title>T</title><guid>g</guid><pubDate>Fri, 27 Nov 2026 10:00:00 GMT</pubDate><link>${link}</link></item>`;
+  assert.deepEqual(parseFeed(`<rss>${item('https://a.test/p')}${item('javascript:alert(1)')}${item('data:text/html,x')}</rss>`).map((found) => found.url), ['https://a.test/p', '', '']);
+});

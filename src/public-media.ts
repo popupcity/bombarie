@@ -8,9 +8,9 @@ export type PublicKind = 'jpg' | 'story' | 'mp4';
 const KINDS: PublicKind[] = ['jpg', 'story', 'mp4'];
 const SAFE = /^[^/\\.][^/\\]*$/;
 
-export const STORY = { width: 1080, height: 1920 } as const;
+const STORY = { width: 1080, height: 1920 } as const;
 
-export async function storyFrame(bytes: Uint8Array): Promise<Buffer> {
+async function storyFrame(bytes: Uint8Array): Promise<Buffer> {
   const source = sharp(bytes).rotate();
   const background = await source.clone().resize(STORY.width, STORY.height, { fit: 'cover' }).blur(40).modulate({ brightness: 0.7 }).jpeg({ quality: 80 }).toBuffer();
   const picture = await source.clone().resize(STORY.width, STORY.height, { fit: 'inside' }).toBuffer();

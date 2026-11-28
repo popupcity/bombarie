@@ -3,7 +3,7 @@ export type Users = Record<string, string>;
 
 const NAME = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 
-export const nameIn = (users: Users, name: string): string | undefined => Object.keys(users).find((known) => known.toLowerCase() === name.toLowerCase());
+const nameIn = (users: Users, name: string): string | undefined => Object.keys(users).find((known) => known.toLowerCase() === name.toLowerCase());
 export const roleOf = (users: Users, name: string): Role | null => {
   const known = nameIn(users, name);
   return known ? (users[known] as Role) : null;

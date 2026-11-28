@@ -6,7 +6,8 @@ import { connectProblem } from '../../../src/connect.ts';
 import { channelInfos, channelPosts, loadChannels, removeChannel, renameChannel, setFeed, setHandle } from '../../../src/channels.ts';
 import { appsPath, readApp, readTokens, tokensPath } from '../../../src/secrets.ts';
 import { readFeed, refreshFeed } from '../../../src/feed.ts';
-import { MAX_EXPORT_BYTES, countedTo, parseExport, saveExport } from '../../../src/substack.ts';
+import { shortDay } from '../../../src/time.ts';
+import { EXPORT_NAMES, MAX_EXPORT_BYTES, countedTo, parseExport, saveExport } from '../../../src/substack.ts';
 import { PLATFORM_LABEL } from '../../../src/types.ts';
 import { sentence } from '../../../src/text.ts';
 import ConfirmDialog from '../../components/ConfirmDialog.astro';
@@ -80,7 +81,7 @@ if (Astro.request.method === 'POST') {
         })
       );
       for (const read of reads) await saveExport(root, key, read, { items: readFeed(root, key)?.items ?? [], feed: channel.feed });
-      const names = [...new Set(reads.map((read) => ({ followers: 'subscribers', views: 'views', posts: 'posts', countries: 'countries' })[read.kind]))];
+      const names = [...new Set(reads.map((read) => EXPORT_NAMES[read.kind].toLowerCase()))];
       setOutcome({ name: key, ok: true, message: `Read: ${names.join(', ')}.` });
       return Astro.redirect(here, 303);
     }
@@ -133,8 +134,7 @@ const note = connected
 const stored = hasFeed ? readFeed(root, key) : null;
 const feedFile = stored && stored.source === channel.feed ? stored : null;
 const substack = channel.platform === 'substack';
-const counted = ([['Subscribers', 'followers'], ['Views', 'views'], ['Posts', 'posts'], ['Countries', 'countries']] as const).map(([label, kind]) => [label, substack ? countedTo(root, key, kind) : undefined] as const);
-const shortDay = (day: string): string => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(day.slice(0, 4) !== String(new Date().getFullYear()) && { year: 'numeric' }), timeZone: 'UTC' });
+const counted = (Object.keys(EXPORT_NAMES) as (keyof typeof EXPORT_NAMES)[]).map((kind) => [EXPORT_NAMES[kind], substack ? countedTo(root, key, kind) : undefined] as const);
 const EXPORTS = 'Download these in the statistics of your Substack and drop them here, together or one by one: the total of subscribers (a file named followers), the traffic for 90 days or less (traffic), the table of posts (email_stats) and the countries of your audience (audience_location, upload it soon after downloading). The subscriber list with e-mail addresses is not needed.';
 ---
 
@@ -172,7 +172,7 @@ const EXPORTS = 'Download these in the statistics of your Substack and drop them
                 {counted.map(([label, to]) => (
                   <li class="flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-lg bg-surface p-2 text-center ring-1 ring-line ring-inset">
                     <Text variant="small">{label}</Text>
-                    <Text variant="small" class="text-ink-soft tabular-nums">{to ? shortDay(to) : '–'}</Text>
+                    <Text variant="small" class="text-ink-soft tabular-nums">{to ? shortDay(to, new Date()) : '–'}</Text>
                   </li>
                 ))}
                 <li class="contents">
