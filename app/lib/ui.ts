@@ -10,7 +10,7 @@ export const OVERLAY =
   'origin-top -translate-y-1 scale-98 opacity-0 ease-leave open:ease-pop transition-[opacity,scale,translate,overlay,display] transition-discrete open:translate-y-0 open:scale-100 open:opacity-100 starting:open:-translate-y-1 starting:open:scale-98 starting:open:opacity-0';
 export const DIALOG = `${OVERLAY} backdrop:opacity-0 backdrop:ease-leave open:backdrop:ease-pop backdrop:transition-[opacity,overlay,display] backdrop:transition-discrete open:backdrop:opacity-100 starting:open:backdrop:opacity-0`;
 
-export const FLOAT = `${OVERLAY} mx-0 my-1 rounded-xl bg-surface text-sm text-ink shadow-float ring-1 ring-line ring-inset`;
+export const FLOAT = `${OVERLAY} rounded-xl bg-surface text-sm text-ink shadow-float ring-1 ring-line ring-inset`;
 export const MENU = `${FLOAT} p-2`;
 export const PANEL = `${FLOAT} p-4`;
 const ROW = 'flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink';

@@ -1,4 +1,25 @@
 import { show } from './inplace.ts';
+import { float } from './place.ts';
+
+function openDay(mark: Element): HTMLElement | null {
+  const panel = document.getElementById(mark.getAttribute('data-opens')!);
+  if (!panel) return null;
+  panel.showPopover();
+  float(panel, mark as HTMLElement);
+  return panel;
+}
+
+document.addEventListener('click', (event) => {
+  const mark = (event.target as Element).closest('[data-opens]');
+  if (mark) openDay(mark);
+});
+
+document.addEventListener('keydown', (event) => {
+  const mark = (event.target as Element).closest('[data-opens][role="button"]');
+  if (!mark || (event.key !== 'Enter' && event.key !== ' ')) return;
+  event.preventDefault();
+  openDay(mark)?.querySelector('a')?.focus();
+});
 
 document.addEventListener('click', (event) => {
   if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;

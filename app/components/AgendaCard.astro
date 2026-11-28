@@ -50,7 +50,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
           {card.feed && <Icon name="arrow-square-out" class="text-ink-soft" />}
         </span>
         {hasMenu && (
-          <button type="button" popovertarget={menuId} aria-label="Actions" title="Actions" style={`anchor-name:--${menuId}`} class:list={[QUIET, 'relative z-10 col-start-2 row-start-1 -mr-2 size-8 text-lg']}><Icon name="dots-three" weight="bold" /></button>
+          <button type="button" popovertarget={menuId} aria-label="Actions" title="Actions" class:list={[QUIET, 'relative z-10 col-start-2 row-start-1 -mr-2 size-8 text-lg']}><Icon name="dots-three" weight="bold" /></button>
         )}
       </div>
       <div class="col-span-2 row-start-2 flex min-w-0 flex-col gap-2">
@@ -70,7 +70,7 @@ const firstLine = card.text.split('\n').find((line) => line.trim() !== '') ?? ''
       )
     }
     {hasMenu && (
-      <div id={menuId} popover style={`position-anchor:--${menuId}`} class:list={[MENU, 'w-60 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [right:anchor(right)] [top:anchor(bottom)]']}>
+      <div id={menuId} popover data-float="end" class:list={[MENU, 'w-60']}>
         <CardActions card={card} siblings={siblings} />
       </div>
     )}

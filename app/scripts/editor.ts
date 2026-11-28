@@ -276,7 +276,7 @@ function init(root: HTMLElement) {
       }
       if (!trigger) {
         trigger = h('button', { type: 'button', 'data-unused-trigger': true, popovertarget: 'unused-menu', title: 'Files of this post that are not used', class: `${ADD_TILE} focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ink` }) as HTMLButtonElement;
-        trigger.addEventListener('click', () => openUnused(trigger!, reply));
+        trigger.addEventListener('click', () => openUnused(reply));
         media.append(trigger);
       }
       const icon = h('span', { 'aria-hidden': 'true', class: 'inline-block size-5 shrink-0 [&>svg]:size-full' });
@@ -286,9 +286,7 @@ function init(root: HTMLElement) {
     if (unusedMenu.matches(':popover-open')) fillUnused();
   }
 
-  function openUnused(trigger: HTMLElement, reply: Element | undefined) {
-    for (const other of document.querySelectorAll<HTMLElement>('[data-unused-trigger]')) other.style.removeProperty('anchor-name');
-    trigger.style.setProperty('anchor-name', '--unused-menu');
+  function openUnused(reply: Element | undefined) {
     unusedFor = reply;
     fillUnused();
   }
@@ -803,8 +801,6 @@ function init(root: HTMLElement) {
     (event) => {
       const trigger = (event.target as Element).closest<HTMLElement>('[popovertarget="reply-menu"]');
       if (!trigger || !replyMenu) return;
-      for (const other of document.querySelectorAll<HTMLElement>('[popovertarget="reply-menu"]')) other.style.removeProperty('anchor-name');
-      trigger.style.setProperty('anchor-name', '--reply-menu');
       menuFor = trigger.closest<HTMLElement>('[data-reply]');
       const current = menuFor ? (menuFor.dataset.by ?? own) : null;
       for (const option of replyMenu.querySelectorAll<HTMLElement>('[data-author]')) {

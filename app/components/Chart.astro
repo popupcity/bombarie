@@ -10,9 +10,10 @@ interface Props {
   grid: Scale;
   number: (value: number) => string;
   parts?: { fill: string; stroke?: string; points: Point[] }[] | undefined;
+  marks?: { date: string; fills: string[]; said: string; opens: string }[];
   class?: string;
 }
-const { points, kind, label, said, time, grid, number, parts, class: className } = Astro.props;
+const { points, kind, label, said, time, grid, number, parts, marks = [], class: className } = Astro.props;
 const { low, high } = grid;
 const longest = Math.max(...grid.lines.map((value) => number(value).length));
 const columns = longest <= 3 ? 'grid-cols-[24px_minmax(0,1fr)]' : longest <= 4 ? 'grid-cols-[32px_minmax(0,1fr)]' : 'grid-cols-[40px_minmax(0,1fr)]';
@@ -28,6 +29,8 @@ const layers = (point: Point): { fill: string; top: number }[] => {
   }).reverse();
 };
 const courses = kind !== 'line' ? [] : parts ? parts.map((part) => ({ points: part.points, stroke: part.stroke!, dot: part.fill })) : [{ points, stroke: 'stroke-current', dot: 'fill-current' }];
+const MARKS = 3;
+const posted = new Map(marks.map((mark) => [mark.date, mark]));
 const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 4 ? 'start' : at > 96 ? 'end' : 'middle');
 ---
 
@@ -47,11 +50,21 @@ const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 4 ? 'start' : a
       points.map((point) => (
         <g>
           {kind === 'bars' && layers(point).map((layer) => layer.top > low && <rect x={`${time.at(point.date) - step * 0.35}%`} y={`${y(layer.top)}%`} width={`${step * 0.7}%`} height={`${y(low) - y(layer.top)}%`} rx="2" class={layer.fill} />)}
-          <rect x={`${time.at(point.date) - step / 2}%`} y="0" width={`${step}%`} height="100%" fill="transparent" data-tip={said(point)} />
+          <rect x={`${time.at(point.date) - step / 2}%`} y="0" width={`${step}%`} height="100%" fill="transparent" data-tip={said(point)} data-opens={posted.get(point.date)?.opens} class={posted.has(point.date) ? 'cursor-pointer' : undefined} />
         </g>
       ))
     }
   </svg>
+  {marks.length > 0 && (
+    <svg class="col-start-2 block h-8 w-full overflow-visible">
+      {marks.map((mark) => (
+        <g>
+          {mark.fills.slice(0, MARKS).map((fill, index) => <circle cx={`${time.at(mark.date)}%`} cy={4 + index * 12} r="4" class={fill} />)}
+          <rect x={`${time.at(mark.date) - step / 2}%`} y="0" width={`${step}%`} height="100%" fill="transparent" role="button" tabindex="0" aria-label={mark.said} data-tip={mark.said} data-opens={mark.opens} class="cursor-pointer focus-visible:outline-2 focus-visible:outline-ink" />
+        </g>
+      ))}
+    </svg>
+  )}
   <svg aria-hidden="true" class="col-start-2 block h-4 w-full overflow-visible text-xs">
     {time.ticks.map((tick) => (
       <text x={`${anchor(tick.at) === 'start' ? 0 : anchor(tick.at) === 'end' ? 100 : tick.at}%`} y="12" text-anchor={anchor(tick.at)} class="fill-ink-soft">{tick.label}</text>

@@ -25,7 +25,7 @@ const { toggles, movable, removable } = cardActions(card);
 const when = `${card.day}T${card.time}`;
 ---
 
-<div id={id} popover style={`position-anchor:--${id}`} class:list={[FLOAT, 'w-96 max-w-[calc(100vw-32px)] p-6 [inset:auto] [left:anchor(left)] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]']}>
+<div id={id} popover data-float="start" class:list={[FLOAT, 'w-96 max-w-[calc(100vw-32px)] p-6']}>
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-3">
       <Text variant="small" class="flex min-w-0 items-center gap-2 text-ink-soft">

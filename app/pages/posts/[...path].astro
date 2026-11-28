@@ -222,8 +222,8 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
           {
             addable.length > 0 && (
               <>
-                <button type="button" popovertarget="add-variant" aria-label="Add variant" title="Add variant" class="transition inline-flex size-10 cursor-pointer items-center justify-center rounded-lg text-xl text-ink ring-1 ring-line ring-inset [anchor-name:--add-variant] hover:bg-(--tone-hover)"><Icon name="plus" weight="bold" /></button>
-                <form id="add-variant" popover method="post" class:list={[MENU, 'w-72 [inset:auto] [left:anchor(left)] [position-anchor:--add-variant] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]']}>
+                <button type="button" popovertarget="add-variant" aria-label="Add variant" title="Add variant" class="transition inline-flex size-10 cursor-pointer items-center justify-center rounded-lg text-xl text-ink ring-1 ring-line ring-inset hover:bg-(--tone-hover)"><Icon name="plus" weight="bold" /></button>
+                <form id="add-variant" popover data-float="start" method="post" class:list={[MENU, 'w-72']}>
                   <input type="hidden" name="intent" value="add" />
                   <input type="hidden" name="from" value={variant.base} />
                   <div class="scroll-fade">                  {addable.map((option) => (
@@ -289,7 +289,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
                             </span>
                           </button>
                         </template>
-                        <div id="reply-menu" popover class:list={[MENU, 'w-64 [inset:auto] [left:anchor(left)] [position-anchor:--reply-menu] [position-try-fallbacks:flip-block] [top:anchor(bottom)]']}>
+                        <div id="reply-menu" popover data-float="start" class:list={[MENU, 'w-64']}>
                           {pickable.map((author) => (
                             <button type="button" data-author={author.key} class={MENU_ITEM}>
                               <ChannelMark channel={{ label: author.name, avatar: author.avatar, platform: 'linkedin' }} size="md" on="surface" />
@@ -325,7 +325,7 @@ const addable = variantOptions(channelInfos(loadChannels(root))).filter((option)
                     <Button type="button" data-open="delete-file" data-value="" variant="quiet" size="sm" icon data-tone="bad" aria-label="Delete" class="absolute top-1 right-1 opacity-0 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 pointer-coarse:opacity-100 hover:text-(--tone-text)"><Icon name="trash" /></Button>
                   </li>
                 </template>
-                <div id="unused-menu" popover aria-label="Unused files in this post" data-files={JSON.stringify(library)} data-sizes={JSON.stringify(sizes)} class:list={[PANEL, 'w-max max-w-88 [inset:auto] [position-anchor:--unused-menu] [position-try-fallbacks:flip-block,flip-inline] [left:anchor(left)] [top:anchor(bottom)]']}>
+                <div id="unused-menu" popover data-float="start" aria-label="Unused files in this post" data-files={JSON.stringify(library)} data-sizes={JSON.stringify(sizes)} class:list={[PANEL, 'w-max max-w-88']}>
                   <ul id="unused-list" class="flex max-h-80 flex-wrap gap-3 overflow-y-auto"></ul>
                 </div>
         <script type="application/json" id="entities" set:html={jsonForScript(campaign.entities)} />

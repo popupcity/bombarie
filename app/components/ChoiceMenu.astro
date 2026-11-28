@@ -26,13 +26,13 @@ interface Props {
 const { id, label, tone, options, submit = false, triggerId, labelId, said, disableActive = false, by } = Astro.props;
 ---
 
-<Button id={triggerId} type="button" variant="soft" tone={tone} popovertarget={id} style={`anchor-name:--${id}`} class="pr-3 pl-4 has-[img]:pl-1">
+<Button id={triggerId} type="button" variant="soft" tone={tone} popovertarget={id} class="pr-3 pl-4 has-[img]:pl-1">
   {by && <ByPhoto by={by} />}
   {said && <span class="sr-only">{said}</span>}
   <span id={labelId} class="[img+&]:pl-1">{label}</span>
   <Icon name="caret-down" class={CARET} />
 </Button>
-<div id={id} popover style={`position-anchor:--${id}`} class:list={[MENU, 'w-64 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [right:anchor(right)] [top:anchor(bottom)]']}>
+<div id={id} popover data-float="end" class:list={[MENU, 'w-64']}>
   {
     options.map((option) => {
       const Item = option.attrs.href ? 'a' : 'button';

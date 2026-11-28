@@ -133,17 +133,29 @@ export interface TopPost {
 
 const columnFor = (sort: Sort, platform: Platform): string => (sort === 'replies' ? repliesColumn(platform) : sort);
 
+export interface Moment extends Omit<TopPost, 'value'> {
+  at: string;
+  views: number | null;
+}
+
+const told = (channel: string, row: Row) => ({ channel, url: row.url!, day: ymd(new Date(row.date!)), type: kindOf(row.type ?? ''), text: row.text ?? '' });
+
 export function topPosts(sources: { channel: string; platform: Platform; posts: Row[] }[], sort: Sort, from: string): TopPost[] {
   const found = sources.flatMap(({ channel, platform, posts }) =>
     posts.flatMap((row) => {
-      const day = ymd(new Date(row.date!));
-      if (day < from) return [];
       const value = row[columnFor(sort, platform)];
-      if (value === undefined || value === '') return [];
-      return [{ channel, url: row.url!, day, type: kindOf(row.type ?? ''), text: row.text ?? '', value: Number(value) }];
+      const post = told(channel, row);
+      return post.day < from || value === undefined || value === '' ? [] : [{ ...post, value: Number(value) }];
     })
   );
   return found.sort((a, b) => b.value - a.value || b.day.localeCompare(a.day) || a.url.localeCompare(b.url));
+}
+
+export function momentsOf(sources: { channel: string; posts: Row[] }[], from: string): Moment[] {
+  return sources
+    .flatMap(({ channel, posts }) => posts.map((row) => ({ ...told(channel, row), at: new Date(row.date!).toISOString(), views: row.views ? Number(row.views) : null })))
+    .filter((post) => post.day >= from)
+    .sort((a, b) => a.at.localeCompare(b.at) || a.url.localeCompare(b.url));
 }
 
 const KINDS: Record<string, string> = { TEXT_POST: 'Text', LINK: 'Link', NEWSLETTER: 'Newsletter', IMAGE: 'Image', VIDEO: 'Video', REEL: 'Reel', CAROUSEL_ALBUM: 'Carousel', AUDIO: 'Audio' };

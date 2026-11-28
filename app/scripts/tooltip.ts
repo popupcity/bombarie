@@ -7,7 +7,7 @@ const GAP = 8;
 const tip = h('div', {
   popover: 'manual',
   role: 'tooltip',
-  class: `${OVERLAY} pointer-events-none m-0 max-w-64 whitespace-pre-line rounded-lg bg-ink px-3 py-2 text-xs text-page shadow-float [inset:auto]`
+  class: `${OVERLAY} pointer-events-none m-0 [inset:auto] max-w-64 whitespace-pre-line rounded-lg bg-ink px-3 py-2 text-xs text-page shadow-float`
 });
 document.body.append(tip);
 
@@ -69,6 +69,7 @@ document.addEventListener('focusin', (event) => {
 document.addEventListener('focusout', hide);
 document.addEventListener('pointerdown', hide);
 document.addEventListener('scroll', hide, true);
+window.addEventListener('resize', hide);
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') hide();
 });

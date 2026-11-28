@@ -2,10 +2,9 @@
 import Button from '@popupcity/ui/src/components/Button.astro';
 import Card from '@popupcity/ui/src/components/Card.astro';
 import Heading from '@popupcity/ui/src/components/Heading.astro';
-import Icon from '@popupcity/ui/src/components/Icon.astro';
 import Text from '@popupcity/ui/src/components/Text.astro';
 import { channelInfos, loadChannels } from '../../src/channels.ts';
-import { METRICS, SORTS, UNITS, grouped, timeline, before, dailyOf, passedOn, passedOnLine, followerLine, followersOf, metricOf, othersShare, rangeOf, scale, since, sortOf, summed, topPosts, viewTotal } from '../../src/insights.ts';
+import { METRICS, SORTS, UNITS, grouped, timeline, before, dailyOf, passedOn, passedOnLine, followerLine, followersOf, metricOf, momentsOf, othersShare, rangeOf, scale, since, sortOf, summed, topPosts, viewTotal } from '../../src/insights.ts';
 import type { Daily, Metric, Range, Sort } from '../../src/insights.ts';
 import { readPosts } from '../../src/posts.ts';
 import { historiesOf, placeKindOf, placeName, sharesOf } from '../../src/audience.ts';
@@ -20,11 +19,11 @@ import ChoiceMenu from '../components/ChoiceMenu.astro';
 import ChannelMark from '../components/ChannelMark.astro';
 import Spark from '../components/Spark.astro';
 import StatTile from '../components/StatTile.astro';
-import PlatformMark from '../components/PlatformMark.astro';
+import PostRow from '../components/PostRow.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Shell from '../layouts/Shell.astro';
 import { root, states } from '../lib/data.ts';
-import { SEGMENT, SEGMENTS, SERIES, SERIES_LINES, postHref } from '../lib/ui.ts';
+import { PANEL, SEGMENT, SEGMENTS, SERIES, SERIES_LINES, postHref } from '../lib/ui.ts';
 
 const PAGE = 5;
 const RANGE_COOKIE = 'bombarie_stats_range';
@@ -116,6 +115,16 @@ for (const post of readPosts(root, channels).posts) {
   const first = post.images[0];
   made.set(state.url, { href: postHref(post.id), ...(first && { image: `/img/${encodeURIComponent(folder)}/${encodeURIComponent(needsCover(first) ? `${first}.cover.jpg` : first)}?size=96` }) });
 }
+
+const posted = new Map<string, ReturnType<typeof momentsOf>>();
+if (unit === 'day') {
+  for (const post of momentsOf(picked.map((channel) => ({ channel: channel.info.name, posts: channel.posts })), first > from ? first : from)) {
+    posted.set(post.day, [...(posted.get(post.day) ?? []), post]);
+  }
+}
+const colourOf = (channel: string): string => SERIES[measured.findIndex((found) => found.info.name === channel) % SERIES.length]!;
+
+const marks = [...posted].map(([day, posts]) => ({ date: day, fills: posts.map((post) => colourOf(post.channel)), said: `${posts.length === 1 ? '1 post' : `${posts.length} posts`} on ${shortDay(day, now)}`, opens: `posts-${day}` }));
 
 const href = (change: { range?: Range; hide?: string[]; metric?: Metric; sort?: Sort; top?: number; audience?: PlaceKind; places?: number; tags?: number; place?: string }): string => {
   const next = { range, hide: [...hidden], metric, sort, top: 0, audience: where, places: 0, tags: 0, place: opened, ...change };
@@ -209,9 +218,17 @@ const split = (point: { date: string; value: number }): string =>
                         ))}
                       </nav>
                     </div>
+                    {[...posted].map(([day, posts]) => (
+                      <div id={`posts-${day}`} popover data-float="start" aria-label={`Posts on ${dayLabel(day)}`} class:list={[PANEL, 'w-80 max-w-[calc(100vw-16px)] divide-y divide-line p-0']}>
+                        {posts.map((post) => {
+                          const own = made.get(post.url);
+                          return <PostRow href={own?.href ?? post.url} here={Boolean(own)} channel={infoOf.get(post.channel)!} image={own?.image} text={post.text} type={post.type} when={dayLabel(post.day)} value={post.views === null ? undefined : number(post.views)} unit={post.views === 1 ? 'view' : 'views'} />;
+                        })}
+                      </div>
+                    ))}
                     <Card class="flex flex-col gap-4">
                       {points.length > (metric === 'followers' ? 1 : 0) ? (
-                        <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={points} time={time} grid={scale(points.map((point) => point.value), metric !== 'followers')} number={compact} class="h-64" label={`${METRIC_NAMES[metric]} of the channels shown`} said={split} parts={metric === 'followers' ? undefined : rows.map((row) => ({ fill: row.fill, points: row.daily }))} />
+                        <Chart kind={metric === 'followers' ? 'line' : 'bars'} points={points} time={time} grid={scale(points.map((point) => point.value), metric !== 'followers')} number={compact} class="h-64" label={`${METRIC_NAMES[metric]} of the channels shown`} said={split} marks={marks} parts={metric === 'followers' ? undefined : rows.map((row) => ({ fill: row.fill, points: row.daily }))} />
                       ) : (
                         <Text variant="body" class="flex h-64 items-center justify-center text-center text-ink-faint">No data yet.</Text>
                       )}
@@ -297,24 +314,7 @@ const split = (point: { date: string; value: number }): string =>
                         const info = infoOf.get(post.channel)!;
                         return (
                           <li>
-                            <a href={own?.href ?? post.url} target={own ? undefined : '_blank'} rel={own ? undefined : 'noopener noreferrer'} class="transition flex items-start gap-3 p-4 md:p-6 hover:bg-(--tone-hover) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink">
-                              <span class="w-4 shrink-0 text-right text-sm text-ink-soft tabular-nums">{index + 1}</span>
-                              {own?.image ? (
-                                <span class="relative size-8 shrink-0">
-                                  <img src={own.image} alt="" loading="lazy" class="size-8 rounded-lg bg-track object-cover" />
-                                  <PlatformMark platform={info.platform} class="absolute -right-1 -bottom-1 size-5 ring-2 ring-surface" />
-                                </span>
-                              ) : (
-                                <ChannelMark channel={info} size="lg" on="surface" />
-                              )}
-                              <span class="flex min-w-0 flex-1 flex-col gap-3">
-                                <span class:list={['line-clamp-2 text-sm break-words', !post.text && 'text-ink-faint']}>{post.text || 'No text.'}</span>
-                                <span class="flex items-baseline justify-between gap-2 text-xs text-ink-soft">
-                                  <span class="flex min-w-0 items-center"><span class="truncate">{post.type}</span><Icon name="dot" weight="bold" /><span class="shrink-0">{dayLabel(post.day)}</span></span>
-                                  <span class="flex shrink-0 items-baseline gap-1 tabular-nums"><span class="text-base leading-4 text-ink">{number(post.value)}</span> {post.value === 1 ? ONE[sort] : SORT_LABELS[sort].toLowerCase()}</span>
-                                </span>
-                              </span>
-                            </a>
+                            <PostRow href={own?.href ?? post.url} here={Boolean(own)} channel={info} image={own?.image} text={post.text} type={post.type} when={dayLabel(post.day)} value={number(post.value)} unit={post.value === 1 ? ONE[sort] : SORT_LABELS[sort].toLowerCase()} rank={index + 1} />
                           </li>
                         );
                       })}

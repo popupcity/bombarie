@@ -19,7 +19,7 @@ const connections = await loadConnections();
 const options = variantOptions(channelInfos(loadChannels(root)));
 ---
 
-<div id={id} popover style={`position-anchor:--${id}`} class:list={[MENU, 'w-72 [inset:auto] [position-try-fallbacks:flip-inline,flip-block] [top:anchor(bottom)]', align === 'right' ? '[right:anchor(right)]' : '[left:anchor(left)]']}>
+<div id={id} popover data-float={align === 'right' ? 'end' : 'start'} class:list={[MENU, 'w-72']}>
   {idea && <Heading variant="label" as="p" data-idea-part class="px-3 py-2">Post</Heading>}
   <div class="scroll-fade">
     {

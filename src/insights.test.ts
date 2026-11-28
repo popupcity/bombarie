@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { axis, before, passedOn, passedOnLine, followerLine, followersOf, grouped, othersShare, rangeOf, scale, since, sortOf, summed, timeline, topPosts, viewTotal } from './insights.ts';
+import { axis, before, passedOn, passedOnLine, followerLine, followersOf, grouped, momentsOf, othersShare, rangeOf, scale, since, sortOf, summed, timeline, topPosts, viewTotal } from './insights.ts';
 
 const now = new Date('2026-11-27T12:00:00Z');
 
@@ -110,4 +110,12 @@ test('the share of reach beyond the followers is taken over the days that have b
   const days = [{ date: '2026-11-01', reach_others: '30', reach_followers: '70' }, { date: '2026-11-02', reach_others: '10', reach_followers: '90' }, { date: '2026-11-03', reach_others: '', reach_followers: '' }, { date: '2026-10-01', reach_others: '99', reach_followers: '1' }];
   assert.equal(othersShare(days, '2026-11-01'), 20);
   assert.equal(othersShare([], ''), null);
+});
+
+test('the posts of a period come in the order they went out, with views when they have them', () => {
+  const sources = [
+    { channel: 'a', posts: [{ url: 'late', date: '2026-11-20T18:00:00+0000', views: '' }, { url: 'old', date: '2026-10-01T10:00:00+0000', views: '3' }] },
+    { channel: 'b', posts: [{ url: 'early', date: '2026-11-20T08:00:00+0000', views: '7', type: 'REEL' }] }
+  ];
+  assert.deepEqual(momentsOf(sources, '2026-11-01').map((post) => [post.url, post.channel, post.day, post.views, post.type]), [['early', 'b', '2026-11-20', 7, 'Reel'], ['late', 'a', '2026-11-20', null, 'Post']]);
 });

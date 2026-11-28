@@ -3,6 +3,7 @@ import { icons } from '@popupcity/ui/src/components/icons.ts';
 import { addDays, addMonths, monthLabel, monthWeeks } from '../../src/calendar.ts';
 import { clock, parseClock, whenLabel, ymd } from '../../src/time.ts';
 import { h } from './dom.ts';
+import { float } from './place.ts';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const NAV = `${QUIET} size-8`;
@@ -32,7 +33,8 @@ function open(button: HTMLElement, input: HTMLInputElement) {
     'data-picker': '',
     role: 'dialog',
     'aria-label': 'Pick a date and time',
-    class: `${PANEL} flex w-80 flex-col gap-4 [inset:auto]`
+    'data-float': 'start',
+    class: `${PANEL} flex w-80 flex-col gap-4`
   });
   button.after(panel);
 
@@ -55,24 +57,6 @@ function open(button: HTMLElement, input: HTMLInputElement) {
     focusDay(day);
   };
 
-  function place() {
-    const anchor = button.getBoundingClientRect();
-    const gap = 8;
-    const offset = 4;
-    panel.style.margin = '0';
-    const vw = document.documentElement.clientWidth;
-    const vh = document.documentElement.clientHeight;
-    if (panel.offsetHeight > vh - gap * 2) {
-      panel.style.maxHeight = `${vh - gap * 2}px`;
-      panel.style.overflowY = 'auto';
-    }
-    const box = { width: panel.offsetWidth, height: panel.offsetHeight };
-    const room = { below: vh - anchor.bottom - gap * 2, above: anchor.top - gap * 2 };
-    const side = box.height <= room.below ? 'below' : box.height <= room.above ? 'above' : room.below >= room.above ? 'below' : 'above';
-    const wanted = side === 'below' ? anchor.bottom + offset : anchor.top - box.height - offset;
-    panel.style.left = `${Math.min(Math.max(gap, anchor.left), vw - box.width - gap)}px`;
-    panel.style.top = `${Math.min(Math.max(gap, wanted), vh - box.height - gap)}px`;
-  }
 
   function render() {
     const weeks = monthWeeks([], view, today);
@@ -180,7 +164,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
             'button',
             {
               type: 'button',
-              class: `${OUTLINE_FIT} flex flex-col items-center justify-center`, 'data-tone': 'ink',
+              class: `${OUTLINE_FIT} flex flex-col items-center justify-center text-sm`, 'data-tone': 'ink',
               onclick: () => {
                 [date = date, time = time] = moment.value.split('T');
                 commit();
@@ -188,8 +172,8 @@ function open(button: HTMLElement, input: HTMLInputElement) {
                 button.focus();
               }
             },
-            h('span', { class: 'text-sm leading-4' }, moment.label),
-            h('span', { class: 'text-xs text-ink-soft tabular-nums' }, moment.value.slice(11))
+            h('span', { class: 'leading-4' }, moment.label),
+            h('span', { class: 'leading-4 text-ink-soft tabular-nums' }, moment.value.slice(11))
           )
         )
       )
@@ -232,7 +216,7 @@ function open(button: HTMLElement, input: HTMLInputElement) {
 
   render();
   panel.showPopover();
-  place();
+  float(panel, button);
   panel.addEventListener('toggle', (event) => {
     if ((event as ToggleEvent).newState === 'closed') {
       if (input.dataset.submit !== undefined && (input.value !== initial || (input.dataset.submit === 'always' && picked))) input.form?.requestSubmit();
