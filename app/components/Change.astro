@@ -5,7 +5,8 @@ interface Props {
   class?: string;
 }
 const { value, unit = '', class: className } = Astro.props;
-const tone = value > 0 ? 'ok' : value < 0 ? 'bad' : undefined;
+const shown = Math.round(value * 10) / 10 || 0;
+const tone = shown > 0 ? 'ok' : shown < 0 ? 'bad' : undefined;
 ---
 
-<span data-tone={tone} class:list={[tone ? 'text-(--tone-text)' : 'text-ink-soft', className]}>{value > 0 && '+'}{value.toLocaleString('en-GB', { maximumFractionDigits: 1 })}{unit}</span>
+<span data-tone={tone} class:list={[tone ? 'text-(--tone-text)' : 'text-ink-soft', className]}>{shown > 0 && '+'}{shown.toLocaleString('en-GB')}{unit}</span>

@@ -24,6 +24,7 @@ import PageHeader from '../components/PageHeader.astro';
 import Shell from '../layouts/Shell.astro';
 import { root, states } from '../lib/data.ts';
 import { PANEL, SEGMENT, SEGMENTS, SERIES, SERIES_LINES, postHref } from '../lib/ui.ts';
+import type { Tip } from '../lib/ui.ts';
 
 const PAGE = 5;
 const RANGE_COOKIE = 'bombarie_stats_range';
@@ -92,7 +93,7 @@ const courseOf = (place: string) => {
   const lines = picked.flatMap((channel, index) => {
     const points = grouped(histories[index]!, unit, 'last');
     const colour = measured.indexOf(channel) % SERIES.length;
-    return points.length > 0 ? [{ name: `${channel.info.label} on ${PLATFORM_LABEL[channel.info.platform]}`, fill: SERIES[colour]!, stroke: SERIES_LINES[colour]!, points }] : [];
+    return points.length > 0 ? [{ info: channel.info, fill: SERIES[colour]!, stroke: SERIES_LINES[colour]!, points }] : [];
   });
   const points = [...new Map(lines.flatMap((line) => line.points).map((point) => [point.date, point])).values()].sort((a, b) => a.date.localeCompare(b.date));
   const values = lines.flatMap((line) => line.points.map((point) => point.value));
@@ -101,8 +102,15 @@ const courseOf = (place: string) => {
     points,
     time: timeline(points[0]?.date ?? ymd(now), ymd(now), unit),
     grid: scale(values, false),
-    said: (point: { date: string }): string =>
-      [bucketLabel(point.date), ...lines.flatMap((line) => line.points.filter((own) => own.date === point.date).map((own) => `${line.name}: ${percent(own.value)}`))].join('\n')
+    said: (point: { date: string }): Tip => ({
+      title: bucketLabel(point.date),
+      rows: lines.flatMap((line) => {
+        const at = line.points.findIndex((own) => own.date === point.date);
+        const own = line.points[at];
+        const earlier = line.points[at - 1];
+        return own ? [{ fill: line.fill, channel: line.info, value: percent(own.value), change: earlier && own.value - earlier.value }] : [];
+      })
+    })
   };
 };
 const infoOf = new Map(measured.map((channel) => [channel.info.name, channel.info]));
@@ -152,16 +160,13 @@ const number = (value: number): string => value.toLocaleString('en-GB');
 const dayLabel = (day: string): string => shortDay(day, now);
 const bucketLabel = (day: string): string =>
   unit === 'month' ? new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : unit === 'week' ? `Week of ${dayLabel(day)}` : dayLabel(day);
-const split = (point: { date: string; value: number }): string =>
-  [
-    `${bucketLabel(point.date)}: ${number(point.value)}`,
-    ...(metric === 'followers'
-      ? []
-      : rows.flatMap((row) => {
-          const found = row.daily.find((own) => own.date === point.date);
-          return found && found.value > 0 ? [`${row.info.label} on ${PLATFORM_LABEL[row.info.platform]}: ${number(found.value)}`] : [];
-        }))
-  ].join('\n');
+const split = (point: { date: string; value: number }): string | Tip => {
+  const found = metric === 'followers' ? [] : rows.flatMap((row) => {
+    const own = row.daily.find((entry) => entry.date === point.date);
+    return own && own.value > 0 ? [{ fill: row.fill, channel: row.info, value: number(own.value) }] : [];
+  });
+  return found.length > 0 ? { title: bucketLabel(point.date), total: number(point.value), rows: found } : `${bucketLabel(point.date)}: ${number(point.value)}`;
+};
 ---
 
 <Shell title="Stats">
@@ -193,7 +198,7 @@ const split = (point: { date: string; value: number }): string =>
           {picked.length === 0 ? (
             <Text variant="body" class="text-ink-faint">All channels are switched off.</Text>
           ) : (
-            <div class="flex flex-col gap-8 md:gap-12">
+            <div class="flex flex-col gap-8">
               <div class="@container">
                 <ul aria-label="At a glance" class="grid gap-4 md:gap-8 @2xl:grid-cols-3">
                   <li class="contents">
@@ -207,7 +212,7 @@ const split = (point: { date: string; value: number }): string =>
                   </li>
                 </ul>
               </div>
-              <div class="grid items-start gap-x-8 gap-y-8 md:gap-y-12 xl:grid-cols-3">
+              <div class="grid items-start gap-8 xl:grid-cols-3">
                 <section aria-label="Audience" class="flex min-w-0 flex-col gap-8 xl:col-span-2">
                   <div class="flex flex-col gap-4">
                     <div class="flex min-h-10 flex-wrap items-center justify-between gap-4">
@@ -236,7 +241,7 @@ const split = (point: { date: string; value: number }): string =>
                   </div>
                   <Card as="ul" variant="bare" class="divide-y divide-line">
                     {rows.toSorted((a, b) => (b.value ?? -1) - (a.value ?? -1)).map((row) => (
-                      <li class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 p-4 md:p-6">
+                      <li class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 p-4 md:p-6">
                         <ChannelMark channel={row.info} size="lg" on="surface" />
                         <span class="flex min-w-0 flex-col gap-2">
                           <span class="flex items-baseline justify-between gap-4">
@@ -270,7 +275,6 @@ const split = (point: { date: string; value: number }): string =>
                         <Card as="ul" variant="bare" class="divide-y divide-line">
                           {places.slice(0, listed).map((found) => {
                             const name = placeName(where, found.place);
-                            const change = found.change === null ? null : Math.round(found.change * 10) / 10;
                             const open = found.place === opened;
                             const course = open ? courseOf(found.place) : null;
                             return (
@@ -282,7 +286,7 @@ const split = (point: { date: string; value: number }): string =>
                                   </span>
                                   <span class="flex items-baseline justify-end gap-2 tabular-nums">
                                     <span>{found.share.toLocaleString('en-GB', { maximumFractionDigits: 1, minimumFractionDigits: 1 })}%</span>
-                                    {change !== null && <Change value={change} unit=" pt" class="text-xs" />}
+                                    {found.change !== null && <Change value={found.change} unit=" pt" class="text-xs" />}
                                   </span>
                                 </a>
                                 {course && course.points.length > 0 && (

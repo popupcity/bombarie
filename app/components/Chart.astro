@@ -1,11 +1,13 @@
 ---
 import type { Axis, Point, Scale } from '../../src/insights.ts';
+import type { Tip } from '../lib/ui.ts';
+import ChartTip from './ChartTip.astro';
 
 interface Props {
   points: Point[];
   kind: 'line' | 'bars';
   label: string;
-  said: (point: Point) => string;
+  said: (point: Point) => string | Tip;
   time: Axis;
   grid: Scale;
   number: (value: number) => string;
@@ -15,7 +17,7 @@ interface Props {
 }
 const { points, kind, label, said, time, grid, number, parts, marks = [], class: className } = Astro.props;
 const { low, high } = grid;
-const longest = Math.max(...grid.lines.map((value) => number(value).length));
+const longest = Math.max(...grid.lines.map((value) => number(value).replace('%', '%%').length));
 const columns = longest <= 3 ? 'grid-cols-[24px_minmax(0,1fr)]' : longest <= 4 ? 'grid-cols-[32px_minmax(0,1fr)]' : 'grid-cols-[40px_minmax(0,1fr)]';
 const y = (value: number): number => 96 - ((value - low) / (high - low || 1)) * 92;
 const step = 100 / time.days;
@@ -29,12 +31,15 @@ const layers = (point: Point): { fill: string; top: number }[] => {
   }).reverse();
 };
 const courses = kind !== 'line' ? [] : parts ? parts.map((part) => ({ points: part.points, stroke: part.stroke!, dot: part.fill })) : [{ points, stroke: 'stroke-current', dot: 'fill-current' }];
+const told = points.map((point) => ({ point, tip: said(point) }));
+const key = `tip-${crypto.randomUUID().slice(0, 8)}`;
 const MARKS = 3;
 const posted = new Map(marks.map((mark) => [mark.date, mark]));
 const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 4 ? 'start' : at > 96 ? 'end' : 'middle');
 ---
 
 <div class:list={['grid min-w-0 gap-x-2 gap-y-1', columns]}>
+  {told.map(({ tip }, at) => typeof tip !== 'string' && <template id={`${key}-${at}`}><ChartTip tip={tip} /></template>)}
   <svg aria-hidden="true" class:list={['w-full text-xs tabular-nums', className]}>
     {grid.lines.map((value) => <text x="0" y={`${y(value)}%`} dy="3" class="fill-ink-soft">{number(value)}</text>)}
   </svg>
@@ -47,10 +52,10 @@ const anchor = (at: number): 'start' | 'middle' | 'end' => (at < 4 ? 'start' : a
       </g>
     ))}
     {
-      points.map((point) => (
+      told.map(({ point, tip }, at) => (
         <g>
           {kind === 'bars' && layers(point).map((layer) => layer.top > low && <rect x={`${time.at(point.date) - step * 0.35}%`} y={`${y(layer.top)}%`} width={`${step * 0.7}%`} height={`${y(low) - y(layer.top)}%`} rx="2" class={layer.fill} />)}
-          <rect x={`${time.at(point.date) - step / 2}%`} y="0" width={`${step}%`} height="100%" fill="transparent" data-tip={said(point)} data-opens={posted.get(point.date)?.opens} class={posted.has(point.date) ? 'cursor-pointer' : undefined} />
+          <rect x={`${time.at(point.date) - step / 2}%`} y="0" width={`${step}%`} height="100%" fill="transparent" data-tip={typeof tip === 'string' ? tip : undefined} data-card={typeof tip === 'string' ? undefined : `${key}-${at}`} data-opens={posted.get(point.date)?.opens} class={posted.has(point.date) ? 'cursor-pointer' : undefined} />
         </g>
       ))
     }

@@ -1,5 +1,6 @@
 import { cardFace, focus, looks } from '@popupcity/ui/src/components/looks.ts';
 import type { Status } from '../../src/calendar.ts';
+import type { Platform } from '../../src/types.ts';
 
 export const brand = 'bombarie';
 export const brandName = 'Bombarie';
@@ -70,6 +71,12 @@ export const quiet = { 'data-bwignore': true, 'data-1p-ignore': true, 'data-lpig
 export const SCHEME_COOKIE = 'bombarie_scheme';
 
 export const RAIL_COOKIE = 'bombarie_rail';
+
+export interface Tip {
+  title: string;
+  total?: string;
+  rows: { fill: string; channel: { label: string; platform: Platform; avatar?: string | undefined }; value: string; change?: number | undefined }[];
+}
 
 export const SERIES = ['fill-series-1', 'fill-series-2', 'fill-series-3', 'fill-series-4', 'fill-series-5'];
 export const SERIES_LINES = ['stroke-series-1', 'stroke-series-2', 'stroke-series-3', 'stroke-series-4', 'stroke-series-5'];

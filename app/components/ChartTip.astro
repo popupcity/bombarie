@@ -1,0 +1,30 @@
+---
+import { PLATFORM_LABEL } from '../../src/types.ts';
+import type { Tip } from '../lib/ui.ts';
+import ChannelMark from './ChannelMark.astro';
+import Change from './Change.astro';
+
+interface Props {
+  tip: Tip;
+}
+const { title, total, rows } = Astro.props.tip;
+const changing = rows.some((row) => row.change !== undefined);
+---
+
+<span class="flex min-w-56 flex-col divide-y divide-line text-sm">
+  <span class="flex items-baseline justify-between gap-4 p-3">
+    <span>{title}</span>
+    {total !== undefined && <span class="tabular-nums">{total}</span>}
+  </span>
+  <span class:list={['grid items-center gap-x-3 gap-y-2 p-3', changing ? 'grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]' : 'grid-cols-[auto_auto_minmax(0,1fr)_auto]']}>
+    {rows.map((row) => (
+      <span class="contents">
+        <svg aria-hidden="true" class="size-2"><circle cx="4" cy="4" r="4" class={row.fill} /></svg>
+        <ChannelMark channel={row.channel} size="lg" on="surface" />
+        <span class="truncate">{row.channel.label}<span class="sr-only"> on {PLATFORM_LABEL[row.channel.platform]}</span></span>
+        <span class="pl-2 text-right tabular-nums">{row.value}</span>
+        {changing && <span class="text-right text-xs tabular-nums">{row.change !== undefined && <Change value={row.change} unit=" pt" />}</span>}
+      </span>
+    ))}
+  </span>
+</span>
