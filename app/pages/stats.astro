@@ -16,7 +16,6 @@ import { PLATFORM_LABEL, needsCover } from '../../src/types.ts';
 import ChannelChip from '../components/ChannelChip.astro';
 import Change from '../components/Change.astro';
 import Chart from '../components/Chart.astro';
-import Flag from '../components/Flag.astro';
 import ChoiceMenu from '../components/ChoiceMenu.astro';
 import ChannelMark from '../components/ChannelMark.astro';
 import Spark from '../components/Spark.astro';
@@ -155,17 +154,19 @@ const split = (point: { date: string; value: number }): string =>
             <Text variant="body" class="text-ink-faint">All channels are switched off.</Text>
           ) : (
             <div class="flex flex-col gap-12">
-              <ul aria-label="At a glance" class="grid gap-8 md:grid-cols-3">
-                <li class="contents">
-                  <StatTile label="Followers" trend={trends.followers} fromZero={false} value={followers.value === null ? '–' : number(followers.value)} change={followers.change ?? undefined} note={counted.length === 1 ? '1 account' : `${counted.length} accounts`} />
-                </li>
-                <li class="contents">
-                  <StatTile label="Views" trend={trends.views} value={number(views.value)} change={views.change ?? undefined} />
-                </li>
-                <li class="contents">
-                  <StatTile label="Likes and replies" trend={trends.reactions} value={number(reactions.value)} change={reactions.change ?? undefined} note={`from ${reactions.posts === 1 ? '1 post' : `${number(reactions.posts)} posts`}`} />
-                </li>
-              </ul>
+              <div class="@container">
+                <ul aria-label="At a glance" class="grid gap-8 @2xl:grid-cols-3">
+                  <li class="contents">
+                    <StatTile label="Followers" trend={trends.followers} fromZero={false} value={followers.value === null ? '–' : number(followers.value)} change={followers.change ?? undefined} note={counted.length === 1 ? '1 account' : `${counted.length} accounts`} />
+                  </li>
+                  <li class="contents">
+                    <StatTile label="Views" trend={trends.views} value={number(views.value)} change={views.change ?? undefined} />
+                  </li>
+                  <li class="contents">
+                    <StatTile label="Likes and replies" trend={trends.reactions} value={number(reactions.value)} change={reactions.change ?? undefined} note={`from ${reactions.posts === 1 ? '1 post' : `${number(reactions.posts)} posts`}`} />
+                  </li>
+                </ul>
+              </div>
               <div class="grid items-start gap-x-8 gap-y-12 xl:grid-cols-3">
                 <section aria-label="Audience" class="flex min-w-0 flex-col gap-8 xl:col-span-2">
                   <div class="flex flex-col gap-4">
@@ -186,7 +187,7 @@ const split = (point: { date: string; value: number }): string =>
                     </Card>
                   </div>
                   <Card as="ul" variant="bare" class="divide-y divide-line">
-                    {rows.map((row) => (
+                    {rows.toSorted((a, b) => (b.value ?? -1) - (a.value ?? -1)).map((row) => (
                       <li class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 p-4 md:p-6">
                         <ChannelMark channel={row.info} size="lg" on="surface" />
                         <span class="flex min-w-0 flex-col gap-2">
@@ -223,10 +224,7 @@ const split = (point: { date: string; value: number }): string =>
                             const change = found.change === null ? null : Math.round(found.change * 10) / 10;
                             return (
                               <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 p-4 md:p-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_128px]" data-tip={`${name}: ${number(found.count)} people`}>
-                                <span class="flex min-w-0 items-center gap-2 text-sm">
-                                  {where === 'country' && <Flag code={found.place} />}
-                                  <span class="truncate">{name}</span>
-                                </span>
+                                <span class="min-w-0 truncate text-sm">{name}</span>
                                 <span class="hidden min-w-0 sm:block">
                                   <Spark points={found.points} fromZero={false} />
                                 </span>

@@ -27,7 +27,7 @@ const on = (prefix: string) => (prefix === '/' ? path === '/' : path === prefix 
 ---
 
 <header class="sticky top-0 z-40 flex h-16 items-center gap-3 bg-page px-4 md:hidden">
-  <a href="/" aria-label={brandName} class:list={[BRAND, 'mr-auto']}><Logo class="size-8" /><Wordmark /></a>
+  <a href="/" aria-label={brandName} class:list={[BRAND, 'mr-auto']}><Logo class="size-8" /></a>
   <Button type="button" popovertarget="new-menu" data-with-idea><Icon name="plus" weight="bold" />New</Button>
   <Button type="button" variant="outline" icon data-nav-toggle aria-controls="sidebar" aria-expanded="false" aria-label="Menu" class="group">
     <span class="relative size-4">

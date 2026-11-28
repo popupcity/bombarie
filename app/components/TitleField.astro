@@ -5,6 +5,6 @@ const props = Astro.props;
 ---
 
 <div class="transition group -ml-3 flex w-fit max-w-[calc(100%+12px)] min-w-0 cursor-text items-center gap-2 rounded-lg pr-3 pl-3 hover:bg-(--tone-hover) has-focus-visible:bg-surface has-focus-visible:outline-2 has-focus-visible:outline-offset-0 has-focus-visible:outline-ink">
-  <input type="text" placeholder="Untitled" aria-label="Title" autocomplete="off" spellcheck="false" {...props} class="field-sizing-content max-w-full bg-transparent text-title leading-11 outline-none [font-family:var(--font-heading)] [font-weight:var(--weight-heading)] [letter-spacing:var(--tracking-heading,0)] placeholder:text-ink-soft" />
+  <input type="text" placeholder="Untitled" aria-label="Title" autocomplete="off" spellcheck="false" {...props} class="field-sizing-content max-w-full bg-transparent text-2xl leading-11 md:text-title md:leading-11 outline-none [font-family:var(--font-heading)] [font-weight:var(--weight-heading)] [letter-spacing:var(--tracking-heading,0)] placeholder:text-ink-soft" />
   <Icon name="pencil-simple" class="transition pointer-events-none shrink-0 text-xl text-ink-soft opacity-0 group-focus-within:hidden group-hover:opacity-100" />
 </div>
